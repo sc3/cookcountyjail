@@ -1,3 +1,7 @@
 from django.db import models
 
-# Create your models here.
+class CountyInmate(models.Model):
+    jail_id=models.IntegerField(primary_key=True)
+    last_name=models.CharField(max_length=100)
+    # @TODO Add other fields
+    # See e.g. http://www2.cookcountysheriff.org/search2/details.asp?jailnumber=2012-0813098 
