@@ -8,5 +8,5 @@ class Command(BaseCommand):
     help = "Generate inmate summaries."
     def handle(self, *args, **kwargs):
         log.debug('Summarizing inmate records')
-        InmateRecordCount.create(count=InmateRecordCount.objects.count())
-        import ipdb; ipdb.set_trace();
+        record = InmateRecordCount(record_count=CountyInmate.objects.count())
+        record.save()
