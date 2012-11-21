@@ -1,8 +1,21 @@
-# Cook County Jail Inmate Population
+# Cook County Jail Inmate Population tracker
 
+A Django app that tracks the population of Cook County Jail over time
+and summarizes trends.
 
+# Using it
 
-# Cook County Jail Inmate Population tracker architecture roadmap
+There is currently no user interface or production website. You can run
+the scraper and summarizer with two management commands:
+
+<pre>./manage.py scrape_inmates
+./manage generate_inmate_summaries</pre>
+
+<code>scrape_inmates</code> also supports a <code>--limit / -l</code>
+flag which limits the number of records created and <code>--search /
+-s</code> flag which overrides the default A-Z search strategy. 
+
+# Architecture roadmap
 
 ## Models
 
@@ -29,7 +42,8 @@ A handful of views export JSON representing summaries by time period.
 
 ## Frontend
 
-The front end will consist of Backbone components:
+The front end will consist of Backbone components to be developed in 
+January with the Chicago Data Visualization Group.
 
 * Data views: Bind to JSON data and use D3 to visualize.
 * Navigation app: Provide time selection and multiple views of data.
