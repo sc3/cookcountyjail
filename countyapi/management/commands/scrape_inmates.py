@@ -10,7 +10,6 @@ BASE_URL = "http://www2.cookcountysheriff.org/search2/"
 class Command(BaseCommand):
     help = "Scrape inmate data from Cook County Sheriff's site."
     def handle(self, *args, **kwargs):
-        # @TODO scrape and load
         # Search, A-Z
         for search in string.uppercase[:26]:
             results = requests.post( "%s/%s" % (BASE_URL, 'locatesearchresults.asp'),
@@ -46,3 +45,6 @@ class Command(BaseCommand):
                 # @TODO Generalize to handle all fields
 
                 inmate.save()
+            # @TODO Keep track of jail IDs, query for records with jail
+            # ids not in current set that also don't have discharge dates.
+            # If record "fell out", assign discharge date to today.
