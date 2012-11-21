@@ -13,7 +13,7 @@ BASE_URL = "http://www2.cookcountysheriff.org/search2"
 class Command(BaseCommand):
     help = "Scrape inmate data from Cook County Sheriff's site."
     option_list= BaseCommand.option_list + (
-        make_option('-l', '--limit', type='int', action='store', dest='limit', default=None,
+        make_option('-l', '--limit', type='int', action='store', dest='limit', default=False,
             help='Limit number of results.'),
         make_option('-s', '--search', type='string', action='store', dest='search', default=None,
             help='Specify last name search term to use instead of looping from A-Z (e.g. "B", "Johnson").'),
@@ -28,6 +28,7 @@ class Command(BaseCommand):
         records = []
         rows_processed = 0
 
+        # Set search to option or string.uppercase (all uppercase letters)
         if options['search']:
             search_list = [options['search']]
         else:
@@ -51,7 +52,7 @@ class Command(BaseCommand):
             rows_processed += new_rows_processed
 
             # Break if limit reached
-            if len(records) >= options['limit']:
+            if options['limit'] and len(records) >= options['limit']:
                 break
 
         log.debug("Imported %s inmate records (%s rows processed)" % (len(records), rows_processed))
@@ -67,38 +68,37 @@ class Command(BaseCommand):
 
             # Get and parse inmate page
             inmate_result = requests.get(url)
+
+            if inmate_result.status_code != requests.codes.ok:
+                log.debug("Error getting %s, status code: %s" % (url, inmate_result.status_code))
+                continue
+
             inmate_doc = pq(inmate_result.content)
-            inmate_columns = inmate_doc('table tr:last-child td')
+            columns = inmate_doc('table tr:last-child td')
 
             # Jail ID is first td
-            jail_id = inmate_columns[0].text_content().strip()
-
-            # Last name is in second td, before comma
-            #last_name = 
-
-            # First name and initials are in second td, after comma
-            #first_name = 
+            jail_id = columns[0].text_content().strip()
 
             # Get or create inmate based on jail_id
             inmate, created = CountyInmate.objects.get_or_create(jail_id=jail_id)
 
             # Set inmate fields
             inmate.url = url
-            inmate.last_name = inmate_columns[1].text_content().split(',')[0]
-            inmate.first_name = inmate_columns[1].text_content().split(',')[1].strip()
+            inmate.last_name = columns[1].text_content().split(',')[0] # Last name is in second td, before comma
+            inmate.first_name = columns[1].text_content().split(',')[1].strip() # First name and initials are in second td, after comma
+
             # @TODO Handle all fields
 
             inmate.save()
+            log.debug("%s inmate %s" % ("Created" if created else "Updated" , inmate))
 
+            # Update global counters
+            rows_processed += 1
             if jail_id not in seen:
                 seen.append(jail_id)
 
-            log.debug("%s inmate %s" % ("Created" if created else "Updated" , inmate))
-
-            rows_processed += 1
-
             # Break on limit
-            if len(seen) >= self.options['limit']:
+            if self.options['limit'] and len(seen) >= self.options['limit']:
                 done = True
                 break
 
