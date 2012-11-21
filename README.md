@@ -1,9 +1,15 @@
+# Cook County Jail Inmate Population
+
+
+
 # Cook County Jail Inmate Population tracker architecture roadmap
 
 ## Models
 
-* Inmate: Name, charges, gender, intake date, discharge date, (other
-  fields available on inmate site)
+* Inmate: Name, charges, gender, intake date, discharge date, other
+  fields available on inmate site (see a 
+  [typical inmate record](http://www2.cookcountysheriff.org/search2/details.asp?jailnumber=2012-1013150)
+  for details).
 * Summaries: One or more models representing population summaries 
   (number of inmates, length of stay, distribution of charges and 
   demographics) by time period (day, week, month, quarter, year).
