@@ -1,5 +1,6 @@
 import django
 import os
+import sys
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
@@ -12,12 +13,12 @@ MANAGERS = ADMINS
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'ENGINE': 'django.db.backends.mysql',
         'NAME': 'cookcountyjail',
         'HOST': 'localhost',
-        'PORT': '5432',
-        #'USER': '',
-        #'PASSWORD': '',
+        'PORT': '3306',
+        'USER': 'cookcountyjail',
+        'PASSWORD': '$9jcn1ma^5lY',
     }
 }
 
@@ -98,3 +99,28 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     'countyapi',
 )
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'simple': {
+            'format': '%(levelname)s: %(message)s'
+        },
+    },
+    'handlers': {
+        'log_to_stdout': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+    },
+    'loggers': {
+        'main': {
+            'handlers': ['log_to_stdout'],
+            'level': 'DEBUG',
+            'propagate': True,
+        }
+    }
+}
+
