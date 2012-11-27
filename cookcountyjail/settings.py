@@ -2,6 +2,8 @@ import django
 import os
 import sys
 
+SITE_STATIC_ROOT = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'static')
+
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
@@ -56,7 +58,7 @@ STATIC_ROOT = ''
 STATIC_URL = '/static/'
 
 # Additional locations of static files
-STATICFILES_DIRS = ()
+STATICFILES_DIRS = (SITE_STATIC_ROOT,)
 
 # List of finder classes that know how to find static files in
 # various locations.
@@ -98,6 +100,7 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'django.contrib.admin',
     'countyapi',
+    'countyui',
 )
 
 LOGGING = {
