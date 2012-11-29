@@ -79,13 +79,13 @@ class Command(BaseCommand):
             # Jail ID is first td
             jail_id = columns[0].text_content().strip()
 
-            # Get or create inmate based on jail_id
-            inmate, created = CountyInmate.objects.get_or_create(jail_id=jail_id)
+            # Populate record
+            defaults = {
+                'url': url,
+            }
 
-            # Set inmate fields
-            inmate.url = url
-            inmate.last_name = columns[1].text_content().split(',')[0] # Last name is in second td, before comma
-            inmate.first_name = columns[1].text_content().split(',')[1].strip() # First name and initials are in second td, after comma
+            # Get or create inmate based on jail_id
+            inmate, created = CountyInmate.objects.get_or_create(jail_id=jail_id, defaults=defaults)
 
             # @TODO Handle all fields
 
