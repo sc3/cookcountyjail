@@ -39,6 +39,7 @@ class Command(BaseCommand):
             log.debug("Search: '%s'" % search)
             url = "%s/%s" % (BASE_URL, 'locatesearchresults.asp')
             results = requests.post(url, data={'LastName': search, 'FirstName': '', 'Submit': 'Begin Search'})
+            #simulates w direct search on the website
 
             # Create pquery object
             document = pq(results.content)
@@ -82,6 +83,10 @@ class Command(BaseCommand):
             # Populate record
             defaults = {
                 'url': url,
+                #'dob': columns[2].text_content().strip(),
+                'race': columns[3].text_content().strip()
+
+                #add fields taht correspond to the inmate report tables and in the models.py
             }
 
             # Get or create inmate based on jail_id

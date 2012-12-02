@@ -3,6 +3,8 @@ from django.db import models
 class CountyInmate(models.Model):
     jail_id=models.CharField(max_length=64, primary_key=True)
     url=models.CharField(max_length=255)
+    race= models.CharField(max_length=4)
+    
     # @TODO Add other fields
     # See e.g. http://www2.cookcountysheriff.org/search2/details.asp?jailnumber=2012-0813098 
 
