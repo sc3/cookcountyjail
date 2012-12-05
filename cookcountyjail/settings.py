@@ -13,6 +13,7 @@ ADMINS = (
 
 MANAGERS = ADMINS
 
+"""
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
@@ -21,6 +22,10 @@ DATABASES = {
         'PORT': '5432',
     }
 }
+"""
+import dj_database_url
+DATABASES = { 'default': dj_database_url.config() }
+
 
 # Time zone
 TIME_ZONE = 'America/Chicago'
