@@ -1,6 +1,7 @@
 import django
 import os
 import sys
+import dj_database_url
 
 SITE_STATIC_ROOT = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'static')
 
@@ -13,18 +14,17 @@ ADMINS = (
 
 MANAGERS = ADMINS
 
-"""
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'cookcountyjail',
-        'HOST': 'localhost',
-        'PORT': '5432',
+if 'CCJ_HEROKU' in os.environ:
+    DATABASES = { 'default': dj_database_url.config() }
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql_psycopg2',
+            'NAME': 'cookcountyjail',
+            'HOST': 'localhost',
+            'PORT': '5432',
+        }
     }
-}
-"""
-import dj_database_url
-DATABASES = { 'default': dj_database_url.config() }
 
 
 # Time zone
