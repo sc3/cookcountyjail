@@ -15,12 +15,10 @@ MANAGERS = ADMINS
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': 'cookcountyjail',
         'HOST': 'localhost',
-        'PORT': '3306',
-        'USER': 'cookcountyjail',
-        'PASSWORD': '$9jcn1ma^5lY',
+        'PORT': '5432',
     }
 }
 
