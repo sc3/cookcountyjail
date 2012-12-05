@@ -75,18 +75,20 @@ class Command(BaseCommand):
                 continue
 
             inmate_doc = pq(inmate_result.content)
-            columns = inmate_doc('table tr:last-child td')
+            columns = inmate_doc('table tr:nth-child(2n) td')
 
             # Jail ID is first td
             jail_id = columns[0].text_content().strip()
+
+            booked_parts = columns[7].text_content().strip().split('/')
 
             # Populate record
             defaults = {
                 'url': url,
                 #'dob': columns[2].text_content().strip(),
-                'race': columns[3].text_content().strip()
-
-                #add fields taht correspond to the inmate report tables and in the models.py
+                'race': columns[3].text_content().strip(),
+                'booked_date': "%s-%s-%s" % (booked_parts[2], booked_parts[0], booked_parts[1]),
+                #add fields that correspond to the inmate report tables and in the models.py
             }
 
             # Get or create inmate based on jail_id
