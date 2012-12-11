@@ -37,9 +37,10 @@ class Command(BaseCommand):
         # Search
         for search in search_list:
             log.debug("Search: '%s'" % search)
+
+            # Simulates a search on the website
             url = "%s/%s" % (BASE_URL, 'locatesearchresults.asp')
             results = requests.post(url, data={'LastName': search, 'FirstName': '', 'Submit': 'Begin Search'})
-            #simulates w direct search on the website
 
             # Create pquery object
             document = pq(results.content)
@@ -57,9 +58,10 @@ class Command(BaseCommand):
                 break
 
         log.debug("Imported %s inmate records (%s rows processed)" % (len(records), rows_processed))
-            # @TODO Keep track of jail IDs, query for records with jail
-            # ids not in current set that also don't have discharge dates.
-            # If record "fell out", assign discharge date to today.
+
+        # @TODO Keep track of jail IDs, query for records with jail
+        # ids not in current set that also don't have discharge dates.
+        # If record "fell out", assign discharge date to today.
 
     def process_urls(self, inmate_urls):
         seen = [] # List to store jail ids
@@ -80,23 +82,21 @@ class Command(BaseCommand):
             # Jail ID is first td
             jail_id = columns[0].text_content().strip()
 
-            booked_parts = columns[7].text_content().strip().split('/')
+            # Get or create inmate based on jail_id
+            inmate, created = CountyInmate.objects.get_or_create(jail_id=jail_id)
 
             # Populate record
-            defaults = {
-                'url': url,
-                #'dob': columns[2].text_content().strip(),
-                'race': columns[3].text_content().strip(),
-                'booked_date': "%s-%s-%s" % (booked_parts[2], booked_parts[0], booked_parts[1]),
-                #add fields that correspond to the inmate report tables and in the models.py
-            }
+            inmate.url = url
+            inmate.race = columns[3].text_content().strip()
 
-            # Get or create inmate based on jail_id
-            inmate, created = CountyInmate.objects.get_or_create(jail_id=jail_id, defaults=defaults)
+            booked_parts = columns[7].text_content().strip().split('/')
+            inmate.booked_date = "%s-%s-%s" % (booked_parts[2], booked_parts[0], booked_parts[1])
 
-            # @TODO Handle all fields
+            # @TODO add fields that correspond to the inmate report tables and in the models.py
 
+            # Save it!
             inmate.save()
+
             log.debug("%s inmate %s" % ("Created" if created else "Updated" , inmate))
 
             # Update global counters
