@@ -5,6 +5,7 @@ from pyquery import PyQuery as pq
 import string
 from countyapi.models import CountyInmate
 from optparse import make_option
+from datetime import datetime
 
 log = logging.getLogger('main')
 
@@ -17,6 +18,8 @@ class Command(BaseCommand):
             help='Limit number of results.'),
         make_option('-s', '--search', type='string', action='store', dest='search', default=None,
             help='Specify last name search term to use instead of looping from A-Z (e.g. "B", "Johnson").'),
+        make_option('-d', '--discharge', action='store_true', dest='discharge', default=False,
+            help='Calculate discharge date.'),
     )
 
     def handle(self, *args, **options):
@@ -57,11 +60,13 @@ class Command(BaseCommand):
             if options['limit'] and len(records) >= options['limit']:
                 break
 
-        log.debug("Imported %s inmate records (%s rows processed)" % (len(records), rows_processed))
+        # Calculate discharge date range
+        if options['discharge']:
+            log.debug("--discharge (-d) flag used. Calculating discharge dates.")
+            discharged = self.calculate_discharge_date(records)
+            log.debug("%s inmates discharged." % len(discharged))
 
-        # @TODO Keep track of jail IDs, query for records with jail
-        # ids not in current set that also don't have discharge dates.
-        # If record "fell out", assign discharge date to today.
+        log.debug("Imported %s inmate records (%s rows processed)" % (len(records), rows_processed))
 
     def process_urls(self, inmate_urls):
         seen = [] # List to store jail ids
@@ -110,4 +115,19 @@ class Command(BaseCommand):
                 break
 
         return seen, rows_processed
+
+    def calculate_discharge_date(self, records):
+        """
+        Given a list of jail ids, find inmates with no discharge date that
+        aren't in the list. Inmate who haven't been discharged 
+        """
+        now = datetime.now()
+        not_present_or_discharged = CountyInmate.objects.filter(discharge_date_earliest__exact=None).exclude(jail_id__in=records)
+        for inmate in not_present_or_discharged:
+            inmate.discharge_date_earliest = inmate.last_seen_date
+            inmate.discharge_date_latest = now
+            log.debug("Discharged %s - Earliest: %s earliest, Latest: %s" % (inmate.jail_id, inmate.last_seen_date, now))
+            inmate.save()
+        return not_present_or_discharged
+
 
