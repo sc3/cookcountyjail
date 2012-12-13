@@ -87,16 +87,39 @@ class Command(BaseCommand):
             # Jail ID is first td
             jail_id = columns[0].text_content().strip()
 
+
+            """
+            next_court_date =
+            next_court_location =
+            bail_status =
+            bail_amount =
+            housing_location =
+            charges =
+            charges_citation ="""
+
             # Get or create inmate based on jail_id
             inmate, created = CountyInmate.objects.get_or_create(jail_id=jail_id)
 
             # Populate record
             inmate.url = url
             inmate.race = columns[3].text_content().strip()
+            inmate.gender = columns[4].text_content().strip()
+            inmate.height = columns[5].text_content().strip()
+            inmate.weight = columns[6].text_content().strip()
 
             booked_parts = columns[7].text_content().strip().split('/')
             inmate.booked_date = "%s-%s-%s" % (booked_parts[2], booked_parts[0], booked_parts[1])
 
+            
+            inmate.housing_location = columns[8].text_content().strip()
+            try:
+                bail_amount = columns[10].text_content().strip().replace(',','')
+                inmate.bail_amount = int(bail_amount)
+            except ValueError:
+                inmate.bail_status = columns[10].text_content().replace('*','').strip()
+
+
+                
             # @TODO add fields that correspond to the inmate report tables and in the models.py
 
             # Save it!
