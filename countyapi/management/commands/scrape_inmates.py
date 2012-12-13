@@ -11,6 +11,18 @@ log = logging.getLogger('main')
 
 BASE_URL = "http://www2.cookcountysheriff.org/search2"
 
+def calculate_age(born):
+    """From http://stackoverflow.com/questions/2217488/age-from-birthdate-in-python"""
+    today = date.today()
+    try: # raised when birth date is February 29 and the current year is not a leap year
+        birthday = born.replace(year=today.year)
+    except ValueError:
+        birthday = born.replace(year=today.year, day=born.day-1)
+    if birthday > today:
+        return today.year - born.year - 1
+    else:
+        return today.year - born.year
+
 class Command(BaseCommand):
     help = "Scrape inmate data from Cook County Sheriff's site."
     option_list= BaseCommand.option_list + (
@@ -84,40 +96,37 @@ class Command(BaseCommand):
             inmate_doc = pq(inmate_result.content)
             columns = inmate_doc('table tr:nth-child(2n) td')
 
-            # Jail ID is first td
+            # Jail ID is needed to get_or_create object. Everything else must
+            # be set after inmate object is created or retrieved.
             jail_id = columns[0].text_content().strip()
-
-
-            """
-            next_court_date =
-            next_court_location =
-            bail_status =
-            bail_amount =
-            housing_location =
-            charges =
-            charges_citation ="""
 
             # Get or create inmate based on jail_id
             inmate, created = CountyInmate.objects.get_or_create(jail_id=jail_id)
 
-            # Populate record
+            # Record url
             inmate.url = url
+
+            # Record columns with simple values
             inmate.race = columns[3].text_content().strip()
             inmate.gender = columns[4].text_content().strip()
             inmate.height = columns[5].text_content().strip()
             inmate.weight = columns[6].text_content().strip()
+            inmate.housing_location = columns[8].text_content().strip()
 
+            # Split booked date into parts and reconstitute as string
             booked_parts = columns[7].text_content().strip().split('/')
             inmate.booked_date = "%s-%s-%s" % (booked_parts[2], booked_parts[0], booked_parts[1])
 
-            
-            inmate.housing_location = columns[8].text_content().strip()
+            # If the value can be converted to an integer, it's a dollar
+            # amount. Otherwise, it's a status, e.g. "* NO BOND *".
             try:
                 bail_amount = columns[10].text_content().strip().replace(',','')
                 inmate.bail_amount = int(bail_amount)
             except ValueError:
                 inmate.bail_status = columns[10].text_content().replace('*','').strip()
-            
+
+            # Charges come on two lines. The first line is a citation and the
+            # second is an optional description of the charges.
             charges = columns[11].text_content().splitlines()
             for n,line in enumerate(charges):
                 charges[n] = line.strip()
@@ -125,25 +134,20 @@ class Command(BaseCommand):
             try:
                 inmate.charges = charges[1]
             except IndexError: pass
-            
+
+            # @TODO This try block is a little too liberal.
             court_date_parts = columns[12].text_content().strip().split('/')
             try:
                 inmate.next_court_date = "%s-%s-%s" % (court_date_parts[2], court_date_parts[0], court_date_parts[1])
-            
+                # Get location by splitting lines, stripping, and re-joining
                 next_court_location = columns[13].text_content().splitlines()
                 for n,line in enumerate(next_court_location):
                     next_court_location[n] = line.strip()
                 inmate.next_court_location = "\n".join(next_court_location)
             except: pass
-            
-
-
-                
-            # @TODO add fields that correspond to the inmate report tables and in the models.py
 
             # Save it!
             inmate.save()
-
             log.debug("%s inmate %s" % ("Created" if created else "Updated" , inmate))
 
             # Update global counters
