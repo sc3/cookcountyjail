@@ -13,7 +13,7 @@ BASE_URL = "http://www2.cookcountysheriff.org/search2"
 
 def calculate_age(born):
     """From http://stackoverflow.com/questions/2217488/age-from-birthdate-in-python"""
-    today = date.today()
+    today = datetime.today()
     try: # raised when birth date is February 29 and the current year is not a leap year
         birthday = born.replace(year=today.year)
     except ValueError:
@@ -114,8 +114,9 @@ class Command(BaseCommand):
             inmate.housing_location = columns[8].text_content().strip()
 
             # Calculate age
-            age_parts = columns[7].text_content().strip().split('/')
-            inmate.booking_age = calculate_age(datetime(age_parts[2], age_parts[0], age_parts[1]))
+            bday_parts = columns[2].text_content().strip().split('/')
+            bday = datetime(int(bday_parts[2]), int(bday_parts[0]), int(bday_parts[1]))
+            inmate.age_at_booking = calculate_age(bday)
 
             # Split booked date into parts and reconstitute as string
             booked_parts = columns[7].text_content().strip().split('/')
