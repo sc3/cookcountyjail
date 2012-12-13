@@ -117,6 +117,25 @@ class Command(BaseCommand):
                 inmate.bail_amount = int(bail_amount)
             except ValueError:
                 inmate.bail_status = columns[10].text_content().replace('*','').strip()
+            
+            charges = columns[11].text_content().splitlines()
+            for n,line in enumerate(charges):
+                charges[n] = line.strip()
+            inmate.charges_citation = charges[0]
+            try:
+                inmate.charges = charges[1]
+            except IndexError: pass
+            
+            court_date_parts = columns[12].text_content().strip().split('/')
+            try:
+                inmate.next_court_date = "%s-%s-%s" % (court_date_parts[2], court_date_parts[0], court_date_parts[1])
+            
+                next_court_location = columns[13].text_content().splitlines()
+                for n,line in enumerate(next_court_location):
+                    next_court_location[n] = line.strip()
+                inmate.next_court_location = "\n".join(next_court_location)
+            except: pass
+            
 
 
                 
