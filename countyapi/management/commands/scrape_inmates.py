@@ -113,6 +113,10 @@ class Command(BaseCommand):
             inmate.weight = columns[6].text_content().strip()
             inmate.housing_location = columns[8].text_content().strip()
 
+            # Calculate age
+            age_parts = columns[7].text_content().strip().split('/')
+            inmate.booking_age = calculate_age(datetime(age_parts[2], age_parts[0], age_parts[1]))
+
             # Split booked date into parts and reconstitute as string
             booked_parts = columns[7].text_content().strip().split('/')
             inmate.booked_date = "%s-%s-%s" % (booked_parts[2], booked_parts[0], booked_parts[1])
