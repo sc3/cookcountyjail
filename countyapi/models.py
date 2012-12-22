@@ -11,7 +11,7 @@ class CountyInmate(models.Model):
     gender=models.CharField(max_length=1, null=True, blank=True)
     height=models.IntegerField(null=True, blank=True)
     weight=models.IntegerField(null=True, blank=True)
-    date_of_birth=models.DateField(null=True)
+    age=models.IntegerField(null=True)
     next_court_date=models.DateField(null=True)
     next_court_location=models.TextField(null=True)
     bail_status=models.CharField(max_length=50, null=True)

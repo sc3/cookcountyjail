@@ -5,8 +5,7 @@ from django.contrib import admin
 admin.autodiscover()
 
 urlpatterns = patterns('',
-    url(r'^data/', include('countyapi.urls')),
-    url(r'^ui/', include('countyui.urls')),
     url(r'^admin/', include(admin.site.urls)),
-    url(r'^.*', RedirectView.as_view(url='/ui/')),
+    url(r'^api/', include('countyapi.urls')),
+   
 )
