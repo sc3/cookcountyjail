@@ -5,10 +5,23 @@ from pyquery import PyQuery as pq
 import string
 from countyapi.models import CountyInmate
 from optparse import make_option
+from datetime import datetime
 
 log = logging.getLogger('main')
 
 BASE_URL = "http://www2.cookcountysheriff.org/search2"
+
+def calculate_age(born):
+    """From http://stackoverflow.com/questions/2217488/age-from-birthdate-in-python"""
+    today = datetime.today()
+    try: # raised when birth date is February 29 and the current year is not a leap year
+        birthday = born.replace(year=today.year)
+    except ValueError:
+        birthday = born.replace(year=today.year, day=born.day-1)
+    if birthday > today:
+        return today.year - born.year - 1
+    else:
+        return today.year - born.year
 
 class Command(BaseCommand):
     help = "Scrape inmate data from Cook County Sheriff's site."
@@ -17,6 +30,8 @@ class Command(BaseCommand):
             help='Limit number of results.'),
         make_option('-s', '--search', type='string', action='store', dest='search', default=None,
             help='Specify last name search term to use instead of looping from A-Z (e.g. "B", "Johnson").'),
+        make_option('-d', '--discharge', action='store_true', dest='discharge', default=False,
+            help='Calculate discharge date.'),
     )
 
     def handle(self, *args, **options):
@@ -37,9 +52,10 @@ class Command(BaseCommand):
         # Search
         for search in search_list:
             log.debug("Search: '%s'" % search)
+
+            # Simulates a search on the website
             url = "%s/%s" % (BASE_URL, 'locatesearchresults.asp')
             results = requests.post(url, data={'LastName': search, 'FirstName': '', 'Submit': 'Begin Search'})
-            #simulates w direct search on the website
 
             # Create pquery object
             document = pq(results.content)
@@ -56,10 +72,13 @@ class Command(BaseCommand):
             if options['limit'] and len(records) >= options['limit']:
                 break
 
+        # Calculate discharge date range
+        if options['discharge']:
+            log.debug("--discharge (-d) flag used. Calculating discharge dates.")
+            discharged = self.calculate_discharge_date(records)
+            log.debug("%s inmates discharged." % len(discharged))
+
         log.debug("Imported %s inmate records (%s rows processed)" % (len(records), rows_processed))
-            # @TODO Keep track of jail IDs, query for records with jail
-            # ids not in current set that also don't have discharge dates.
-            # If record "fell out", assign discharge date to today.
 
     def process_urls(self, inmate_urls):
         seen = [] # List to store jail ids
@@ -77,25 +96,62 @@ class Command(BaseCommand):
             inmate_doc = pq(inmate_result.content)
             columns = inmate_doc('table tr:nth-child(2n) td')
 
-            # Jail ID is first td
+            # Jail ID is needed to get_or_create object. Everything else must
+            # be set after inmate object is created or retrieved.
             jail_id = columns[0].text_content().strip()
 
-            booked_parts = columns[7].text_content().strip().split('/')
-
-            # Populate record
-            defaults = {
-                'url': url,
-                #'dob': columns[2].text_content().strip(),
-                'race': columns[3].text_content().strip(),
-                'booked_date': "%s-%s-%s" % (booked_parts[2], booked_parts[0], booked_parts[1]),
-                #add fields that correspond to the inmate report tables and in the models.py
-            }
-
             # Get or create inmate based on jail_id
-            inmate, created = CountyInmate.objects.get_or_create(jail_id=jail_id, defaults=defaults)
+            inmate, created = CountyInmate.objects.get_or_create(jail_id=jail_id)
 
-            # @TODO Handle all fields
+            # Record url
+            inmate.url = url
 
+            # Record columns with simple values
+            inmate.race = columns[3].text_content().strip()
+            inmate.gender = columns[4].text_content().strip()
+            inmate.height = columns[5].text_content().strip()
+            inmate.weight = columns[6].text_content().strip()
+            inmate.housing_location = columns[8].text_content().strip()
+
+            # Calculate age
+            bday_parts = columns[2].text_content().strip().split('/')
+            bday = datetime(int(bday_parts[2]), int(bday_parts[0]), int(bday_parts[1]))
+            inmate.age_at_booking = calculate_age(bday)
+
+            # Split booked date into parts and reconstitute as string
+            booked_parts = columns[7].text_content().strip().split('/')
+            inmate.booked_date = "%s-%s-%s" % (booked_parts[2], booked_parts[0], booked_parts[1])
+
+            # If the value can be converted to an integer, it's a dollar
+            # amount. Otherwise, it's a status, e.g. "* NO BOND *".
+            try:
+                bail_amount = columns[10].text_content().strip().replace(',','')
+                inmate.bail_amount = int(bail_amount)
+            except ValueError:
+                inmate.bail_status = columns[10].text_content().replace('*','').strip()
+
+            # Charges come on two lines. The first line is a citation and the
+            # second is an optional description of the charges.
+            charges = columns[11].text_content().splitlines()
+            for n,line in enumerate(charges):
+                charges[n] = line.strip()
+            inmate.charges_citation = charges[0]
+            try:
+                inmate.charges = charges[1]
+            except IndexError: pass
+
+            # @TODO This try block is a little too liberal.
+            court_date_parts = columns[12].text_content().strip().split('/')
+            try:
+                inmate.next_court_date = "%s-%s-%s" % (court_date_parts[2], court_date_parts[0], court_date_parts[1])
+                # Get location by splitting lines, stripping, and re-joining
+                next_court_location = columns[13].text_content().splitlines()
+                for n,line in enumerate(next_court_location):
+                    next_court_location[n] = line.strip()
+                inmate.next_court_location = "\n".join(next_court_location)
+            except: pass
+
+            # Save it!
             inmate.save()
             log.debug("%s inmate %s" % ("Created" if created else "Updated" , inmate))
 
@@ -110,4 +166,19 @@ class Command(BaseCommand):
                 break
 
         return seen, rows_processed
+
+    def calculate_discharge_date(self, records):
+        """
+        Given a list of jail ids, find inmates with no discharge date that
+        aren't in the list. Inmate who haven't been discharged 
+        """
+        now = datetime.now()
+        not_present_or_discharged = CountyInmate.objects.filter(discharge_date_earliest__exact=None).exclude(jail_id__in=records)
+        for inmate in not_present_or_discharged:
+            inmate.discharge_date_earliest = inmate.last_seen_date
+            inmate.discharge_date_latest = now
+            log.debug("Discharged %s - Earliest: %s earliest, Latest: %s" % (inmate.jail_id, inmate.last_seen_date, now))
+            inmate.save()
+        return not_present_or_discharged
+
 

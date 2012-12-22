@@ -40,8 +40,8 @@ USE_I18N = False
 # Number and date localization.
 USE_L10N = False
 
-# Use date times with timezones.
-USE_TZ = True
+# Naive times are good by us
+USE_TZ = False
 
 # Media directory
 MEDIA_ROOT = ''
