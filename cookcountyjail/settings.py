@@ -102,7 +102,6 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'django.contrib.admin',
     'countyapi',
-    'countyui',
     'tastypie',
 )
 
