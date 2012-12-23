@@ -5,7 +5,7 @@ class CountyInmate(models.Model):
     url=models.CharField(max_length=255)
     race=models.CharField(max_length=4,null=True, blank=True)
     last_seen_date=models.DateTimeField(auto_now=True)
-    booking_date=models.DateTimeField(auto_now=True,null=True)
+    booking_date=models.DateTimeField(null=True)
     discharge_date_earliest=models.DateTimeField(null=True)
     discharge_date_latest=models.DateTimeField(null=True)
     gender=models.CharField(max_length=1, null=True, blank=True)
