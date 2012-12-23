@@ -6,3 +6,5 @@ pyquery==1.2.2
 requests==0.14.2
 wsgiref==0.1.2
 dj-database-url==0.2.1
+django-tastypie==0.9.11
+
