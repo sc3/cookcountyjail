@@ -48,7 +48,7 @@ def process_urls(base_url,inmate_urls,limit=None):
         
         # Split booked date into parts and reconstitute as string
         booked_parts = columns[7].text_content().strip().split('/')
-        inmate.booked_date = "%s-%s-%s" % (booked_parts[2], booked_parts[0], booked_parts[1])
+        inmate.booking_date = "%s-%s-%s" % (booked_parts[2], booked_parts[0], booked_parts[1])
         
         # If the value can be converted to an integer, it's a dollar
         # amount. Otherwise, it's a status, e.g. "* NO BOND *".
