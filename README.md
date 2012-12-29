@@ -47,3 +47,7 @@ January with the Chicago Data Visualization Group.
 
 * Data views: Bind to JSON data and use D3 to visualize.
 * Navigation app: Provide time selection and multiple views of data.
+
+## Authors
+Contributors: Ryan Asher, Cecilia Calaeria, David Eads, Jimmie Glover, Forest Gregg, Sheila Miguez, Wilbero Morales, and Sabine Ye
+Licensed under the GPL version 3.
