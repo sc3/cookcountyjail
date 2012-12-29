@@ -49,5 +49,5 @@ January with the Chicago Data Visualization Group.
 * Navigation app: Provide time selection and multiple views of data.
 
 ## Authors
-Contributors: Ryan Asher, Cecilia Calaeria, David Eads, Jimmie Glover, Forest Gregg, Wilbero Morales, Sabine Ye
+Contributors: Ryan Asher, Cecilia Calaeria, David Eads, Jimmie Glover, Forest Gregg, Sheila Miguez, Wilbero Morales, and Sabine Ye
 Licensed under the GPL version 3.
