@@ -20,12 +20,18 @@ class CountyInmate(models.Model):
 
     def __unicode__(self):
         return self.jail_id
+    
+    class Meta:
+        ordering = ['-jail_id']
 
 
 class CourtDate(models.Model):
     inmate=models.ForeignKey('CountyInmate', related_name="court_dates")
     location=models.ForeignKey('CourtLocation')
     date=models.DateField()
+
+    class Meta:
+        ordering = ['date']
 
 
 class CourtLocation(models.Model):
