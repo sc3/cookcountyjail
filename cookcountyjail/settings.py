@@ -6,8 +6,9 @@ import dj_database_url
 SITE_STATIC_ROOT = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'static')
 SITE_DIR = os.path.dirname(os.path.dirname(__file__))
 
-DEBUG = True
-TEMPLATE_DEBUG = DEBUG
+if 'CCJ_HEROKU' not in os.environ:
+    DEBUG = True
+    TEMPLATE_DEBUG = DEBUG
 
 ADMINS = (
     # ('Your Name', 'your_email@example.com'),
