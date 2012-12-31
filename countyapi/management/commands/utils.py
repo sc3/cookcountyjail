@@ -70,22 +70,26 @@ def process_urls(base_url,inmate_urls,limit=None):
         
         # @TODO This try block is a little too liberal.
         court_date_parts = columns[12].text_content().strip().split('/')
-        try:
-            # Get location by splitting lines, stripping, and re-joining
+        try:           
+            # Parse next court date
+            next_court_date = "%s-%s-%s" % (court_date_parts[2], court_date_parts[0], court_date_parts[1])
+            
+             # Get location by splitting lines, stripping, and re-joining
             next_court_location = columns[13].text_content().splitlines()
-            for n,line in enumerate(next_court_location):
-                next_court_location[n] = line.strip()
+            next_court_location = [line.strip() for line in next_court_location]
             next_court_location = "\n".join(next_court_location)
 
             # Get or create the location
             location, new_location = CourtLocation.objects.get_or_create(location=next_court_location)
 
-            # Parse next court date
-            next_court_date = "%s-%s-%s" % (court_date_parts[2], court_date_parts[0], court_date_parts[1])
-
             # Get or create a court date for this inmate
             court_date, new_court_date = inmate.court_dates.get_or_create(date=next_court_date, location=location)
-        except: pass
+        except IndexError as e: 
+           if str(e) == "list index out of range" :
+                print "Could not parse next courtdate ", court_date_parts
+            else :
+                raise 
+            
         
         # Save it!
         inmate.save()
