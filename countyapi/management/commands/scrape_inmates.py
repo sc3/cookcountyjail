@@ -51,11 +51,17 @@ class Command(BaseCommand):
             # Get links from last column of each row
             inmate_urls = document('#mainContent table tr td:last-child a')
             
-            # Uniquify urls, reduce the number of queries by about 40$
-            inmate_url = set(inmate_urls)
+            # Uniquify urls, reduce the number of queries by about 40%
+            seen_urls = set([])
+            filtered_urls = []
+            for url in inmate_urls :
+                if url.attrib['href'] not in seen_urls :
+                    filtered_urls.append(url)
+                    seen_urls.add(url.attrib['href'])
+
 
             # Process URLs
-            new_records, new_rows_processed = process_urls(BASE_URL,inmate_urls,options['limit'])
+            new_records, new_rows_processed = process_urls(BASE_URL,filtered_urls,options['limit'])
             records += new_records
             rows_processed += new_rows_processed
 
