@@ -50,6 +50,9 @@ class Command(BaseCommand):
 
             # Get links from last column of each row
             inmate_urls = document('#mainContent table tr td:last-child a')
+            
+            # Uniquify urls, reduce the number of queries by about 40$
+            inmate_url = set(inmate_urls)
 
             # Process URLs
             new_records, new_rows_processed = process_urls(BASE_URL,inmate_urls,options['limit'])
