@@ -85,7 +85,7 @@ def process_urls(base_url,inmate_urls,limit=None):
             # Get or create a court date for this inmate
             court_date, new_court_date = inmate.court_dates.get_or_create(date=next_court_date, location=location)
         except IndexError as e: 
-           if str(e) == "list index out of range" :
+            if str(e) == "list index out of range" :
                 print "Could not parse next courtdate ", court_date_parts
             else :
                 raise 
