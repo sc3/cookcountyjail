@@ -27,7 +27,7 @@ class CountyInmate(models.Model):
 
 class CourtDate(models.Model):
     inmate=models.ForeignKey('CountyInmate', related_name="court_dates")
-    location=models.ForeignKey('CourtLocation')
+    location=models.ForeignKey('CourtLocation', related_name="court_dates")
     date=models.DateField()
 
     class Meta:

@@ -87,7 +87,7 @@ def process_urls(base_url,inmate_urls,limit=None):
         except IndexError as e: 
             if str(e) == "list index out of range" :
                 print "Could not parse next courtdate ", court_date_parts
-            else :
+            else:
                 raise 
             
         
