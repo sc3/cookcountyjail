@@ -3,17 +3,18 @@ from tastypie import fields
 from countyapi.models import CountyInmate, CourtLocation, CourtDate
 
 class CourtLocationResource(ModelResource):
-    court_dates = fields.ToManyField('countyapi.api.resources.CourtDateResource', 'court_dates', full=True)
     class Meta:
         queryset = CourtLocation.objects.all()
         allowed_methods = ['get']
 
-class CourtLocationDateResource(ModelResource):
+class CourtLocationHistoryResource(ModelResource):
+    court_dates = fields.ToManyField('countyapi.api.resources.CourtDateResource', 'court_dates', full=True)
     class Meta:
+        limit = 5
         queryset = CourtLocation.objects.all()
 
 class CourtDateResource(ModelResource):
-    location = fields.ForeignKey('countyapi.api.resources.CourtLocationDateResource', 'location', full=True)
+    location = fields.ForeignKey('countyapi.api.resources.CourtLocationResource', 'location', full=True)
     class Meta:
         queryset = CourtDate.objects.all()
         allowed_methods = ['get']
