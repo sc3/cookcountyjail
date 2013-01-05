@@ -104,6 +104,7 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     'countyapi',
     'tastypie',
+    'south',
 )
 
 LOGGING = {
