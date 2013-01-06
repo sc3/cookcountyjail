@@ -27,7 +27,7 @@ class CountyInmateResource(ModelResource):
         limit = 100
 
         # Exclude non-essential data. Reintroduce to API if needed.
-        excludes = ['height', 'weight', 'last_seen_date', 'discharge_date_latest', 'race', 'url']
+        excludes = ['height', 'weight', 'last_seen_date', 'discharge_date_latest', 'url']
 
         filtering = {
             'jail_id': ALL,
@@ -39,6 +39,7 @@ class CountyInmateResource(ModelResource):
             'housing_location': ALL,
             'charges': ALL,
             'charges_citation':ALL,
+            'race':ALL,
         }
 
     def dehydrate(self, bundle):
