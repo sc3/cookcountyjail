@@ -7,7 +7,6 @@ from countyapi.models import CountyInmate, CourtDate, CourtLocation
 from optparse import make_option
 from datetime import datetime
 from countyapi.management.commands.utils import process_urls
-from countyapi.management.commands.utils import calculate_age
 
 log = logging.getLogger('main')
 
@@ -64,6 +63,7 @@ class Command(BaseCommand):
 
             # Process URLs
             new_records, new_rows_processed = process_urls(BASE_URL,filtered_urls,options['limit'])
+
             records += new_records
             rows_processed += new_rows_processed
 
