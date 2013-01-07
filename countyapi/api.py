@@ -20,6 +20,7 @@ class CourtLocationResource(ModelResource):
         queryset = CourtLocation.objects.all()
         allowed_methods = ['get']
         include_resource_uri = False
+        limit = 2500
         serializer = PrettyJSONSerializer()
 
     def dehydrate(self, bundle):
