@@ -79,10 +79,7 @@ class CourtDateResource(ModelResource):
     def dehydrate(self, bundle):
         # Include inmate when called from location
         if bundle.request.path.startswith("/api/1.0/courtlocation/"):
-            inmate = bundle.obj.inmate
-            resource = CountyInmateResource()
-            inmate_bundle = resource.build_bundle(obj=inmate, request=bundle.request)
-            bundle.data["inmate"] = resource.full_dehydrate(inmate_bundle).data
+            bundle.data["inmate"] = bundle.obj.inmate
 
         # Include location when called from inmate
         if bundle.request.path.startswith("/api/1.0/countyinmate/"):
