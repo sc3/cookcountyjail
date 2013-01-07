@@ -24,7 +24,7 @@ class CourtLocationResource(ModelResource):
 
     def dehydrate(self, bundle):
         # Show court dates in location lists and detail views
-        if bundle.request.path == '/api/1.0/courtlocation/' and bundle.request.REQUEST.get('related'):
+        if bundle.request.path.startswith('/api/1.0/courtlocation/') and (bundle.request.path != '/api/1.0/courtlocation/' or bundle.request.REQUEST.get('related')):
             dates = bundle.obj.court_dates.all()
             resource = CourtDateResource()
             bundle.data['court_dates'] = []
@@ -59,7 +59,7 @@ class CountyInmateResource(ModelResource):
 
     def dehydrate(self, bundle):
         # Show court dates in inmate lists and detail views
-        if bundle.request.path == '/api/1.0/countyinmate/' and bundle.request.REQUEST.get('related'):
+        if bundle.request.path.startswith('/api/1.0/countyinmate/') and (bundle.request.path != '/api/1.0/countyinmate/' or bundle.request.REQUEST.get('related')):
             dates = bundle.obj.court_dates.all()
             resource = CourtDateResource()
             bundle.data['court_dates'] = []
