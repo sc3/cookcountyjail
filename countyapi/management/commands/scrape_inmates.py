@@ -7,6 +7,8 @@ from countyapi.models import CountyInmate, CourtDate, CourtLocation
 from optparse import make_option
 from datetime import datetime
 from countyapi.management.commands.utils import process_urls
+from countyapi.management.commands.utils import calculate_age
+
 log = logging.getLogger('main')
 
 BASE_URL = "http://www2.cookcountysheriff.org/search2"
