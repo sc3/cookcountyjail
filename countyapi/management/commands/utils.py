@@ -36,16 +36,15 @@ def create_update_inmate(url):
     inmate.housing_location = columns[8].text_content().strip()
     
     # Calculate age
+    #if (inmate.age_at_booking = None):
     bday_parts = columns[2].text_content().strip().split('/')
-    bday_parts
-    
     bday = datetime(int(bday_parts[2]), int(bday_parts[0]), int(bday_parts[1]))
-    inmate.age_at_booking = calculate_age(bday)
-    
     # Split booked date into parts and reconstitute as string
     booked_parts = columns[7].text_content().strip().split('/')
     inmate.booking_date = "%s-%s-%s" % (booked_parts[2], booked_parts[0], booked_parts[1])
-    
+    booking_datetime = datetime(int(booked_parts[2]), int(booked_parts[0]), int(booked_parts[1]))
+    inmate.age_at_booking = calculate_age(bday,booking_datetime)
+
     # If the value can be converted to an integer, it's a dollar
     # amount. Otherwise, it's a status, e.g. "* NO BOND *".
     try:
@@ -98,15 +97,16 @@ def process_urls(base_url,inmate_urls,records,limit=None):
     
     return seen
 
-def calculate_age(born):
+def calculate_age(born,booking_date):
     """From http://stackoverflow.com/questions/2217488/age-from-birthdate-in-python"""
-    today = datetime.today()
-    try: # raised when birth date is February 29 and the current year is not a leap year
-        birthday = born.replace(year=today.year)
-    except ValueError:
-        birthday = born.replace(year=today.year, day=born.day-1)
-    if birthday > today:
-        return today.year - born.year - 1
+    if born.month <= booking_date.month and born.day <= booking_date.day:
+        return (booking_date.year - born.year) 
     else:
-        return today.year - born.year
+        return booking_date.year - born.year -1
+
+
+
+
+
+
 

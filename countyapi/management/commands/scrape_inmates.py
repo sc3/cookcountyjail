@@ -71,7 +71,11 @@ class Command(BaseCommand):
                 break
         
         # Calculate discharge date range
+        
         if options['discharge']:
+            if options['limit'] or options['search']:
+                log.debug("Discharge date option is incompatible with limit and search options")
+                return 
             log.debug("--discharge (-d) flag used. Calculating discharge dates.")
             discharged = self.calculate_discharge_date(seen)
             log.debug("%s inmates discharged." % len(discharged))
