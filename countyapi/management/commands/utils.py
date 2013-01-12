@@ -7,13 +7,13 @@ from datetime import datetime
 
 log = logging.getLogger('main')
 
-def create_update_inmate(url,seen,rows_processed):
+def create_update_inmate(url):
     # Get and parse inmate page
     inmate_result = requests.get(url)
     
     if inmate_result.status_code != requests.codes.ok:
         log.debug("Error getting %s, status code: %s" % (url, inmate_result.status_code))
-        return seen, rows_processed
+        return
     
     inmate_doc = pq(inmate_result.content)
     columns = inmate_doc('table tr:nth-child(2n) td')
@@ -80,22 +80,23 @@ def create_update_inmate(url,seen,rows_processed):
     log.debug("%s inmate %s" % ("Created" if created else "Updated" , inmate))
 
     # Update global counters
-    rows_processed += 1
-    if jail_id not in seen:
-        seen.append(jail_id)
+   
+    return jail_id
 
-    return seen, rows_processed
-
-def process_urls(base_url,inmate_urls,limit=None):
+def process_urls(base_url,inmate_urls,records,limit=None):
     seen = [] # List to store jail ids
-    rows_processed = 0 # Rows processed counter
-    for url in inmate_urls:
+   
+    for url in inmate_urls:	
         url = "%s/%s" % (base_url, url.attrib['href'])
-        seen, rows_processed = create_update_inmate(url,seen,rows_processed)
-        if limit and len(seen) >= limit:
-            break
+        new_id = create_update_inmate(url)
+        if new_id not in seen and new_id != None:
+        	seen.append(new_id)
+        if (limit and (records + len(seen)) >= limit):
+    		break 
+        	
+       
     
-    return seen, rows_processed
+    return seen
 
 def calculate_age(born):
     """From http://stackoverflow.com/questions/2217488/age-from-birthdate-in-python"""

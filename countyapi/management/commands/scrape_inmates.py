@@ -29,8 +29,8 @@ class Command(BaseCommand):
         self.options = options
 
         # Global counters
-        records = []
-        rows_processed = 0
+        records = 0
+        seen = []
 
         # Set search to option or string.uppercase (all uppercase letters)
         if options['search']:
@@ -59,34 +59,32 @@ class Command(BaseCommand):
                 if url.attrib['href'] not in seen_urls :
                     filtered_urls.append(url)
                     seen_urls.add(url.attrib['href'])
-
+                    
 
             # Process URLs
-            new_records, new_rows_processed = process_urls(BASE_URL,filtered_urls,options['limit'])
-
-            records += new_records
-            rows_processed += new_rows_processed
-
+            new_seen = (process_urls(BASE_URL,filtered_urls,records,options['limit']))
+            seen += new_seen 
+            records = len(seen)
+            
             # Break if limit reached
-            if options['limit'] and len(records) >= options['limit']:
+            if options['limit'] and records >= options['limit']:
                 break
-
+        
         # Calculate discharge date range
         if options['discharge']:
             log.debug("--discharge (-d) flag used. Calculating discharge dates.")
-            discharged = self.calculate_discharge_date(records)
+            discharged = self.calculate_discharge_date(seen)
             log.debug("%s inmates discharged." % len(discharged))
-
-        log.debug("Imported %s inmate records (%s rows processed)" % (len(records), rows_processed))
-
-    
-    def calculate_discharge_date(self, records):
+        
+        log.debug("Imported %s inmate records)" % (records))
+       
+    def calculate_discharge_date(self, seen):
         """
         Given a list of jail ids, find inmates with no discharge date that
         aren't in the list. Inmate who haven't been discharged 
         """
         now = datetime.now()
-        not_present_or_discharged = CountyInmate.objects.filter(discharge_date_earliest__exact=None).exclude(jail_id__in=records)
+        not_present_or_discharged = CountyInmate.objects.filter(discharge_date_earliest__exact=None).exclude(jail_id__in=seen)
         for inmate in not_present_or_discharged:
             inmate.discharge_date_earliest = inmate.last_seen_date
             inmate.discharge_date_latest = now
