@@ -1,3 +1,5 @@
+import csv
+from django.http import HttpResponse
 from tastypie.resources import ModelResource, ALL
 from tastypie import fields
 from countyapi.models import CountyInmate, CourtLocation, CourtDate
@@ -5,8 +7,19 @@ from django.core.serializers import json
 from django.utils import simplejson
 from tastypie.serializers import Serializer
 
-class PrettyJSONSerializer(Serializer):
+class JailSerializer(Serializer):
     json_indent = 2
+
+    formats = ['json', 'jsonp', 'xml', 'yaml', 'html', 'plist', 'csv']
+    content_types = {
+        'json': 'application/json',
+        'jsonp': 'text/javascript',
+        'xml': 'application/xml',
+        'yaml': 'text/yaml',
+        'html': 'text/html',
+        'plist': 'application/x-plist',
+        'csv': 'text/csv',
+    }
 
     def to_json(self, data, options=None):
         options = options or {}
@@ -15,13 +28,31 @@ class PrettyJSONSerializer(Serializer):
                 sort_keys=True, ensure_ascii=False, indent=self.json_indent)
 
 
+    def to_csv(self, data, options=None):
+        options = options or {}
+        data = self.to_simple(data, options)
+        response = HttpResponse(mimetype='text/csv')
+        response['Content-Disposition'] = 'attachment; filename=data.csv'
+            
+        writer = csv.writer(response)
+        writer.writerow([unicode(key).encode(
+                "utf-8", "replace") for key in data['objects'][0].keys()])
+
+        for item in data['objects']:
+            writer.writerow([unicode(item[key]).encode(
+                "utf-8", "replace") for key in item.keys()])
+
+        return response
+
+
+
 class CourtLocationResource(ModelResource):
     class Meta:
         queryset = CourtLocation.objects.all()
         allowed_methods = ['get']
         include_resource_uri = False
         limit = 2500
-        serializer = PrettyJSONSerializer()
+        serializer = JailSerializer()
 
     def dehydrate(self, bundle):
         # Show court dates in location lists and detail views
@@ -40,7 +71,7 @@ class CountyInmateResource(ModelResource):
         allowed_methods = ['get']
         include_resource_uri = False
         limit = 100
-        serializer = PrettyJSONSerializer()
+        serializer = JailSerializer()
 
         # Exclude non-essential data. Reintroduce to API if needed.
         excludes = ['height', 'weight', 'last_seen_date', 'discharge_date_latest', 'url']
@@ -89,5 +120,4 @@ class CourtDateResource(ModelResource):
             bundle.data["location"] = resource.full_dehydrate(location_bundle).data
 
         return bundle
-
 
