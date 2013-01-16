@@ -1,2 +1,2 @@
 # Authors
-Ryan Asher, Cecilia Calaeria, David Eads, Jimmie Glover, Forest Gregg, Sheila Miguez, Wilbero Morales, and Sabine Ye
+Ryan Asher, Cecilia Calabria, David Eads, Jimmie Glover, Forest Gregg, Sheila Miguez, Wilberto Morales, Sabine Ye
