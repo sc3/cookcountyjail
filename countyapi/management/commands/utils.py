@@ -63,17 +63,23 @@ def create_update_inmate(url):
         inmate.charges = charges[1]
     except IndexError: pass
 
-    # @TODO This try block is a little too liberal.
     court_date_parts = columns[12].text_content().strip().split('/')
     try:
-        inmate.next_court_date = "%s-%s-%s" % (court_date_parts[2], court_date_parts[0], court_date_parts[1])
         # Get location by splitting lines, stripping, and re-joining
         next_court_location = columns[13].text_content().splitlines()
         for n,line in enumerate(next_court_location):
             next_court_location[n] = line.strip()
-        inmate.next_court_location = "\n".join(next_court_location)
-    except: pass
-
+        next_court_location = "\n".join(next_court_location)
+        
+        # Get or create the location
+        location, new_location = CourtLocation.objects.get_or_create(location=next_court_location)
+        
+        # Parse next court date
+        next_court_date = "%s-%s-%s" % (court_date_parts[2], court_date_parts[0], court_date_parts[1])
+        
+        # Get or create a court date for this inmate
+        court_date, new_court_date = inmate.court_dates.get_or_create(date=next_court_date, location=location)
+    except IndexError: pass
     # Save it!
     inmate.save()
     log.debug("%s inmate %s" % ("Created" if created else "Updated" , inmate))
