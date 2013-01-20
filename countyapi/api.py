@@ -32,8 +32,8 @@ class JailSerializer(Serializer):
         options = options or {}
         data = self.to_simple(data, options)
         response = HttpResponse(mimetype='text/csv')
-        response['Content-Disposition'] = 'attachment; filename=data.csv'
-            
+        response['Content-Disposition'] = 'attachment; filename=cookcountyjail.csv'
+
         writer = csv.writer(response)
         writer.writerow([unicode(key).encode(
                 "utf-8", "replace") for key in data['objects'][0].keys()])
@@ -106,14 +106,33 @@ class CourtDateResource(ModelResource):
         queryset = CourtDate.objects.all()
         allowed_methods = ['get']
         include_resource_uri = False
+        serializer = JailSerializer()
 
     def dehydrate(self, bundle):
-        # Include inmate when called from location
+        # Include inmate ID when called from location
         if bundle.request.path.startswith("/api/1.0/courtlocation/"):
-            bundle.data["inmate"] = bundle.obj.inmate
+            bundle.data["inmate"] = bundle.obj.inmate.pk
 
         # Include location when called from inmate
         if bundle.request.path.startswith("/api/1.0/countyinmate/"):
+            location = bundle.obj.location
+            resource = CourtLocationResource()
+            location_bundle = resource.build_bundle(obj=location, request=bundle.request)
+            bundle.data["location"] = resource.full_dehydrate(location_bundle).data
+
+        # Include primary keys on court dates
+        if bundle.request.path.startswith("/api/1.0/courtdate/") and not bundle.request.REQUEST.get('related'):
+            bundle.data["location_id"] = bundle.obj.location.pk
+            bundle.data["location"] = bundle.obj.location.location
+            bundle.data["inmate_jail_id"] = bundle.obj.inmate.pk
+
+        # Include full inmate in related query
+        if bundle.request.path.startswith("/api/1.0/courtdate/") and bundle.request.REQUEST.get('related'):
+            inmate = bundle.obj.inmate
+            resource = CountyInmateResource()
+            inmate_bundle = resource.build_bundle(obj=inmate, request=bundle.request)
+            bundle.data["inmate"] = resource.full_dehydrate(inmate_bundle).data
+            
             location = bundle.obj.location
             resource = CourtLocationResource()
             location_bundle = resource.build_bundle(obj=location, request=bundle.request)
