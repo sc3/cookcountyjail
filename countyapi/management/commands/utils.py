@@ -64,7 +64,7 @@ def create_update_inmate(url):
     except IndexError: pass
 
     court_date_parts = columns[12].text_content().strip().split('/')
-    try:
+    if len(court_date_parts) == 3:
         # Get location by splitting lines, stripping, and re-joining
         next_court_location = columns[13].text_content().splitlines()
         for n,line in enumerate(next_court_location):
@@ -79,7 +79,6 @@ def create_update_inmate(url):
         
         # Get or create a court date for this inmate
         court_date, new_court_date = inmate.court_dates.get_or_create(date=next_court_date, location=location)
-    except IndexError: pass
     # Save it!
     inmate.save()
     log.debug("%s inmate %s" % ("Created" if created else "Updated" , inmate))
