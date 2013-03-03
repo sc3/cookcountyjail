@@ -87,7 +87,6 @@ class CountyInmateResource(ModelResource):
             'charges': ALL,
             'charges_citation':ALL,
             'race':ALL,
-            'court_dates':ALL,
         }
 
     def dehydrate(self, bundle):
@@ -147,10 +146,23 @@ class HousingLocationResource(ModelResource):
         allowed_methods = ['get']
         include_resource_uri = False
         serializer = JailSerializer()
-
+        filtering = {
+            'housing_location': ALL,
+            'division': ALL,
+            'sub_division': ALL,
+            'sub_division_location': ALL,
+            'in_jail': ALL,
+            'in_program': ALL
+        }
+ 
 class HousingHistoryResource(ModelResource):
     class Meta:
         queryset = HousingHistory.objects.all()
         allowed_methods = ['get']
         include_resource_uri = False
         serializer = JailSerializer()
+        filtering = {
+            'inmate': ALL,
+            'housing_date': ALL, 
+            'housing_location': ALL
+        }
