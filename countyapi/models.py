@@ -40,5 +40,21 @@ class CourtLocation(models.Model):
 
 class InmateRecordCount(models.Model):
     """ This is a silly example. @TODO Create real summaries. """
-    date = models.DateTimeField(auto_now_add=True)
-    record_count = models.IntegerField()
+    date=models.DateTimeField(auto_now_add=True)
+    record_count=models.IntegerField()
+
+class HousingHistory(models.Model):
+    inmate=models.ForeignKey('CountyInmate',related_name="housing_history")
+    housing_location=models.ForeignKey('HousingLocation', related_name="housing_history")
+    housing_date=models.DateField(null=True)
+    
+class HousingLocation(models.Model):
+    housing_location=models.CharField(max_length=40,primary_key=True)
+    division=models.CharField(max_length=4)
+    sub_division=models.CharField(max_length=20)
+    sub_division_location=models.CharField(max_length=20)
+    in_jail=models.NullBooleanField()
+    in_program=models.CharField(max_length=60)
+
+    def __unicode__(self):
+        return self.housing_location

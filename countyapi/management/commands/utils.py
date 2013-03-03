@@ -2,8 +2,9 @@ import logging
 import requests
 from pyquery import PyQuery as pq
 import string
-from countyapi.models import CountyInmate, CourtDate, CourtLocation
+from countyapi.models import CountyInmate, CourtDate, CourtLocation, HousingHistory, HousingLocation
 from datetime import datetime
+from datetime import date
 
 log = logging.getLogger('main')
 
@@ -34,7 +35,16 @@ def create_update_inmate(url):
     inmate.height = columns[5].text_content().strip()
     inmate.weight = columns[6].text_content().strip()
     inmate.housing_location = columns[8].text_content().strip()
-    
+
+    # Housing location parsing
+    inmate_housing_location, created_location = HousingLocation.objects.get_or_create(housing_location = columns[8].text_content().strip())
+    process_housing_location(inmate_housing_location)
+    housing_history, new_history = inmate.housing_history.get_or_create(housing_location=inmate_housing_location)
+    if new_history:
+        housing_history.housing_date = date.today()
+    housing_history.save()
+    inmate_housing_location.save()
+     
     # Calculate age
     #if (inmate.age_at_booking = None):
     bday_parts = columns[2].text_content().strip().split('/')
@@ -109,9 +119,79 @@ def calculate_age(born,booking_date):
     else:
         return booking_date.year - born.year -1
 
+def process_housing_location(location_object):
+    """Receives a housing location from the HousingLocation table and parses it editing the different fields"""
+    location_segments = location_object.housing_location.replace("-"," ").split() # Creates a list with the housing location information 
+    try:
+        # If successful then the location starts with a integer, implies inmate is in a division
+        int(location_segments[0])
+    except (ValueError, IndexError):
+        # Location starts with a letter stuff here there for not in a division and no further parsing
+        if location_object.housing_location == "":
+            location_object.housing_location = "UNKNOWN"
+        return
 
+    location_start = location_segments[0]
+    location_segments_len = len(location_segments)
+    housing_location = location_object.housing_location
+    location_object.division = location_start
 
+    if location_segments_len == 1: # Executed only if the housing information is a single division number ex: '01-' 
+        return
 
+    for element in location_segments:
+        if element == "DR":
+            location_object.in_program = "Day Release"
+            location_object.in_jail = False
+        if element == "DRAW":
+            location_object.in_program == "Day Release, AWOL"
+            location_object.in_jail = False
 
-
+    if ((location_start == "02" or location_start == "08" or location_start == "09" or location_start == "11" or location_start == "14") or (location_start == "01" and "ABO" in housing_location)):
+        location_object.sub_division = location_segments[1]
+        location_object.sub_division_location = " ".join(location_segments[2:]).replace(" ","-")
+        return
+    if location_start == "03" and "AX" in housing_location:
+        location_object.sub_division = location_segments[2]
+        location_object.sub_division_location = " ".join(location_segments[3:]).replace(" ","-")
+        return
+    if location_start == "5" or location_start == "6" or location_start == "10":
+        location_object.sub_division = location_segments[2] + location_segments[1]
+        location_object.sub_division_location = " ".join(location_segments[3:]).replace(" ","-")
+        return
+    if location_start == "15":
+        if location_segments[1] == "EM":
+            location_object.in_program = "Electronic Monitoring"
+            location_object.in_jail = False
+        elif location_segments[1] == "EMAW":
+            location_object.in_program = "Electronic Monitoring, AWOL"
+            location_object.in_jail = False
+        elif location_segments[1] == "KK" or location_segments[1] == "LV" or location_segments[1] == "US":
+            location_object.in_program = "Other Countie"
+            location_object.in_jail = False
+        else:
+            location_object.sub_division = location_segments[1]
+        return
+    if location_start == "16":
+        location_object.division = location_start
+        return
+    if location_start == "17":
+        if location_segments[1] == "MOMS":
+            location_object.in_program = "MOMS Program"
+        elif location_segments[1] == "SFFP":
+            location_object.in_program = "Sherrif Female Furlough Program"
+            location_object.in_jail = False
+        elif location_segments[1] == "SFFPAW":
+            location_object.in_program = "Sherrif Female Furlough Program, AWOL"
+            location_object.in_jail = False
+        return
+    if location_start == "04":
+        if "M1" in housing_location:
+            location_object.in_program = "Protective Custody"
+        elif "N1" in housing_location:
+            location_object.in_program = "Segregation"
+    
+    location_object.sub_division = " ".join(location_segments[1:3]).replace(" ","")
+    location_object.sub_division_location = " ".join(location_segments[3:]).replace(" ","-")
+    return
 

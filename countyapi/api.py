@@ -2,7 +2,7 @@ import csv
 from django.http import HttpResponse
 from tastypie.resources import ModelResource, ALL
 from tastypie import fields
-from countyapi.models import CountyInmate, CourtLocation, CourtDate
+from countyapi.models import CountyInmate, CourtLocation, CourtDate, HousingLocation, HousingHistory
 from django.core.serializers import json
 from django.utils import simplejson
 from tastypie.serializers import Serializer
@@ -87,6 +87,7 @@ class CountyInmateResource(ModelResource):
             'charges': ALL,
             'charges_citation':ALL,
             'race':ALL,
+            'court_dates':ALL,
         }
 
     def dehydrate(self, bundle):
@@ -140,3 +141,16 @@ class CourtDateResource(ModelResource):
 
         return bundle
 
+class HousingLocationResource(ModelResource):
+    class Meta:
+        queryset = HousingLocation.objects.all()
+        allowed_methods = ['get']
+        include_resource_uri = False
+        serializer = JailSerializer()
+
+class HousingHistoryResource(ModelResource):
+    class Meta:
+        queryset = HousingHistory.objects.all()
+        allowed_methods = ['get']
+        include_resource_uri = False
+        serializer = JailSerializer()
