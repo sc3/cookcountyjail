@@ -7,6 +7,7 @@ from django.core.serializers import json
 from django.utils import simplejson
 from tastypie.serializers import Serializer
 
+
 class JailSerializer(Serializer):
     json_indent = 2
 
@@ -45,8 +46,14 @@ class JailSerializer(Serializer):
         return response
 
 
+class CachedModelResource(ModelResource):
+    def create_response(self, *args, **kwargs):
+        resp = super(CachedModelResource, self).create_response(*args, **kwargs)
+        resp['Cache-Control'] = "max-age=3600"
+        return resp
 
-class CourtLocationResource(ModelResource):
+
+class CourtLocationResource(CachedModelResource):
     class Meta:
         queryset = CourtLocation.objects.all()
         allowed_methods = ['get']
@@ -65,13 +72,14 @@ class CourtLocationResource(ModelResource):
                 bundle.data["court_dates"].append(resource.full_dehydrate(date_bundle).data)
         return bundle
 
-class CountyInmateResource(ModelResource):
+class CountyInmateResource(CachedModelResource):
     class Meta:
         queryset = CountyInmate.objects.all()
         allowed_methods = ['get']
         include_resource_uri = False
         limit = 100
         serializer = JailSerializer()
+
 
         # Exclude non-essential data. Reintroduce to API if needed.
         excludes = ['height', 'weight', 'last_seen_date', 'discharge_date_latest', 'url']
@@ -101,7 +109,7 @@ class CountyInmateResource(ModelResource):
         return bundle
 
 
-class CourtDateResource(ModelResource):
+class CourtDateResource(CachedModelResource):
     class Meta:
         queryset = CourtDate.objects.all()
         allowed_methods = ['get']
@@ -140,7 +148,7 @@ class CourtDateResource(ModelResource):
 
         return bundle
 
-class HousingLocationResource(ModelResource):
+class HousingLocationResource(CachedModelResource):
     class Meta:
         queryset = HousingLocation.objects.all()
         allowed_methods = ['get']
@@ -155,7 +163,7 @@ class HousingLocationResource(ModelResource):
             'in_program': ALL
         }
  
-class HousingHistoryResource(ModelResource):
+class HousingHistoryResource(CachedModelResource):
     class Meta:
         queryset = HousingHistory.objects.all()
         allowed_methods = ['get']
