@@ -107,7 +107,15 @@ class CourtDateResource(ModelResource):
         allowed_methods = ['get']
         include_resource_uri = False
         serializer = JailSerializer()
-
+        
+        
+        filtering = {
+            'date': ALL,
+            'location': ALL,
+            'inmate': ALL,
+        }
+        
+        
     def dehydrate(self, bundle):
         # Include inmate ID when called from location
         if bundle.request.path.startswith("/api/1.0/courtlocation/"):
