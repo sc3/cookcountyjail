@@ -1,6 +1,7 @@
 from django.db import models
 
 class CountyInmate(models.Model):
+    """Model that represents a Cook County Jail inmate."""
     jail_id=models.CharField(max_length=15, primary_key=True)
     url=models.CharField(max_length=255)
     race=models.CharField(max_length=4,null=True, blank=True)
@@ -20,12 +21,13 @@ class CountyInmate(models.Model):
 
     def __unicode__(self):
         return self.jail_id
-    
+
     class Meta:
         ordering = ['-jail_id']
 
 
 class CourtDate(models.Model):
+    """Model that represents an inmate's next court date."""
     inmate=models.ForeignKey('CountyInmate', related_name="court_dates")
     location=models.ForeignKey('CourtLocation', related_name="court_dates")
     date=models.DateField()
@@ -35,20 +37,19 @@ class CourtDate(models.Model):
 
 
 class CourtLocation(models.Model):
+    """Model that represents a unique court location (court house and room)."""
     location=models.TextField()
 
 
-class InmateRecordCount(models.Model):
-    """ This is a silly example. @TODO Create real summaries. """
-    date=models.DateTimeField(auto_now_add=True)
-    record_count=models.IntegerField()
-
 class HousingHistory(models.Model):
+    """Model that represents an inmate's housing location on a given date."""
     inmate=models.ForeignKey('CountyInmate',related_name="housing_history")
     housing_location=models.ForeignKey('HousingLocation', related_name="housing_history")
     housing_date=models.DateField(null=True)
-    
+
+
 class HousingLocation(models.Model):
+    """Model that represents a housing unit in the jail."""
     housing_location=models.CharField(max_length=40,primary_key=True)
     division=models.CharField(max_length=4)
     sub_division=models.CharField(max_length=20)
