@@ -1,14 +1,13 @@
 import django
 import os
 import sys
-import dj_database_url
 
 SITE_STATIC_ROOT = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'static')
 SITE_DIR = os.path.dirname(os.path.dirname(__file__))
 
-if 'CCJ_HEROKU' not in os.environ:
-    DEBUG = True
-    TEMPLATE_DEBUG = DEBUG
+#if 'CCJ_PRODUCTION' not in os.environ:
+DEBUG = True
+TEMPLATE_DEBUG = DEBUG
 
 ADMINS = (
     # ('Your Name', 'your_email@example.com'),
@@ -16,8 +15,16 @@ ADMINS = (
 
 MANAGERS = ADMINS
 
-if 'CCJ_HEROKU' in os.environ:
-    DATABASES = { 'default': dj_database_url.config() }
+if 'CCJ_PRODUCTION' in os.environ:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql_psycopg2',
+            'NAME': 'cookcountyjail',
+            'USER': 'cookcountyjail',
+            'PASSWORD': 'walblgadb;lgall',
+            'HOST': '127.0.0.1',
+        }
+    }
 else:
     DATABASES = {
         'default': {
@@ -25,7 +32,6 @@ else:
             'NAME': os.path.join(SITE_DIR,'ccj'),
         }
     }
-
 
 # Time zone
 TIME_ZONE = 'America/Chicago'
