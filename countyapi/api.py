@@ -61,25 +61,71 @@ class CourtLocationResource(CachedModelResource):
         limit = 2500
         serializer = JailSerializer()
 
-    def dehydrate(self, bundle):
-        # Show court dates in location lists and detail views
-        if bundle.request.path.startswith('/api/1.0/courtlocation/') and (bundle.request.path != '/api/1.0/courtlocation/' or bundle.request.REQUEST.get('related')):
-            dates = bundle.obj.court_dates.all()
-            resource = CourtDateResource()
-            bundle.data['court_dates'] = []
-            for court_date in dates:
-                date_bundle = resource.build_bundle(obj=court_date, request=bundle.request)
-                bundle.data["court_dates"].append(resource.full_dehydrate(date_bundle).data)
-        return bundle
+
+class CourtDateResource(CachedModelResource):
+    class Meta:
+        queryset = CourtDate.objects.all()
+        allowed_methods = ['get']
+        include_resource_uri = False
+        serializer = JailSerializer()
+
+        filtering = {
+            'date': ALL,
+            'location': ALL,
+            'inmate': ALL,
+        }
+        ordering = filtering.keys()
+
+
+class HousingLocationResource(CachedModelResource):
+    class Meta:
+        queryset = HousingLocation.objects.all()
+        allowed_methods = ['get']
+        include_resource_uri = False
+        serializer = JailSerializer()
+        filtering = {
+            'housing_location': ALL,
+            'division': ALL,
+            'sub_division': ALL,
+            'sub_division_location': ALL,
+            'in_jail': ALL,
+            'in_program': ALL
+        }
+        ordering = filtering.keys()
+ 
+class HousingHistoryResource(CachedModelResource):
+    class Meta:
+        queryset = HousingHistory.objects.all()
+        allowed_methods = ['get']
+        include_resource_uri = False
+        serializer = JailSerializer()
+        filtering = {
+            'inmate': ALL,
+            'housing_date': ALL, 
+            'housing_location': ALL
+        }
+        ordering = filtering.keys()
+
 
 class CountyInmateResource(CachedModelResource):
+    housing_history = fields.ToManyField(HousingHistoryResource, "housing_history", null=True, full=True)
+    court_dates = fields.ToManyField(CourtDateResource, "court_dates", null=True, full=True)
+
+    def alter_list_data_to_serialize(self, request, data):
+        if request.GET.get('format') == 'csv' or not request.GET.get('related', False):
+            for row in data['objects']:
+                row.data['housing_history_count'] = len(row.data['housing_history'])
+                del row.data['housing_history']
+                row.data['court_date_count'] = len(row.data['court_dates'])
+                del row.data['court_dates']
+        return data
+
     class Meta:
         queryset = CountyInmate.objects.all()
         allowed_methods = ['get']
         include_resource_uri = False
         limit = 100
         serializer = JailSerializer()
-
 
         # Exclude non-essential data. Reintroduce to API if needed.
         excludes = ['height', 'weight', 'last_seen_date', 'discharge_date_latest', 'url']
@@ -96,89 +142,4 @@ class CountyInmateResource(CachedModelResource):
             'charges_citation':ALL,
             'race':ALL,
         }
-
-    def dehydrate(self, bundle):
-        # Show court dates in inmate lists and detail views
-        if bundle.request.path.startswith('/api/1.0/countyinmate/') and (bundle.request.path != '/api/1.0/countyinmate/' or bundle.request.REQUEST.get('related')):
-            dates = bundle.obj.court_dates.all()
-            resource = CourtDateResource()
-            bundle.data['court_dates'] = []
-            for court_date in dates:
-                date_bundle = resource.build_bundle(obj=court_date, request=bundle.request)
-                bundle.data["court_dates"].append(resource.full_dehydrate(date_bundle).data)
-        return bundle
-
-
-class CourtDateResource(CachedModelResource):
-    class Meta:
-        queryset = CourtDate.objects.all()
-        allowed_methods = ['get']
-        include_resource_uri = False
-        serializer = JailSerializer()
-        
-        
-        filtering = {
-            'date': ALL,
-            'location': ALL,
-            'inmate': ALL,
-        }
-        
-        
-    def dehydrate(self, bundle):
-        # Include inmate ID when called from location
-        if bundle.request.path.startswith("/api/1.0/courtlocation/"):
-            bundle.data["inmate"] = bundle.obj.inmate.pk
-
-        # Include location when called from inmate
-        if bundle.request.path.startswith("/api/1.0/countyinmate/"):
-            location = bundle.obj.location
-            resource = CourtLocationResource()
-            location_bundle = resource.build_bundle(obj=location, request=bundle.request)
-            bundle.data["location"] = resource.full_dehydrate(location_bundle).data
-
-        # Include primary keys on court dates
-        if bundle.request.path.startswith("/api/1.0/courtdate/") and not bundle.request.REQUEST.get('related'):
-            bundle.data["location_id"] = bundle.obj.location.pk
-            bundle.data["location"] = bundle.obj.location.location
-            bundle.data["inmate_jail_id"] = bundle.obj.inmate.pk
-
-        # Include full inmate in related query
-        if bundle.request.path.startswith("/api/1.0/courtdate/") and bundle.request.REQUEST.get('related'):
-            inmate = bundle.obj.inmate
-            resource = CountyInmateResource()
-            inmate_bundle = resource.build_bundle(obj=inmate, request=bundle.request)
-            bundle.data["inmate"] = resource.full_dehydrate(inmate_bundle).data
-            
-            location = bundle.obj.location
-            resource = CourtLocationResource()
-            location_bundle = resource.build_bundle(obj=location, request=bundle.request)
-            bundle.data["location"] = resource.full_dehydrate(location_bundle).data
-
-        return bundle
-
-class HousingLocationResource(CachedModelResource):
-    class Meta:
-        queryset = HousingLocation.objects.all()
-        allowed_methods = ['get']
-        include_resource_uri = False
-        serializer = JailSerializer()
-        filtering = {
-            'housing_location': ALL,
-            'division': ALL,
-            'sub_division': ALL,
-            'sub_division_location': ALL,
-            'in_jail': ALL,
-            'in_program': ALL
-        }
- 
-class HousingHistoryResource(CachedModelResource):
-    class Meta:
-        queryset = HousingHistory.objects.all()
-        allowed_methods = ['get']
-        include_resource_uri = False
-        serializer = JailSerializer()
-        filtering = {
-            'inmate': ALL,
-            'housing_date': ALL, 
-            'housing_location': ALL
-        }
+        ordering = filtering.keys()
