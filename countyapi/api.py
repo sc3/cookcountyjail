@@ -6,7 +6,7 @@ from countyapi.models import CountyInmate, CourtLocation, CourtDate, HousingLoca
 from django.core.serializers import json
 from django.utils import simplejson
 from tastypie.serializers import Serializer
-
+from copy import copy
 
 class JailSerializer(Serializer):
     json_indent = 2
@@ -21,13 +21,6 @@ class JailSerializer(Serializer):
         'plist': 'application/x-plist',
         'csv': 'text/csv',
     }
-
-    def to_json(self, data, options=None):
-        options = options or {}
-        data = self.to_simple(data, options)
-        return simplejson.dumps(data, cls=json.DjangoJSONEncoder,
-                sort_keys=True, ensure_ascii=False, indent=self.json_indent)
-
 
     def to_csv(self, data, options=None):
         options = options or {}
@@ -47,6 +40,12 @@ class JailSerializer(Serializer):
 
 
 class CachedModelResource(ModelResource):
+    def __init__(self, api_name=None):
+        self.fields = {k: copy(v) for k, v in self.base_fields.iteritems()}
+
+        if not api_name is None:
+            self._meta.api_name = api_name
+
     def create_response(self, *args, **kwargs):
         resp = super(CachedModelResource, self).create_response(*args, **kwargs)
         resp['Cache-Control'] = "max-age=3600"
@@ -117,11 +116,11 @@ class CountyInmateResource(CachedModelResource):
                 row.data['housing_history_count'] = len(row.data['housing_history'])
                 del row.data['housing_history']
                 row.data['court_date_count'] = len(row.data['court_dates'])
-                del row.data['court_dates']
+                del row.data['court_dates'] 
         return data
 
     class Meta:
-        queryset = CountyInmate.objects.all()
+        queryset = CountyInmate.objects.all().prefetch_related('housing_history').prefetch_related('court_dates')
         allowed_methods = ['get']
         include_resource_uri = False
         limit = 100
