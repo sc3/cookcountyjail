@@ -3,14 +3,10 @@ from django.http import HttpResponse
 from tastypie.resources import ModelResource, ALL
 from tastypie import fields
 from countyapi.models import CountyInmate, CourtLocation, CourtDate, HousingLocation, HousingHistory
-from django.core.serializers import json
-from django.utils import simplejson
 from tastypie.serializers import Serializer
 
 
 class JailSerializer(Serializer):
-    json_indent = 2
-
     formats = ['json', 'jsonp', 'xml', 'yaml', 'html', 'plist', 'csv']
     content_types = {
         'json': 'application/json',
@@ -22,13 +18,6 @@ class JailSerializer(Serializer):
         'csv': 'text/csv',
     }
 
-    def to_json(self, data, options=None):
-        options = options or {}
-        data = self.to_simple(data, options)
-        return simplejson.dumps(data, cls=json.DjangoJSONEncoder,
-                sort_keys=True, ensure_ascii=False, indent=self.json_indent)
-
-
     def to_csv(self, data, options=None):
         options = options or {}
         data = self.to_simple(data, options)
@@ -36,12 +25,10 @@ class JailSerializer(Serializer):
         response['Content-Disposition'] = 'attachment; filename=cookcountyjail.csv'
 
         writer = csv.writer(response)
-        writer.writerow([unicode(key).encode(
-                "utf-8", "replace") for key in data['objects'][0].keys()])
+        writer.writerow(data['objects'][0].keys())
 
         for item in data['objects']:
-            writer.writerow([unicode(item[key]).encode(
-                "utf-8", "replace") for key in item.keys()])
+            writer.writerow(item.values())
 
         return response
 
