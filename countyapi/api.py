@@ -19,10 +19,11 @@ class JailSerializer(Serializer):
     }
 
     def to_csv(self, data, options=None):
+        """Write to a simple CSV format."""
         options = options or {}
         data = self.to_simple(data, options)
         response = HttpResponse(mimetype='text/csv')
-        response['Content-Disposition'] = 'attachment; filename=cookcountyjail.csv'
+        response['Content-Disposition'] = 'attachment; filename="cookcountyjail.csv"'
 
         writer = csv.writer(response)
         writer.writerow(data['objects'][0].keys())
