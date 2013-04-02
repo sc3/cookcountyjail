@@ -43,9 +43,8 @@ class CachedModelResource(ModelResource):
 class CourtLocationResource(CachedModelResource):
     class Meta:
         queryset = CourtLocation.objects.all()
-        allowed_methods = ['get']
-        include_resource_uri = False
-        limit = 2500
+        limit = 100
+        max_limit = 0
         serializer = JailSerializer()
 
     def dehydrate(self, bundle):
@@ -63,14 +62,10 @@ class CountyInmateResource(CachedModelResource):
     class Meta:
         queryset = CountyInmate.objects.all()
         allowed_methods = ['get']
-        include_resource_uri = False
         limit = 100
+        max_limit = 0
         serializer = JailSerializer()
-
-
-        # Exclude non-essential data. Reintroduce to API if needed.
         excludes = ['height', 'weight', 'last_seen_date', 'discharge_date_latest', 'url']
-
         filtering = {
             'jail_id': ALL,
             'booking_date': ALL,
@@ -83,6 +78,7 @@ class CountyInmateResource(CachedModelResource):
             'charges_citation':ALL,
             'race':ALL,
         }
+        ordering = filtering.keys()
 
     def dehydrate(self, bundle):
         # Show court dates in inmate lists and detail views
@@ -100,17 +96,17 @@ class CourtDateResource(CachedModelResource):
     class Meta:
         queryset = CourtDate.objects.all()
         allowed_methods = ['get']
-        include_resource_uri = False
+        limit = 100
+        max_limit = 0
         serializer = JailSerializer()
-        
-        
         filtering = {
             'date': ALL,
             'location': ALL,
             'inmate': ALL,
         }
-        
-        
+        ordering = filtering.keys()
+
+
     def dehydrate(self, bundle):
         # Include inmate ID when called from location
         if bundle.request.path.startswith("/api/1.0/courtlocation/"):
@@ -135,7 +131,7 @@ class CourtDateResource(CachedModelResource):
             resource = CountyInmateResource()
             inmate_bundle = resource.build_bundle(obj=inmate, request=bundle.request)
             bundle.data["inmate"] = resource.full_dehydrate(inmate_bundle).data
-            
+
             location = bundle.obj.location
             resource = CourtLocationResource()
             location_bundle = resource.build_bundle(obj=location, request=bundle.request)
@@ -147,7 +143,8 @@ class HousingLocationResource(CachedModelResource):
     class Meta:
         queryset = HousingLocation.objects.all()
         allowed_methods = ['get']
-        include_resource_uri = False
+        limit = 100
+        max_limit = 0
         serializer = JailSerializer()
         filtering = {
             'housing_location': ALL,
@@ -157,15 +154,18 @@ class HousingLocationResource(CachedModelResource):
             'in_jail': ALL,
             'in_program': ALL
         }
+        ordering = filtering.keys()
  
 class HousingHistoryResource(CachedModelResource):
     class Meta:
         queryset = HousingHistory.objects.all()
         allowed_methods = ['get']
-        include_resource_uri = False
         serializer = JailSerializer()
+        limit = 100
+        max_limit = 0
         filtering = {
             'inmate': ALL,
             'housing_date': ALL, 
             'housing_location': ALL
         }
+        ordering = filtering.keys()
