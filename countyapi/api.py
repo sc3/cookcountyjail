@@ -1,6 +1,6 @@
 import csv
 from django.http import HttpResponse
-from tastypie.resources import ModelResource, ALL
+from tastypie.resources import ModelResource, ALL, ALL_WITH_RELATIONS
 from tastypie import fields
 from tastypie.serializers import Serializer
 from tastypie.cache import SimpleCache
@@ -78,6 +78,9 @@ class CourtLocationResource(JailResource):
         max_limit = 0
         cache = SimpleCache(timeout=720)
         serializer = JailSerializer()
+        filtering = {
+            'location': ALL,
+        }
 
     def dehydrate(self, bundle):
         """Show court dates in location lists and detail views."""
@@ -90,57 +93,14 @@ class CourtLocationResource(JailResource):
                 bundle.data["court_dates"].append(resource.full_dehydrate(date_bundle).data)
         return bundle
 
-class CountyInmateResource(JailResource):
-    """
-    API endpoint for CountyInmate model, which represents a person in jail.
-    """
-
-    class Meta:
-        queryset = CountyInmate.objects.all()
-        allowed_methods = ['get']
-        limit = 100
-        max_limit = 0
-        cache = SimpleCache(timeout=720)
-        serializer = JailSerializer()
-        excludes = ['height', 'weight', 'last_seen_date', 'discharge_date_latest', 'url']
-        filtering = {
-            'jail_id': ALL,
-            'booking_date': ALL,
-            'discharge_date_earliest': ALL,
-            'gender': ALL,
-            'age_at_booking': ALL,
-            'bail_amount': ALL,
-            'housing_location': ALL,
-            'charges': ALL,
-            'charges_citation':ALL,
-            'race':ALL,
-        }
-        ordering = filtering.keys()
-
-    def dehydrate(self, bundle):
-        """Show court dates and housing history in inmate lists and detail views."""
-        if bundle.request.path.startswith('/api/1.0/countyinmate/') and (bundle.request.path != '/api/1.0/countyinmate/' or bundle.request.REQUEST.get('related') == '1'):
-            dates = bundle.obj.court_dates.all()
-            resource = CourtDateResource()
-            bundle.data['court_dates'] = []
-            for court_date in dates:
-                date_bundle = resource.build_bundle(obj=court_date, request=bundle.request)
-                bundle.data["court_dates"].append(resource.full_dehydrate(date_bundle).data)
-
-            dates = bundle.obj.housing_history.all()
-            resource = HousingHistoryResource()
-            bundle.data['housing_history'] = []
-            for court_date in dates:
-                date_bundle = resource.build_bundle(obj=court_date, request=bundle.request)
-                bundle.data["housing_history"].append(resource.full_dehydrate(date_bundle).data)
-        return bundle
-
 
 class CourtDateResource(JailResource):
     """
     API endpoint for CourtDate model, the unique combination of courtroom,
     inmate, and date used to represent the court history.
     """
+    location = fields.ToOneField(CourtLocationResource, "location", null=True, full=False)
+    inmate = fields.ToOneField('countyapi.api.CountyInmateResource', "inmate", null=True, full=False)
 
     class Meta:
         queryset = CourtDate.objects.all()
@@ -151,8 +111,8 @@ class CourtDateResource(JailResource):
         serializer = JailSerializer()
         filtering = {
             'date': ALL,
-            'location': ALL,
-            'inmate': ALL,
+            'location': ALL_WITH_RELATIONS,
+            'inmate': ALL_WITH_RELATIONS,
         }
         ordering = filtering.keys()
 
@@ -218,6 +178,8 @@ class HousingHistoryResource(JailResource):
     API endpoint for HousingHistory model, the unique combination of housing
     location, inmate, and date used to represent the housing history.
     """
+    housing_location = fields.ToOneField(HousingLocationResource, "housing_location", null=True, full=False)
+    inmate = fields.ToOneField('countyapi.api.CountyInmateResource', "inmate", null=True, full=False)
     class Meta:
         queryset = HousingHistory.objects.all()
         allowed_methods = ['get']
@@ -226,9 +188,9 @@ class HousingHistoryResource(JailResource):
         max_limit = 0
         cache = SimpleCache(timeout=720)
         filtering = {
-            'inmate': ALL,
+            'inmate': ALL_WITH_RELATIONS,
             'housing_date': ALL, 
-            'housing_location': ALL
+            'housing_location': ALL_WITH_RELATIONS,
         }
         ordering = filtering.keys()
 
@@ -265,3 +227,53 @@ class HousingHistoryResource(JailResource):
             bundle.data["housing_location"] = resource.full_dehydrate(location_bundle).data
 
         return bundle
+
+class CountyInmateResource(JailResource):
+    """
+    API endpoint for CountyInmate model, which represents a person in jail.
+    """
+    court_dates = fields.ToManyField(CourtDateResource, "court_dates")
+    housing_history = fields.ToManyField(HousingHistoryResource, "housing_history")
+
+    class Meta:
+        queryset = CountyInmate.objects.all()
+        allowed_methods = ['get']
+        limit = 100
+        max_limit = 0
+        cache = SimpleCache(timeout=720)
+        serializer = JailSerializer()
+        excludes = ['height', 'weight', 'last_seen_date', 'discharge_date_latest', 'url']
+        filtering = {
+            'jail_id': ALL,
+            'booking_date': ALL,
+            'discharge_date_earliest': ALL,
+            'gender': ALL,
+            'age_at_booking': ALL,
+            'bail_amount': ALL,
+            'housing_location': ALL,
+            'charges': ALL,
+            'charges_citation':ALL,
+            'race':ALL,
+            'court_dates': ALL_WITH_RELATIONS,
+            'housing_history': ALL_WITH_RELATIONS,
+        }
+        ordering = filtering.keys()
+
+    def dehydrate(self, bundle):
+        """Show court dates and housing history in inmate lists and detail views."""
+        if bundle.request.path.startswith('/api/1.0/countyinmate/') and (bundle.request.path != '/api/1.0/countyinmate/' or bundle.request.REQUEST.get('related') == '1'):
+            dates = bundle.obj.court_dates.all()
+            resource = CourtDateResource()
+            bundle.data['court_dates'] = []
+            for court_date in dates:
+                date_bundle = resource.build_bundle(obj=court_date, request=bundle.request)
+                bundle.data["court_dates"].append(resource.full_dehydrate(date_bundle).data)
+
+            dates = bundle.obj.housing_history.all()
+            resource = HousingHistoryResource()
+            bundle.data['housing_history'] = []
+            for court_date in dates:
+                date_bundle = resource.build_bundle(obj=court_date, request=bundle.request)
+                bundle.data["housing_history"].append(resource.full_dehydrate(date_bundle).data)
+        return bundle
+
