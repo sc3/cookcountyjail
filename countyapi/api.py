@@ -2,8 +2,9 @@ import csv
 from django.http import HttpResponse
 from tastypie.resources import ModelResource, ALL
 from tastypie import fields
-from countyapi.models import CountyInmate, CourtLocation, CourtDate, HousingLocation, HousingHistory
 from tastypie.serializers import Serializer
+from tastypie.cache import SimpleCache
+from countyapi.models import CountyInmate, CourtLocation, CourtDate, HousingLocation, HousingHistory
 
 DISCLAIMER = """Cook County Jail Inmate data, scraped from
 http://www2.cookcountysheriff.org/search2/ nightly.
@@ -65,12 +66,6 @@ class JailResource(ModelResource):
         data['meta']['about_this_data'] = DISCLAIMER
         return data
 
-    def create_response(self, *args, **kwargs):
-        """Add caching to response."""
-        resp = super(JailResource, self).create_response(*args, **kwargs)
-        resp['Cache-Control'] = "max-age=43200"
-        return resp
-
 
 class CourtLocationResource(JailResource):
     """
@@ -81,6 +76,7 @@ class CourtLocationResource(JailResource):
         queryset = CourtLocation.objects.all()
         limit = 100
         max_limit = 0
+        cache = SimpleCache(timeout=720)
         serializer = JailSerializer()
 
     def dehydrate(self, bundle):
@@ -104,6 +100,7 @@ class CountyInmateResource(JailResource):
         allowed_methods = ['get']
         limit = 100
         max_limit = 0
+        cache = SimpleCache(timeout=720)
         serializer = JailSerializer()
         excludes = ['height', 'weight', 'last_seen_date', 'discharge_date_latest', 'url']
         filtering = {
@@ -150,6 +147,7 @@ class CourtDateResource(JailResource):
         allowed_methods = ['get']
         limit = 100
         max_limit = 0
+        cache = SimpleCache(timeout=720)
         serializer = JailSerializer()
         filtering = {
             'date': ALL,
@@ -203,6 +201,7 @@ class HousingLocationResource(JailResource):
         allowed_methods = ['get']
         limit = 100
         max_limit = 0
+        cache = SimpleCache(timeout=720)
         serializer = JailSerializer()
         filtering = {
             'housing_location': ALL,
@@ -225,6 +224,7 @@ class HousingHistoryResource(JailResource):
         serializer = JailSerializer()
         limit = 100
         max_limit = 0
+        cache = SimpleCache(timeout=720)
         filtering = {
             'inmate': ALL,
             'housing_date': ALL, 
