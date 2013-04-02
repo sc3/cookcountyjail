@@ -129,6 +129,13 @@ class CountyInmateResource(JailResource):
             for court_date in dates:
                 date_bundle = resource.build_bundle(obj=court_date, request=bundle.request)
                 bundle.data["court_dates"].append(resource.full_dehydrate(date_bundle).data)
+
+            dates = bundle.obj.housing_history.all()
+            resource = HousingHistoryResource()
+            bundle.data['housing_history'] = []
+            for court_date in dates:
+                date_bundle = resource.build_bundle(obj=court_date, request=bundle.request)
+                bundle.data["housing_history"].append(resource.full_dehydrate(date_bundle).data)
         return bundle
 
 
@@ -167,13 +174,13 @@ class CourtDateResource(JailResource):
             bundle.data["location"] = resource.full_dehydrate(location_bundle).data
 
         # Include primary keys on court dates
-        if bundle.request.path.startswith("/api/1.0/courtdate/") and not bundle.request.REQUEST.get('related'):
+        if bundle.request.path.startswith("/api/1.0/courtdate/") and not bundle.request.REQUEST.get('related') == '1':
             bundle.data["location_id"] = bundle.obj.location.pk
             bundle.data["location"] = bundle.obj.location.location
             bundle.data["inmate_jail_id"] = bundle.obj.inmate.pk
 
         # Include full inmate in related query
-        if bundle.request.path.startswith("/api/1.0/courtdate/") and bundle.request.REQUEST.get('related'):
+        if bundle.request.path.startswith("/api/1.0/courtdate/") and bundle.request.REQUEST.get('related') == '1':
             inmate = bundle.obj.inmate
             resource = CountyInmateResource()
             inmate_bundle = resource.build_bundle(obj=inmate, request=bundle.request)
@@ -224,3 +231,37 @@ class HousingHistoryResource(JailResource):
             'housing_location': ALL
         }
         ordering = filtering.keys()
+
+    def dehydrate(self, bundle):
+        """Set up bidirectional relationships based on request."""
+        #import ipdb; ipdb.set_trace();
+
+        # Include inmate ID when called from location
+        if bundle.request.path.startswith("/api/1.0/historylocation/"):
+            bundle.data["inmate"] = bundle.obj.inmate.pk
+
+        # Include location when called from inmate
+        if bundle.request.path.startswith("/api/1.0/countyinmate/"):
+            location = bundle.obj.housing_location
+            resource = HousingLocationResource()
+            location_bundle = resource.build_bundle(obj=location, request=bundle.request)
+            bundle.data["housing_location"] = resource.full_dehydrate(location_bundle).data
+
+        # Include primary keys on court dates
+        if bundle.request.path.startswith("/api/1.0/housinghistory/") and not bundle.request.REQUEST.get('related') == '1':
+            bundle.data["location_id"] = bundle.obj.housing_location.pk
+            bundle.data["inmate_jail_id"] = bundle.obj.inmate.pk
+
+        # Include full inmate in related query
+        if bundle.request.path.startswith("/api/1.0/housinghistory/") and bundle.request.REQUEST.get('related') == '1':
+            inmate = bundle.obj.inmate
+            resource = CountyInmateResource()
+            inmate_bundle = resource.build_bundle(obj=inmate, request=bundle.request)
+            bundle.data["inmate"] = resource.full_dehydrate(inmate_bundle).data
+
+            location = bundle.obj.housing_location
+            resource = HousingLocationResource()
+            location_bundle = resource.build_bundle(obj=location, request=bundle.request)
+            bundle.data["housing_location"] = resource.full_dehydrate(location_bundle).data
+
+        return bundle
