@@ -5,9 +5,27 @@ from tastypie import fields
 from countyapi.models import CountyInmate, CourtLocation, CourtDate, HousingLocation, HousingHistory
 from tastypie.serializers import Serializer
 
+DISCLAIMER = """Cook County Jail Inmate data, scraped from
+http://www2.cookcountysheriff.org/search2/ nightly.
+
+Learn more about this API at
+https://github.com/sc3/cookcountyjail/wiki/API-guide
+
+Learn more about this project at
+https://github.com/sc3/cookcountyjail/
+
+The data on jail inmates is not verified. Do not take the data as
+definitive, but rather as suggestive. This data can be used to develop
+interesting questions, but it cannot be cited as factual.
+
+Developed by the Supreme Chi-Town Coding Crew
+(https://github.com/sc3/sc3)"""
+
 
 class JailSerializer(Serializer):
-    formats = ['json', 'jsonp', 'xml', 'yaml', 'html', 'plist', 'csv']
+    """Serialize to json, jsonp, xml, and csv."""
+
+    formats = ['json', 'jsonp', 'xml', 'csv']
     content_types = {
         'json': 'application/json',
         'jsonp': 'text/javascript',
@@ -34,14 +52,31 @@ class JailSerializer(Serializer):
         return response
 
 
-class CachedModelResource(ModelResource):
+class JailResource(ModelResource):
+    """ModelResource overrides for our project. Add caching and disclaimer."""
+
+    def alter_detail_data_to_serialize(self, request, data):
+        """Add message to data."""
+        data.data['about_this_data'] = DISCLAIMER
+        return data
+
+    def alter_list_data_to_serialize(self, request, data):
+        """Add message to meta."""
+        data['meta']['about_this_data'] = DISCLAIMER
+        return data
+
     def create_response(self, *args, **kwargs):
-        resp = super(CachedModelResource, self).create_response(*args, **kwargs)
-        resp['Cache-Control'] = "max-age=3600"
+        """Add caching to response."""
+        resp = super(JailResource, self).create_response(*args, **kwargs)
+        resp['Cache-Control'] = "max-age=43200"
         return resp
 
 
-class CourtLocationResource(CachedModelResource):
+class CourtLocationResource(JailResource):
+    """
+    API endpoint for CourtLocation model, which represents court room.
+    """
+
     class Meta:
         queryset = CourtLocation.objects.all()
         limit = 100
@@ -49,8 +84,8 @@ class CourtLocationResource(CachedModelResource):
         serializer = JailSerializer()
 
     def dehydrate(self, bundle):
-        # Show court dates in location lists and detail views
-        if bundle.request.path.startswith('/api/1.0/courtlocation/') and (bundle.request.path != '/api/1.0/courtlocation/' or bundle.request.REQUEST.get('related')):
+        """Show court dates in location lists and detail views."""
+        if bundle.request.path.startswith('/api/1.0/courtlocation/') and (bundle.request.path != '/api/1.0/courtlocation/' or bundle.request.REQUEST.get('related') == '1'):
             dates = bundle.obj.court_dates.all()
             resource = CourtDateResource()
             bundle.data['court_dates'] = []
@@ -59,7 +94,11 @@ class CourtLocationResource(CachedModelResource):
                 bundle.data["court_dates"].append(resource.full_dehydrate(date_bundle).data)
         return bundle
 
-class CountyInmateResource(CachedModelResource):
+class CountyInmateResource(JailResource):
+    """
+    API endpoint for CountyInmate model, which represents a person in jail.
+    """
+
     class Meta:
         queryset = CountyInmate.objects.all()
         allowed_methods = ['get']
@@ -82,8 +121,8 @@ class CountyInmateResource(CachedModelResource):
         ordering = filtering.keys()
 
     def dehydrate(self, bundle):
-        # Show court dates in inmate lists and detail views
-        if bundle.request.path.startswith('/api/1.0/countyinmate/') and (bundle.request.path != '/api/1.0/countyinmate/' or bundle.request.REQUEST.get('related')):
+        """Show court dates and housing history in inmate lists and detail views."""
+        if bundle.request.path.startswith('/api/1.0/countyinmate/') and (bundle.request.path != '/api/1.0/countyinmate/' or bundle.request.REQUEST.get('related') == '1'):
             dates = bundle.obj.court_dates.all()
             resource = CourtDateResource()
             bundle.data['court_dates'] = []
@@ -93,7 +132,12 @@ class CountyInmateResource(CachedModelResource):
         return bundle
 
 
-class CourtDateResource(CachedModelResource):
+class CourtDateResource(JailResource):
+    """
+    API endpoint for CourtDate model, the unique combination of courtroom,
+    inmate, and date used to represent the court history.
+    """
+
     class Meta:
         queryset = CourtDate.objects.all()
         allowed_methods = ['get']
@@ -109,6 +153,8 @@ class CourtDateResource(CachedModelResource):
 
 
     def dehydrate(self, bundle):
+        """Set up bidirectional relationships based on request."""
+
         # Include inmate ID when called from location
         if bundle.request.path.startswith("/api/1.0/courtlocation/"):
             bundle.data["inmate"] = bundle.obj.inmate.pk
@@ -140,7 +186,11 @@ class CourtDateResource(CachedModelResource):
 
         return bundle
 
-class HousingLocationResource(CachedModelResource):
+class HousingLocationResource(JailResource):
+    """
+    API endpoint for HousingLocation model, a place or status in the jail.
+    """
+
     class Meta:
         queryset = HousingLocation.objects.all()
         allowed_methods = ['get']
@@ -157,7 +207,11 @@ class HousingLocationResource(CachedModelResource):
         }
         ordering = filtering.keys()
  
-class HousingHistoryResource(CachedModelResource):
+class HousingHistoryResource(JailResource):
+    """
+    API endpoint for HousingHistory model, the unique combination of housing
+    location, inmate, and date used to represent the housing history.
+    """
     class Meta:
         queryset = HousingHistory.objects.all()
         allowed_methods = ['get']
