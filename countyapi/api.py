@@ -243,7 +243,7 @@ class CountyInmateResource(JailResource):
     housing_history = fields.ToManyField(HousingHistoryResource, "housing_history")
 
     class Meta:
-        queryset = CountyInmate.objects.all()
+        queryset = CountyInmate.objects.prefetch_related('housing_history').prefetch_related('court_dates').all()
         allowed_methods = ['get']
         limit = 100
         max_limit = 0
