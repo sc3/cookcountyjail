@@ -5,6 +5,7 @@ from tastypie import fields
 from tastypie.serializers import Serializer
 from tastypie.cache import SimpleCache
 from countyapi.models import CountyInmate, CourtLocation, CourtDate, HousingLocation, HousingHistory
+from copy import copy
 
 DISCLAIMER = """Cook County Jail Inmate data, scraped from
 http://www2.cookcountysheriff.org/search2/ nightly.
@@ -55,6 +56,12 @@ class JailSerializer(Serializer):
 
 class JailResource(ModelResource):
     """ModelResource overrides for our project. Add caching and disclaimer."""
+    def __init__(self, api_name=None):
+        """Patched init that doesn't use deepcopy, see https://github.com/toastdriven/django-tastypie/issues/720"""
+        self.fields = {k: copy(v) for k, v in self.base_fields.iteritems()}
+
+        if not api_name is None:
+            self._meta.api_name = api_name
 
     def alter_detail_data_to_serialize(self, request, data):
         """Add message to data."""
