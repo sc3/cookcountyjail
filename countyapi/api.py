@@ -329,7 +329,7 @@ class CountyInmateResource(JailResource):
         max_limit = 0
         cache = SimpleCache(timeout=720)
         serializer = JailSerializer()
-        excludes = ['last_seen_date',]
+        excludes = ['last_seen_date', 'url',]
         filtering = {
             'jail_id': ALL,
             'booking_date': ALL,
