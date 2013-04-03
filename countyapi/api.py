@@ -5,6 +5,8 @@ from tastypie import fields
 from tastypie.serializers import Serializer
 from tastypie.cache import SimpleCache
 from countyapi.models import CountyInmate, CourtLocation, CourtDate, HousingLocation, HousingHistory
+from tastypie.bundle import Bundle
+from tastypie.fields import ToManyField, ToOneField
 from copy import copy
 
 DISCLAIMER = """Cook County Jail Inmate data, scraped from
@@ -22,6 +24,84 @@ interesting questions, but it cannot be cited as factual.
 
 Developed by the Supreme Chi-Town Coding Crew
 (https://github.com/sc3/sc3)"""
+
+class JailToOneField(ToOneField):
+    def dehydrate(self, bundle):
+        foreign_obj = None
+
+        if isinstance(self.attribute, basestring):
+            attrs = self.attribute.split('__')
+            foreign_obj = bundle.obj
+
+            for attr in attrs:
+                previous_obj = foreign_obj
+                try:
+                    foreign_obj = getattr(foreign_obj, attr, None)
+                except ObjectDoesNotExist:
+                    foreign_obj = None
+        elif callable(self.attribute):
+            foreign_obj = self.attribute(bundle)
+
+        if not foreign_obj:
+            if not self.null:
+                raise ApiFieldError("The model '%r' has an empty attribute '%s' and doesn't allow a null value." % (previous_obj, attr))
+
+            return None
+
+        if bundle.request.GET.get('related') == '1':
+            self.fk_resource = self.get_related_resource(foreign_obj)
+            fk_bundle = Bundle(obj=foreign_obj, request=bundle.request)
+            return self.dehydrate_related(fk_bundle, self.fk_resource)
+        else:
+            return super(JailToOneField, self).dehydrate(bundle)
+
+
+class JailToManyField(ToManyField):
+    def dehydrate(self, bundle):
+        if not bundle.obj or not bundle.obj.pk:
+            if not self.null:
+                raise ApiFieldError("The model '%r' does not have a primary key and can not be used in a ToMany context." % bundle.obj)
+
+            return []
+
+        the_m2ms = None
+        previous_obj = bundle.obj
+        attr = self.attribute
+
+        if isinstance(self.attribute, basestring):
+            attrs = self.attribute.split('__')
+            the_m2ms = bundle.obj
+
+            for attr in attrs:
+                previous_obj = the_m2ms
+                try:
+                    the_m2ms = getattr(the_m2ms, attr, None)
+                except ObjectDoesNotExist:
+                    the_m2ms = None
+
+                if not the_m2ms:
+                    break
+
+        elif callable(self.attribute):
+            the_m2ms = self.attribute(bundle)
+
+        if not the_m2ms:
+            if not self.null:
+                raise ApiFieldError("The model '%r' has an empty attribute '%s' and doesn't allow a null value." % (previous_obj, attr))
+
+            return []
+
+        self.m2m_resources = []
+        m2m_dehydrated = []
+
+        # TODO: Also model-specific and leaky. Relies on there being a
+        #       ``Manager`` there.
+        if bundle.request.GET.get('related') == '1':
+            for m2m in the_m2ms.all():
+                m2m_resource = self.get_related_resource(m2m)
+                m2m_bundle = Bundle(obj=m2m, request=bundle.request)
+                self.m2m_resources.append(m2m_resource)
+                m2m_dehydrated.append(self.dehydrate_related(m2m_bundle, m2m_resource))
 
 
 class JailSerializer(Serializer):
@@ -106,11 +186,11 @@ class CourtDateResource(JailResource):
     API endpoint for CourtDate model, the unique combination of courtroom,
     inmate, and date used to represent the court history.
     """
-    location = fields.ToOneField(CourtLocationResource, "location", null=True, full=False)
-    inmate = fields.ToOneField('countyapi.api.CountyInmateResource', "inmate", null=True, full=False)
+    location = JailToOneField(CourtLocationResource, "location", null=True, full=False)
+    inmate = JailToOneField('countyapi.api.CountyInmateResource', "inmate", null=True, full=False)
 
     class Meta:
-        queryset = CourtDate.objects.all()
+        queryset = CourtDate.objects.select_related('location').select_related('inmate').all()
         allowed_methods = ['get']
         limit = 100
         max_limit = 0
@@ -185,10 +265,10 @@ class HousingHistoryResource(JailResource):
     API endpoint for HousingHistory model, the unique combination of housing
     location, inmate, and date used to represent the housing history.
     """
-    housing_location = fields.ToOneField(HousingLocationResource, "housing_location", null=True, full=False)
-    inmate = fields.ToOneField('countyapi.api.CountyInmateResource', "inmate", null=True, full=False)
+    housing_location = JailToOneField(HousingLocationResource, "housing_location", null=True, full=False)
+    inmate = JailToOneField('countyapi.api.CountyInmateResource', "inmate", null=True, full=False)
     class Meta:
-        queryset = HousingHistory.objects.all()
+        queryset = HousingHistory.objects.select_related('location').select_related('inmate').all()
         allowed_methods = ['get']
         serializer = JailSerializer()
         limit = 100
@@ -239,11 +319,11 @@ class CountyInmateResource(JailResource):
     """
     API endpoint for CountyInmate model, which represents a person in jail.
     """
-    court_dates = fields.ToManyField(CourtDateResource, "court_dates")
-    housing_history = fields.ToManyField(HousingHistoryResource, "housing_history")
+    court_dates = JailToManyField(CourtDateResource, "court_dates")
+    housing_history = JailToManyField(HousingHistoryResource, "housing_history")
 
     class Meta:
-        queryset = CountyInmate.objects.prefetch_related('housing_history').prefetch_related('court_dates').all()
+        queryset = CountyInmate.objects.select_related('housing_history').select_related('court_dates').all()
         allowed_methods = ['get']
         limit = 100
         max_limit = 0
