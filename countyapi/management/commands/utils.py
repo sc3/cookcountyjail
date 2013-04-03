@@ -5,6 +5,7 @@ import string
 from countyapi.models import CountyInmate, CourtDate, CourtLocation, HousingHistory, HousingLocation
 from datetime import datetime
 from datetime import date
+from django.db.utils import DatabaseError
 
 log = logging.getLogger('main')
 
@@ -39,12 +40,15 @@ def create_update_inmate(url):
     # Housing location parsing
     inmate_housing_location, created_location = HousingLocation.objects.get_or_create(housing_location = columns[8].text_content().strip())
     process_housing_location(inmate_housing_location)
-    housing_history, new_history = inmate.housing_history.get_or_create(housing_location=inmate_housing_location)
-    if new_history:
-        housing_history.housing_date = date.today()
-    housing_history.save()
-    inmate_housing_location.save()
-     
+    try:
+        housing_history, new_history = inmate.housing_history.get_or_create(housing_location=inmate_housing_location)
+        if new_history:
+            housing_history.housing_date = date.today()
+        housing_history.save()
+        inmate_housing_location.save()
+    except DatabaseError:
+        log.debug("Could not save housing location '%s'" % columns[8].text_content().strip())
+    
     # Calculate age
     #if (inmate.age_at_booking = None):
     bday_parts = columns[2].text_content().strip().split('/')
