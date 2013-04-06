@@ -38,7 +38,16 @@ class CourtDate(models.Model):
 
 class CourtLocation(models.Model):
     """Model that represents a unique court location (court house and room)."""
-    location=models.TextField()
+    location = models.TextField()
+    """
+    location_name=models.CharField(max_length=20, null=True)
+    branch_name = models.CharField(max_length=60, null=True)
+    room_number=models.IntegerField(null=True, blank=True)
+    address = models.CharField(max_length=100, null=True)
+    city = models.CharField(max_length=30, null=True)
+    state = models.CharField(max_length=3, Null=True)
+    zip_code = models.IntegerField(null=True, blank=True)
+    """
 
 
 class HousingHistory(models.Model):

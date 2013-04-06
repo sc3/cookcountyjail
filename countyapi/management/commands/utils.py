@@ -82,8 +82,11 @@ def create_update_inmate(url):
         next_court_location = "\n".join(next_court_location)
         
         # Get or create the location
-        location, new_location = CourtLocation.objects.get_or_create(location=next_court_location)
-        
+        parsed_location = parse_location(next_court_location)
+        if parsed_location is None:
+            parsed_location = {}
+        location, new_location = CourtLocation.objects.get_or_create(location=next_court_location, **parsed_location)
+ 
         # Parse next court date
         next_court_date = "%s-%s-%s" % (court_date_parts[2], court_date_parts[0], court_date_parts[1])
         
@@ -97,6 +100,61 @@ def create_update_inmate(url):
    
     return jail_id
 
+def parse_location(location_string):
+    """
+    Takes a location string of the form:
+
+    "Criminal C\nCriminal Courts Building, Room:506\n2650 South California Avenue Room: 506\nChicago, IL 60608\n"
+
+     and returns a dict of the form:
+    {
+        'location_name': 'Criminal C',
+        'branch_name': 'Criminal Courts Building',
+        'room_number': 506,
+        'address': '2650 South California Avenue',
+        'city': 'Chicago',
+        'state':'IL',
+        'zip_code': 60608,
+    }
+    """
+    lines = location_string.split('\n')
+
+    if len(lines) == 5:
+        try:
+            # The first line is the locaiton_name
+            location_name = lines[0]
+
+            # Second line must be split into room number and branch name
+            branch_line = lines[1].split(', Room:')
+            branch_name = branch_line[0]
+            room_number = int(branch_line[1])
+
+            # Third line has address - remove room number and store
+            address = lines[2].split('Room:')[0]
+
+            city_state_zip = lines[3].split(' ')
+            city = city_state_zip[0].replace(',', '')
+            state = city_state_zip[1]
+            zip_code = int(city_state_zip[2])
+
+            d = {
+                'location_name': location_name,
+                'branch_name': branch_name,
+                'room_number': room_number,
+                'address': address,
+                'city': city,
+                'state': state,
+                'zip_code': zip_code,
+            }
+            return d
+        except Exception:
+            log.debug("Unknown format found in location: %s" % location_string)
+            return None
+    else:
+        log.debug("Unknown format found in location: %s" % location_string)
+        return None
+
+
 def process_urls(base_url,inmate_urls,records,limit=None):
     seen = [] # List to store jail ids
    
@@ -106,9 +164,7 @@ def process_urls(base_url,inmate_urls,records,limit=None):
         if new_id not in seen and new_id != None:
         	seen.append(new_id)
         if (limit and (records + len(seen)) >= limit):
-    		break 
-        	
-       
+    		break    
     
     return seen
 
