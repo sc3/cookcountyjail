@@ -5,7 +5,7 @@ import sys
 SITE_STATIC_ROOT = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'static')
 SITE_DIR = os.path.dirname(os.path.dirname(__file__))
 
-if 'CCJ_PRODUCTION' not in os.environ:
+if not 'CCJ_PRODUCTION' in os.environ:
     DEBUG = True
     TEMPLATE_DEBUG = DEBUG
 

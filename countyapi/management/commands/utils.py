@@ -5,6 +5,7 @@ import string
 from countyapi.models import CountyInmate, CourtDate, CourtLocation, HousingHistory, HousingLocation
 from datetime import datetime
 from datetime import date
+from django.db.utils import DatabaseError
 
 log = logging.getLogger('main')
 
@@ -39,12 +40,15 @@ def create_update_inmate(url):
     # Housing location parsing
     inmate_housing_location, created_location = HousingLocation.objects.get_or_create(housing_location = columns[8].text_content().strip())
     process_housing_location(inmate_housing_location)
-    housing_history, new_history = inmate.housing_history.get_or_create(housing_location=inmate_housing_location)
-    if new_history:
-        housing_history.housing_date = date.today()
-    housing_history.save()
-    inmate_housing_location.save()
-     
+    try:
+        housing_history, new_history = inmate.housing_history.get_or_create(housing_location=inmate_housing_location)
+        if new_history:
+            housing_history.housing_date = date.today()
+        housing_history.save()
+        inmate_housing_location.save()
+    except DatabaseError:
+        log.debug("Could not save housing location '%s'" % columns[8].text_content().strip())
+    
     # Calculate age
     #if (inmate.age_at_booking = None):
     bday_parts = columns[2].text_content().strip().split('/')
@@ -82,9 +86,6 @@ def create_update_inmate(url):
         next_court_location = "\n".join(next_court_location)
         
         # Get or create the location
-        parsed_location = parse_location(next_court_location)
-        if parsed_location is None:
-            parsed_location = {}
         location, new_location = CourtLocation.objects.get_or_create(location=next_court_location, **parsed_location)
  
         # Parse next court date
@@ -99,61 +100,6 @@ def create_update_inmate(url):
     # Update global counters
    
     return jail_id
-
-def parse_location(location_string):
-    """
-    Takes a location string of the form:
-
-    "Criminal C\nCriminal Courts Building, Room:506\n2650 South California Avenue Room: 506\nChicago, IL 60608\n"
-
-     and returns a dict of the form:
-    {
-        'location_name': 'Criminal C',
-        'branch_name': 'Criminal Courts Building',
-        'room_number': 506,
-        'address': '2650 South California Avenue',
-        'city': 'Chicago',
-        'state':'IL',
-        'zip_code': 60608,
-    }
-    """
-    lines = location_string.split('\n')
-
-    if len(lines) == 5:
-        try:
-            # The first line is the locaiton_name
-            location_name = lines[0]
-
-            # Second line must be split into room number and branch name
-            branch_line = lines[1].split(', Room:')
-            branch_name = branch_line[0]
-            room_number = int(branch_line[1])
-
-            # Third line has address - remove room number and store
-            address = lines[2].split('Room:')[0]
-
-            city_state_zip = lines[3].split(' ')
-            city = city_state_zip[0].replace(',', '')
-            state = city_state_zip[1]
-            zip_code = int(city_state_zip[2])
-
-            d = {
-                'location_name': location_name,
-                'branch_name': branch_name,
-                'room_number': room_number,
-                'address': address,
-                'city': city,
-                'state': state,
-                'zip_code': zip_code,
-            }
-            return d
-        except Exception:
-            log.debug("Unknown format found in location: %s" % location_string)
-            return None
-    else:
-        log.debug("Unknown format found in location: %s" % location_string)
-        return None
-
 
 def process_urls(base_url,inmate_urls,records,limit=None):
     seen = [] # List to store jail ids
