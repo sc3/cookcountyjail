@@ -15,7 +15,6 @@ class CountyInmate(models.Model):
     age_at_booking=models.IntegerField(null=True, blank=True)
     bail_status=models.CharField(max_length=50, null=True)
     bail_amount=models.IntegerField(null=True, blank=True)
-    housing_location=models.CharField(null=True,max_length=20)
     charges=models.TextField(null=True)
     charges_citation=models.TextField(null=True)
 
