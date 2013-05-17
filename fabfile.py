@@ -10,7 +10,7 @@ PROJECT_PATH = '~/cookcountyjail' # change to where the project is located
 SOURCE_CODE_SITE = 'https://github.com/sc3/cookcountyjail'
 
 # Singleton enviorement for fabric itself, != our virtualenv
-env.hosts = [''] # our remote systems
+env.hosts = ['127.0.0.1'] # our localhost
 
 def pre_requirements():
     """Stuff needed before it all like virtualenv before running project's pip install requirement.txt"""
