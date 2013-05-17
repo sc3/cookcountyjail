@@ -4,7 +4,7 @@ import subprocess
 
 # Some global variables. Need some tweaking to make them more modular
 HOME = '~'
-VIRTUALENV_NAME = 'countyjail' # change to desired name
+VIRTUALENV_NAME = 'countyjail_env' # change to desired name
 VIRTUALENVS_DIRECTORY = '~/ENV' # change to the path where all the envs are gonna be stored
 COOKCOUNTY_ENV_PATH = '%s/%s' % (VIRTUALENVS_DIRECTORY, VIRTUALENV_NAME) # where our env should be
 PROJECT_PATH = '~/cookcountyjail' # change to where the project is located
@@ -30,12 +30,12 @@ def create_env(env_name=VIRTUALENV_NAME, envs_path=VIRTUALENVS_DIRECTORY, home=H
     with cd(home):
         run('mkdir %s' % envs_path)
     with cd(envs_path):
-        run('virtualenv --no-site-packages --distribute %s' % env_name)
+        run('virtualenv --distribute %s' % env_name)
         
 def start_env(env_path=COOKCOUNTY_ENV_PATH):
      """Function to activate the virtualenv warning only returns a string to be used and not
      actually runs the env"""
-     return ('source %s/bin/activate &&' % env_path)
+     return ('source %s/bin/activate && ' % env_path)
      
 def clone_repo(repo_path=SOURCE_CODE_SITE):
      run('git clone %s' % repo_path)
@@ -51,7 +51,7 @@ def migrate(app):
 def complete_setup():
     """ Mash up of all other setup functions"""
     print "Not ready"
-    # Still not ready for testing because it does not accept input for django user set up
+    # May still not be ready for testing ... SEEMS to accept input for django user set up
     if not confirm("Warning this file is untested and incomplete. Do you want to continue? "):
         return
     pre_requirements()
