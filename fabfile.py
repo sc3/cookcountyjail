@@ -4,7 +4,7 @@ import subprocess
 
 # Some global variables. Need some tweaking to make them more modular
 HOME = '~'
-VIRTUALENV_NAME = 'countyjail_env' # change to desired name
+VIRTUALENV_NAME = 'countyjail' # change to desired name
 VIRTUALENVS_DIRECTORY = '~/ENV' # change to the path where all the envs are gonna be stored
 COOKCOUNTY_ENV_PATH = '%s/%s' % (VIRTUALENVS_DIRECTORY, VIRTUALENV_NAME) # where our env should be
 PROJECT_PATH = '~/cookcountyjail' # change to where the project is located
@@ -61,4 +61,4 @@ def complete_setup():
     with cd(PROJECT_PATH):
         install_project_requirements()
         syncdb()
-        migrate('countyapi')     
+        migrate('countyapi')
