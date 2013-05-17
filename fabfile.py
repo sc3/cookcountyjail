@@ -1,5 +1,6 @@
 from fabric.api import settings, abort, run, cd, env, prefix
 from fabric.contrib.console import confirm
+import subprocess
 
 # Some global variables. Need some tweaking to make them more modular
 HOME = '~'
@@ -14,8 +15,13 @@ env.hosts = ['127.0.0.1'] # our localhost
 
 def pre_requirements():
     """Stuff needed before it all like virtualenv before running project's pip install requirement.txt"""
-    # requirements: virtualenv, git, setuptools, pip
-    print 'Needs to be implemented'
+    print "Installing pre-requisite modules and third-party software..."
+    pre_reqs = ['python-virtualenv', 'python-setuptools', 'git']
+    unfulfilled_reqs = ['libpq-dev', 'libxml2-dev', 'libxslt1-dev', 'python2.7-dev']
+    # The above are all dependencies that pip was unable to resolve later on,
+    # -- at least on the system that I tested this file.
+    subprocess.call('sudo apt-get install ' + " ".join(unfulfilled_reqs + pre_reqs), shell=True)    
+
 def install_project_requirements(file='requirements.txt'):
     run( start_env() + 'pip install -r %s' % file)
 
@@ -45,7 +51,7 @@ def migrate(app):
 def complete_setup():
     """ Mash up of all other setup functions"""
     print "Not ready"
-    return # Still not ready for testing because it does not accept input for django user set up
+    # Still not ready for testing because it does not accept input for django user set up
     if not confirm("Warning this file is untested and incomplete. Do you want to continue? "):
         return
     pre_requirements()
