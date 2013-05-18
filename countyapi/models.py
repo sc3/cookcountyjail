@@ -4,7 +4,7 @@ class CountyInmate(models.Model):
     """Model that represents a Cook County Jail inmate."""
     jail_id=models.CharField(max_length=15, primary_key=True)
     url=models.CharField(max_length=255)
-    race=models.CharField(max_length=4,null=True, blank=True)
+    race=models.CharField(max_length=4, null=True, blank=True)
     last_seen_date=models.DateTimeField(auto_now=True)
     booking_date=models.DateTimeField(null=True)
     discharge_date_earliest=models.DateTimeField(null=True)
@@ -38,7 +38,13 @@ class CourtDate(models.Model):
 class CourtLocation(models.Model):
     """Model that represents a unique court location (court house and room)."""
     location = models.TextField()
-
+    location_name=models.CharField(max_length=20, null=True)
+    branch_name = models.CharField(max_length=60, null=True)
+    room_number=models.IntegerField(null=True, blank=True)
+    address = models.CharField(max_length=100, null=True)
+    city = models.CharField(max_length=30, null=True)
+    state = models.CharField(max_length=3, null=True)
+    zip_code = models.IntegerField(null=True, blank=True)
 
 class HousingHistory(models.Model):
     """Model that represents an inmate's housing location on a given date."""

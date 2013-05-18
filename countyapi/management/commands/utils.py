@@ -1,5 +1,6 @@
 import logging
 import requests
+import re
 from pyquery import PyQuery as pq
 import string
 from countyapi.models import CountyInmate, CourtDate, CourtLocation, HousingHistory, HousingLocation
@@ -86,13 +87,19 @@ def create_update_inmate(url):
         next_court_location = "\n".join(next_court_location)
         
         # Get or create the location
-        location, new_location = CourtLocation.objects.get_or_create(location=next_court_location, **parsed_location)
- 
+        parsed_location = parse_location(next_court_location)
+        if parsed_location is None:
+            parsed_location = {}
+        location, new_location = CourtLocation.objects.get_or_create(**parsed_location)
+        log.info("location: %s" % location)
+        log.info("new location: %s" % new_location)
+
         # Parse next court date
         next_court_date = "%s-%s-%s" % (court_date_parts[2], court_date_parts[0], court_date_parts[1])
         
         # Get or create a court date for this inmate
         court_date, new_court_date = inmate.court_dates.get_or_create(date=next_court_date, location=location)
+        raw_input()
     # Save it!
     inmate.save()
     log.debug("%s inmate %s" % ("Created" if created else "Updated" , inmate))
@@ -100,6 +107,80 @@ def create_update_inmate(url):
     # Update global counters
    
     return jail_id
+
+def parse_location(location_string):
+    """
+    Takes a location string of the form:
+
+    "Criminal C\nCriminal Courts Building, Room:506\n2650 South California Avenue Room: 506\nChicago, IL 60608\n"
+
+     and returns a dict of the form:
+    {
+        'location_name': 'Criminal C',
+        'branch_name': 'Criminal Courts Building',
+        'room_number': 506,
+        'address': '2650 South California Avenue',
+        'city': 'Chicago',
+        'state': 'IL',
+        'zip_code': 60608,
+    }
+    """
+    
+    lines = location_string.split('\n')[:-1]
+    #log.info("all lines: '%s'" % lines)
+    #log.info("num lines: %s" % len(lines))
+    #raw_input()
+
+    if len(lines) == 4:
+        try:
+            # The first line is the locaiton_name
+            location_name = lines[0]
+            #log.info("location name: '%s'" % location_name)
+            #raw_input()
+
+            # Second line must be split into room number and branch name
+            branch_line = lines[1].split(', Room:')
+            branch_name = branch_line[0].strip()
+            #log.info("branch name: '%s'" % branch_name)
+            #raw_input()
+            room_number = int(branch_line[1])
+            #log.info("room num: '%s'" % room_number)
+            #raw_input()
+
+            # Third line has address - remove room number and store
+            address = lines[2].split('Room:')[0].strip()
+            #log.info("address: '%s'" % address)
+            #raw_input()
+
+            city_state_zip = lines[3].split(' ')
+            city = city_state_zip[0].replace(',', '').strip()
+            #log.info("city: '%s'" % city)
+            #raw_input()
+            state_zip = city_state_zip[1].split(u'\xa0')
+            state = state_zip[0].strip()
+            #log.info("state: '%s'" % state)
+            #raw_input()
+            zip_code = int(state_zip[1])
+            #log.info("zip code: '%s'" % zip_code)
+            #raw_input()
+
+            d = {
+                'location': location_string,
+                'location_name': location_name,
+                'branch_name': branch_name,
+                'room_number': room_number,
+                'address': address,
+                'city': city,
+                'state': state,
+                'zip_code': zip_code,
+            }
+            return d
+        except IndexError as e:
+            log.debug("EXCEPTION: Unknown format found in location: %s" % location_string)
+            return None
+    else:
+        log.debug("IDK: Unknown format found in location: %s" % location_string)
+        return None
 
 def process_urls(base_url,inmate_urls,records,limit=None):
     seen = [] # List to store jail ids
