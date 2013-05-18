@@ -6,10 +6,15 @@ from countyapi.models import CountyInmate, CourtDate, CourtLocation, HousingHist
 from datetime import datetime
 from datetime import date
 from django.db.utils import DatabaseError
+from time import sleep
+
+SLEEP_INTERVAL = 0.5
 
 log = logging.getLogger('main')
 
 def create_update_inmate(url):
+    sleep(SLEEP_INTERVAL)
+
     # Get and parse inmate page
     inmate_result = requests.get(url)
     
@@ -86,7 +91,7 @@ def create_update_inmate(url):
         next_court_location = "\n".join(next_court_location)
         
         # Get or create the location
-        location, new_location = CourtLocation.objects.get_or_create(location=next_court_location, **parsed_location)
+        location, new_location = CourtLocation.objects.get_or_create(location=next_court_location)
  
         # Parse next court date
         next_court_date = "%s-%s-%s" % (court_date_parts[2], court_date_parts[0], court_date_parts[1])
