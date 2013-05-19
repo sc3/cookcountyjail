@@ -6,10 +6,15 @@ from countyapi.models import CountyInmate, CourtDate, CourtLocation, HousingHist
 from datetime import datetime
 from datetime import date
 from django.db.utils import DatabaseError
+from time import sleep
+
+SLEEP_INTERVAL = 0.5
 
 log = logging.getLogger('main')
 
 def create_update_inmate(url):
+    sleep(SLEEP_INTERVAL)
+
     # Get and parse inmate page
     inmate_result = requests.get(url)
     
@@ -19,7 +24,7 @@ def create_update_inmate(url):
     
     inmate_doc = pq(inmate_result.content)
     columns = inmate_doc('table tr:nth-child(2n) td')
-
+    
     # Jail ID is needed to get_or_create object. Everything else must
     # be set after inmate object is created or retrieved.
     jail_id = columns[0].text_content().strip()
@@ -59,6 +64,9 @@ def create_update_inmate(url):
     inmate.age_at_booking = calculate_age(bday, booking_datetime)
 
     # Bond: If the value can be converted to an integer, it's a dollar
+    inmate.age_at_booking = calculate_age(bday,booking_datetime)
+
+    # If the value can be converted to an integer, it's a dollar
     # amount. Otherwise, it's a status, e.g. "* NO BOND *".
     try:
         bail_amount = columns[10].text_content().strip().replace(',','')
@@ -69,7 +77,7 @@ def create_update_inmate(url):
     # Charges: charges come on two lines. The first line is a citation and the
     # second is an optional description of the charges.
     charges = columns[11].text_content().splitlines()
-    for n,line in enumerate(charges):
+    for n, line in enumerate(charges):
         charges[n] = line.strip()
     inmate.charges_citation = charges[0]
     try:
@@ -89,19 +97,17 @@ def create_update_inmate(url):
         parsed_location = parse_location(next_court_location)
         if parsed_location is None:
             parsed_location = {}
-        #location, new_location = CourtLocation.objects.get_or_create(location=next_court_location, **parsed_location)
+        location, new_location = CourtLocation.objects.get_or_create(location=next_court_location, **parsed_location)
 
         # Parse next court date
         next_court_date = "%s-%s-%s" % (court_date_parts[2], court_date_parts[0], court_date_parts[1])
         
         # Get or create a court date for this inmate
-        #court_date, new_court_date = inmate.court_dates.get_or_create(date=next_court_date, location=location)
+        court_date, new_court_date = inmate.court_dates.get_or_create(date=next_court_date, location=location)
     # Save it!
     inmate.save()
     log.debug("%s inmate %s" % ("Created" if created else "Updated" , inmate))
 
-    # Update global counters
-   
     return jail_id
 
 def process_urls(base_url,inmate_urls,records,limit=None):

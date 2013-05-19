@@ -19,7 +19,7 @@ def pre_requirements():
     pre_reqs = ['python-virtualenv', 'python-setuptools', 'git']
     unfulfilled_reqs = ['libpq-dev', 'libxml2-dev', 'libxslt1-dev', 'python2.7-dev']
     # The above are all dependencies that pip was unable to resolve later on,
-    # -- at least on the system that I tested this file.
+    # -- at least for the system that I used to test this file.
     subprocess.call('sudo apt-get install ' + " ".join(unfulfilled_reqs + pre_reqs), shell=True)    
 
 def install_project_requirements(file='requirements.txt'):
