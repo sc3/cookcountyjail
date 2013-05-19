@@ -64,9 +64,6 @@ def create_update_inmate(url):
     inmate.age_at_booking = calculate_age(bday, booking_datetime)
 
     # Bond: If the value can be converted to an integer, it's a dollar
-    inmate.age_at_booking = calculate_age(bday,booking_datetime)
-
-    # If the value can be converted to an integer, it's a dollar
     # amount. Otherwise, it's a status, e.g. "* NO BOND *".
     try:
         bail_amount = columns[10].text_content().strip().replace(',','')
