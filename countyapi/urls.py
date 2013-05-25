@@ -1,5 +1,6 @@
 from django.conf.urls import patterns, include, url
 from tastypie.api import Api
+
 from countyapi.api import CountyInmateResource, CourtLocationResource, CourtDateResource, HousingLocationResource, HousingHistoryResource
 
 v1_api = Api(api_name='1.0')

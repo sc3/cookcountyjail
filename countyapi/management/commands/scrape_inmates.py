@@ -1,12 +1,15 @@
+from datetime
 import logging
-import requests
-from django.core.management.base import BaseCommand
 from pyquery import PyQuery as pq
+import requests
 import string
+
+from django.core.management.base import BaseCommand
+
+from countyapi.management.commands.utils import process_urls
 from countyapi.models import CountyInmate, CourtDate, CourtLocation
 from optparse import make_option
-from datetime import datetime
-from countyapi.management.commands.utils import process_urls
+
 
 log = logging.getLogger('main')
 
@@ -87,7 +90,7 @@ class Command(BaseCommand):
         Given a list of jail ids, find inmates with no discharge date that
         aren't in the list. Inmate who haven't been discharged 
         """
-        now = datetime.now()
+        now = datetime.datetime.now()
         not_present_or_discharged = CountyInmate.objects.filter(discharge_date_earliest__exact=None).exclude(jail_id__in=seen)
         for inmate in not_present_or_discharged:
             inmate.discharge_date_earliest = inmate.last_seen_date
