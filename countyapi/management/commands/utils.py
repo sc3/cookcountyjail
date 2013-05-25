@@ -56,17 +56,16 @@ def create_update_inmate(url):
     except DatabaseError:
         log.debug("Could not save housing location '%s'" % columns[8].text_content().strip())
     
-    # Calculate age
-    #if (inmate.age_at_booking = None):
+    # Age parsing
     bday_parts = columns[2].text_content().strip().split('/')
     bday = datetime(int(bday_parts[2]), int(bday_parts[0]), int(bday_parts[1]))
     # Split booked date into parts and reconstitute as string
     booked_parts = columns[7].text_content().strip().split('/')
     inmate.booking_date = "%s-%s-%s" % (booked_parts[2], booked_parts[0], booked_parts[1])
     booking_datetime = datetime(int(booked_parts[2]), int(booked_parts[0]), int(booked_parts[1]))
-    inmate.age_at_booking = calculate_age(bday,booking_datetime)
+    inmate.age_at_booking = calculate_age(bday, booking_datetime)
 
-    # If the value can be converted to an integer, it's a dollar
+    # Bond: If the value can be converted to an integer, it's a dollar
     # amount. Otherwise, it's a status, e.g. "* NO BOND *".
     try:
         bail_amount = columns[10].text_content().strip().replace(',','')
@@ -74,27 +73,31 @@ def create_update_inmate(url):
     except ValueError:
         inmate.bail_status = columns[10].text_content().replace('*','').strip()
 
-    # Charges come on two lines. The first line is a citation and the
+    # Charges: charges come on two lines. The first line is a citation and the
     # second is an optional description of the charges.
     charges = columns[11].text_content().splitlines()
-    for n,line in enumerate(charges):
+    for n, line in enumerate(charges):
         charges[n] = line.strip()
     inmate.charges_citation = charges[0]
     try:
         inmate.charges = charges[1]
     except IndexError: pass
 
+    # Court date parsing
     court_date_parts = columns[12].text_content().strip().split('/')
     if len(court_date_parts) == 3:
         # Get location by splitting lines, stripping, and re-joining
         next_court_location = columns[13].text_content().splitlines()
-        for n,line in enumerate(next_court_location):
+        for n, line in enumerate(next_court_location):
             next_court_location[n] = line.strip()
         next_court_location = "\n".join(next_court_location)
         
-        # Get or create the location
-        location, new_location = CourtLocation.objects.get_or_create(location=next_court_location)
- 
+        # Get or create the location object
+        parsed_location = parse_location(next_court_location)
+        if parsed_location is None:
+            parsed_location = {}
+        location, new_location = CourtLocation.objects.get_or_create(location=next_court_location, **parsed_location)
+
         # Parse next court date
         next_court_date = "%s-%s-%s" % (court_date_parts[2], court_date_parts[0], court_date_parts[1])
         
@@ -104,8 +107,6 @@ def create_update_inmate(url):
     inmate.save()
     log.debug("%s inmate %s" % ("Created" if created else "Updated" , inmate))
 
-    # Update global counters
-   
     return jail_id
 
 def process_urls(base_url,inmate_urls,records,limit=None):
@@ -200,7 +201,65 @@ def process_housing_location(location_object):
         elif "N1" in housing_location:
             location_object.in_program = "Segregation"
     
-    location_object.sub_division = " ".join(location_segments[1:3]).replace(" ","")
-    location_object.sub_division_location = " ".join(location_segments[3:]).replace(" ","-")
+    location_object.sub_division = " ".join(location_segments[1:3]).replace(" ", "")
+    location_object.sub_division_location = " ".join(location_segments[3:]).replace(" ", "-")
     return
 
+def parse_location(location_string):
+    """
+    Takes a location string of the form:
+
+    "Criminal C\nCriminal Courts Building, Room:506\n2650 South California Avenue Room: 506\nChicago, IL 60608\n"
+
+     and returns a dict of the form:
+    {
+        'location_name': 'Criminal C',
+        'branch_name': 'Criminal Courts Building',
+        'room_number': 506,
+        'address': '2650 South California Avenue',
+        'city': 'Chicago',
+        'state': 'IL',
+        'zip_code': 60608,
+    }
+    """
+
+    # last line is always empty
+    lines = location_string.split('\n')[:-1]
+
+    if len(lines) == 4:
+        try:
+            # The first line is the location_name
+            location_name = lines[0]
+
+            # Second line must be split into room number and branch name
+            branch_line = lines[1].split(', Room:')
+            branch_name = branch_line[0].strip()
+            room_number = int(branch_line[1])
+
+            # Third line has address - remove room number and store
+            address = lines[2].split('Room:')[0].strip()
+
+            # Fourth line has city, state and zip separated by spaces,
+            # or a weird unicode space character
+            city_state_zip = lines[3].replace(u'\xa0', u' ').split(' ')
+            city = city_state_zip[0].replace(',', '').strip()
+            state = city_state_zip[1].strip()
+            zip_code = int(city_state_zip[2])
+
+            d = {
+                'location_name': location_name,
+                'branch_name': branch_name,
+                'room_number': room_number,
+                'address': address,
+                'city': city,
+                'state': state,
+                'zip_code': zip_code,
+            }
+
+            return d
+        except IndexError as e:
+            log.debug("Following location has unknown format: %s" % location_string)
+            return None
+    else:
+        log.debug("Following location doesn't have right number of lines: %s" % location_string)
+        return None
