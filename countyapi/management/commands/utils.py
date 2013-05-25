@@ -1,12 +1,14 @@
+from datetime import datetime, date
 import logging
-import requests
 from pyquery import PyQuery as pq
+import requests
 import string
-from countyapi.models import CountyInmate, CourtDate, CourtLocation, HousingHistory, HousingLocation
-from datetime import datetime
-from datetime import date
-from django.db.utils import DatabaseError
 from time import sleep
+
+from django.db.utils import DatabaseError
+
+from countyapi.models import CountyInmate, CourtDate, CourtLocation, HousingHistory, HousingLocation
+
 
 SLEEP_INTERVAL = 0.5
 

@@ -1,13 +1,16 @@
-import logging
-import requests
-from django.core.management.base import BaseCommand
-from pyquery import PyQuery as pq
-import string
-from countyapi.models import CountyInmate
-from optparse import make_option
 import datetime
+import logging
+from optparse import make_option
+from pyquery import PyQuery as pq
+import requests
+import string
+
+from django.core.management.base import BaseCommand
+
+from countyapi.models import CountyInmate
 from utils import calculate_age
 from utils import create_update_inmate
+
 
 log = logging.getLogger('main')
 
@@ -18,16 +21,19 @@ def date_dict(booking_date_option):
     dates_dictionary = {'year': int(date[0:4]), 'month' : int(date[4:6]), 'day' : int(date[6:]) }
     return dates_dictionary
 
+
 def add_char(short_string, length = 2,char = '0'):
     short_string = str(short_string)
     while(len(short_string) != length):
         short_string = char + short_string
     return short_string
 
+
 class Command(BaseCommand):
     help = "Scrape inmates from the given booking day until today."
     option_list= BaseCommand.option_list + (
-        make_option('-b', '--booking_date', type='string', action='store', dest='booking_date', default=None,
+        make_option('-b', '--booking_date', type='string', action='store', 
+            dest='booking_date', default=None,
             help='Scrapes inmates with a booking date grater than the given argument. Date is in format of YYYYMMDD'),
     )
     
