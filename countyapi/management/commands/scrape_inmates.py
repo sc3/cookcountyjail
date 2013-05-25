@@ -1,4 +1,4 @@
-from datetime
+from datetime import datetime
 import logging
 from pyquery import PyQuery as pq
 import requests
