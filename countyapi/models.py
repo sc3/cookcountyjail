@@ -17,8 +17,6 @@ class CountyInmate(models.Model):
     age_at_booking = models.IntegerField(null=True, blank=True)
     bail_status = models.CharField(max_length=50, null=True)
     bail_amount = models.IntegerField(null=True, blank=True)
-    charges = models.TextField(null=True)
-    charges_citation = models.TextField(null=True)
     
     def __unicode__(self):
         return self.jail_id
@@ -74,3 +72,9 @@ class HousingLocation(models.Model):
 
     def __unicode__(self):
         return self.housing_location
+
+class ChargesHistory(models.Model):
+    inmate = models.ForeignKey('CountyInmate', related_name='charges_history')
+    charges = models.TextField(null=True)
+    charges_citation = models.TextField(null=True)
+    date_seen = models.DateField(null=True)

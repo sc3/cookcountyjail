@@ -7,7 +7,7 @@ from time import sleep
 
 from django.db.utils import DatabaseError
 
-from countyapi.models import CountyInmate, CourtDate, CourtLocation, HousingHistory, HousingLocation
+from countyapi.models import CountyInmate, CourtDate, CourtLocation, HousingHistory, HousingLocation, ChargesHistory
 
 
 SLEEP_INTERVAL = 0.5
@@ -76,13 +76,30 @@ def create_update_inmate(url):
     # Charges: charges come on two lines. The first line is a citation and the
     # second is an optional description of the charges.
     charges = columns[11].text_content().splitlines()
+    # Variables to keep our parsed strings
+    parsed_charges = ""
+    parsed_charges_citation = ""
     for n, line in enumerate(charges):
         charges[n] = line.strip()
-    inmate.charges_citation = charges[0]
+    parsed_charges = charges[0]
     try:
-        inmate.charges = charges[1]
+        parsed_charges_citation = charges[1]
     except IndexError: pass
+    
+    if len(inmate.charges_history.all()) != 0:
+        inmate_latest_charge = inmate.charges_history.latest('date_seen') # last known charge
+        # if the last known charge is different than the current info then create a new charge
+        if inmate_latest_charge.charges != parsed_charges or inmate_latest_charge.charges_citation != parsed_charges_citation:
+            new_charge = inmate.charges_history.create(charges=parsed_charges, charges_citation=parsed_charges_citation)
+            new_charge.date_seen = datetime.now().date()
+            new_charge.save()
+    else:
+        # if the inmate has no charges then create a new one with the parsed info
+        new_charge = inmate.charges_history.create(charges=parsed_charges, charges_citation=parsed_charges_citation)
+        new_charge.date_seen = datetime.now().date()
+        new_charge.save()
 
+    print inmate.charges_history.all()
     # Court date parsing
     court_date_parts = columns[12].text_content().strip().split('/')
     if len(court_date_parts) == 3:
