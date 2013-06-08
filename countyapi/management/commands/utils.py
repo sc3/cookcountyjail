@@ -108,7 +108,7 @@ def create_update_inmate(url):
         next_court_location = "\n".join(next_court_location)
         
         # Get or create the location object
-        parsed_location = parse_location(next_court_location, jail_id)
+        parsed_location = parse_location(next_court_location)
         if parsed_location is None:
             parsed_location = {}
         location, new_location = CourtLocation.objects.get_or_create(location=next_court_location, **parsed_location)
@@ -220,7 +220,7 @@ def process_housing_location(location_object):
     location_object.sub_division_location = " ".join(location_segments[3:]).replace(" ", "-")
     return
 
-def parse_location(location_string, jail_id):
+def parse_location(location_string):
     """
     Takes a location string of the form:
 
