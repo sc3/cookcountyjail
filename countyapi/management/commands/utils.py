@@ -98,8 +98,6 @@ def create_update_inmate(url):
         new_charge = inmate.charges_history.create(charges=parsed_charges, charges_citation=parsed_charges_citation)
         new_charge.date_seen = datetime.now().date()
         new_charge.save()
-
-    print inmate.charges_history.all()
     # Court date parsing
     court_date_parts = columns[12].text_content().strip().split('/')
     if len(court_date_parts) == 3:
@@ -110,7 +108,7 @@ def create_update_inmate(url):
         next_court_location = "\n".join(next_court_location)
         
         # Get or create the location object
-        parsed_location = parse_location(next_court_location)
+        parsed_location = parse_location(next_court_location, jail_id)
         if parsed_location is None:
             parsed_location = {}
         location, new_location = CourtLocation.objects.get_or_create(location=next_court_location, **parsed_location)
@@ -222,7 +220,7 @@ def process_housing_location(location_object):
     location_object.sub_division_location = " ".join(location_segments[3:]).replace(" ", "-")
     return
 
-def parse_location(location_string):
+def parse_location(location_string, jail_id):
     """
     Takes a location string of the form:
 
@@ -259,9 +257,16 @@ def parse_location(location_string):
             # Fourth line has city, state and zip separated by spaces,
             # or a weird unicode space character
             city_state_zip = lines[3].replace(u'\xa0', u' ').split(' ')
-            city = city_state_zip[0].replace(',', '').strip()
-            state = city_state_zip[1].strip()
-            zip_code = int(city_state_zip[2])
+            len_of_city_state_zip = len(city_state_zip)
+
+            # If the len of city_state_zip is 3 then it is expected to be a list in the form of ['Cityname', 'State', 'zipcode'] 
+            # else if it is 4 then it is expected to have a format of ['Cityname', 'Cityname_continued', 'State', 'zipcode']
+            # else we don't know it's format, or the name of the city might have 3 words like Country Club Hills
+            city = city_state_zip[0].replace(',', '').strip() if (len_of_city_state_zip == 3) else " ".join(city_state_zip[0:2]).replace(',', '').strip() if (len_of_city_state_zip == 4) else None
+            if (len_of_city_state_zip != 3 and len_of_city_state_zip != 4):
+                log.debug("Couldn't parse location for %s" % city_state_zip)
+            state = city_state_zip[1].strip() if len_of_city_state_zip == 3 else city_state_zip[2].strip() if len_of_city_state_zip == 4 else None
+            zip_code = int(city_state_zip[-1])
 
             d = {
                 'location_name': location_name,
