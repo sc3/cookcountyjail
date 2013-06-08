@@ -262,9 +262,6 @@ def parse_location(location_string):
             city = " ".join(city_state_zip[0:-2]).replace(',', '').strip()
             state = city_state_zip[-2].strip()
             zip_code = int(city_state_zip[-1])
-            print city
-            print state
-            print zip_code
 
             d = {
                 'location_name': location_name,
