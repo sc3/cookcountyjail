@@ -259,14 +259,12 @@ def parse_location(location_string):
             city_state_zip = lines[3].replace(u'\xa0', u' ').split(' ')
             len_of_city_state_zip = len(city_state_zip)
 
-            # If the len of city_state_zip is 3 then it is expected to be a list in the form of ['Cityname', 'State', 'zipcode'] 
-            # else if it is 4 then it is expected to have a format of ['Cityname', 'Cityname_continued', 'State', 'zipcode']
-            # else we don't know it's format, or the name of the city might have 3 words like Country Club Hills
-            city = city_state_zip[0].replace(',', '').strip() if (len_of_city_state_zip == 3) else " ".join(city_state_zip[0:2]).replace(',', '').strip() if (len_of_city_state_zip == 4) else None
-            if (len_of_city_state_zip != 3 and len_of_city_state_zip != 4):
-                log.debug("Couldn't parse location for %s" % city_state_zip)
-            state = city_state_zip[1].strip() if len_of_city_state_zip == 3 else city_state_zip[2].strip() if len_of_city_state_zip == 4 else None
+            city = " ".join(city_state_zip[0:-2]).replace(',', '').strip()
+            state = city_state_zip[-2].strip()
             zip_code = int(city_state_zip[-1])
+            print city
+            print state
+            print zip_code
 
             d = {
                 'location_name': location_name,
