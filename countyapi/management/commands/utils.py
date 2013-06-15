@@ -14,16 +14,25 @@ SLEEP_INTERVAL = 0.5
 
 log = logging.getLogger('main')
 
-def create_update_inmate(url):
-    sleep(SLEEP_INTERVAL)
+def recursive_requests(url, limit=3, before_r_sleep=0.0, after_r_sleep=0.0, attempts=1):
+    """Recursively requests for a url while the numbers of attempts is less than the limit and the results aren't a requests(module) ok status code. Will sleep before and after every request if params are provided. Returns None if the requests were unsuccessful, else returns a 'requests.models.Response' object"""
+    sleep(before_r_sleep)
+    results = requests.get(url)
+    sleep(after_r_sleep)
+    if results.status_code != requests.codes.ok:
+        if attempts > limit:
+            return None
+        log.debug("Error getting %s, status code: %s, Attempt #: %s" % (url, results.status_code, attempts))
+        results = recursive_requests(url, limit, before_r_sleep, after_r_sleep, attempts+1)
+    return results
 
+def create_update_inmate(url):
     # Get and parse inmate page
-    inmate_result = requests.get(url)
+    inmate_result = recursive_requests(url, 3, SLEEP_INTERVAL)
     
-    if inmate_result.status_code != requests.codes.ok:
-        log.debug("Error getting %s, status code: %s" % (url, inmate_result.status_code))
+    if not inmate_result: 
+    # the results are not truthy so return, else it's a truthy object so continue
         return
-    
     inmate_doc = pq(inmate_result.content)
     columns = inmate_doc('table tr:nth-child(2n) td')
     
