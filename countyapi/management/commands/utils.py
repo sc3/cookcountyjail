@@ -1,22 +1,38 @@
+from datetime import datetime, date
 import logging
-import requests
 from pyquery import PyQuery as pq
+import requests
 import string
-from countyapi.models import CountyInmate, CourtDate, CourtLocation, HousingHistory, HousingLocation
-from datetime import datetime
-from datetime import date
+from time import sleep
+
 from django.db.utils import DatabaseError
+
+from countyapi.models import CountyInmate, CourtDate, CourtLocation, HousingHistory, HousingLocation, ChargesHistory
+
+
+SLEEP_INTERVAL = 0.5
 
 log = logging.getLogger('main')
 
+def recursive_requests(url, limit=3, before_r_sleep=0.0, after_r_sleep=0.0, attempts=1):
+    """Recursively requests for a url while the numbers of attempts is less than the limit and the results aren't a requests(module) ok status code. Will sleep before and after every request if params are provided. Returns None if the requests were unsuccessful, else returns a 'requests.models.Response' object"""
+    sleep(before_r_sleep)
+    results = requests.get(url)
+    sleep(after_r_sleep)
+    if results.status_code != requests.codes.ok:
+        if attempts > limit:
+            return None
+        log.debug("Error getting %s, status code: %s, Attempt #: %s" % (url, results.status_code, attempts))
+        results = recursive_requests(url, limit, before_r_sleep, after_r_sleep, attempts+1)
+    return results
+
 def create_update_inmate(url):
     # Get and parse inmate page
-    inmate_result = requests.get(url)
+    inmate_result = recursive_requests(url, 3, SLEEP_INTERVAL)
     
-    if inmate_result.status_code != requests.codes.ok:
-        log.debug("Error getting %s, status code: %s" % (url, inmate_result.status_code))
+    if not inmate_result: 
+    # the results are not truthy so return, else it's a truthy object so continue
         return
-    
     inmate_doc = pq(inmate_result.content)
     columns = inmate_doc('table tr:nth-child(2n) td')
     
@@ -49,17 +65,16 @@ def create_update_inmate(url):
     except DatabaseError:
         log.debug("Could not save housing location '%s'" % columns[8].text_content().strip())
     
-    # Calculate age
-    #if (inmate.age_at_booking = None):
+    # Age parsing
     bday_parts = columns[2].text_content().strip().split('/')
     bday = datetime(int(bday_parts[2]), int(bday_parts[0]), int(bday_parts[1]))
     # Split booked date into parts and reconstitute as string
     booked_parts = columns[7].text_content().strip().split('/')
     inmate.booking_date = "%s-%s-%s" % (booked_parts[2], booked_parts[0], booked_parts[1])
     booking_datetime = datetime(int(booked_parts[2]), int(booked_parts[0]), int(booked_parts[1]))
-    inmate.age_at_booking = calculate_age(bday,booking_datetime)
+    inmate.age_at_booking = calculate_age(bday, booking_datetime)
 
-    # If the value can be converted to an integer, it's a dollar
+    # Bond: If the value can be converted to an integer, it's a dollar
     # amount. Otherwise, it's a status, e.g. "* NO BOND *".
     try:
         bail_amount = columns[10].text_content().strip().replace(',','')
@@ -67,27 +82,46 @@ def create_update_inmate(url):
     except ValueError:
         inmate.bail_status = columns[10].text_content().replace('*','').strip()
 
-    # Charges come on two lines. The first line is a citation and the
+    # Charges: charges come on two lines. The first line is a citation and the
     # second is an optional description of the charges.
     charges = columns[11].text_content().splitlines()
-    for n,line in enumerate(charges):
+    # Variables to keep our parsed strings
+    parsed_charges = ""
+    parsed_charges_citation = ""
+    for n, line in enumerate(charges):
         charges[n] = line.strip()
-    inmate.charges_citation = charges[0]
+    parsed_charges = charges[0]
     try:
-        inmate.charges = charges[1]
+        parsed_charges_citation = charges[1]
     except IndexError: pass
-
+    
+    if len(inmate.charges_history.all()) != 0:
+        inmate_latest_charge = inmate.charges_history.latest('date_seen') # last known charge
+        # if the last known charge is different than the current info then create a new charge
+        if inmate_latest_charge.charges != parsed_charges or inmate_latest_charge.charges_citation != parsed_charges_citation:
+            new_charge = inmate.charges_history.create(charges=parsed_charges, charges_citation=parsed_charges_citation)
+            new_charge.date_seen = datetime.now().date()
+            new_charge.save()
+    else:
+        # if the inmate has no charges then create a new one with the parsed info
+        new_charge = inmate.charges_history.create(charges=parsed_charges, charges_citation=parsed_charges_citation)
+        new_charge.date_seen = datetime.now().date()
+        new_charge.save()
+    # Court date parsing
     court_date_parts = columns[12].text_content().strip().split('/')
     if len(court_date_parts) == 3:
         # Get location by splitting lines, stripping, and re-joining
         next_court_location = columns[13].text_content().splitlines()
-        for n,line in enumerate(next_court_location):
+        for n, line in enumerate(next_court_location):
             next_court_location[n] = line.strip()
         next_court_location = "\n".join(next_court_location)
         
-        # Get or create the location
+        # Get or create the location object
+        parsed_location = parse_location(next_court_location)
+        if parsed_location is None:
+            parsed_location = {}
         location, new_location = CourtLocation.objects.get_or_create(location=next_court_location, **parsed_location)
- 
+
         # Parse next court date
         next_court_date = "%s-%s-%s" % (court_date_parts[2], court_date_parts[0], court_date_parts[1])
         
@@ -97,8 +131,6 @@ def create_update_inmate(url):
     inmate.save()
     log.debug("%s inmate %s" % ("Created" if created else "Updated" , inmate))
 
-    # Update global counters
-   
     return jail_id
 
 def process_urls(base_url,inmate_urls,records,limit=None):
@@ -193,7 +225,67 @@ def process_housing_location(location_object):
         elif "N1" in housing_location:
             location_object.in_program = "Segregation"
     
-    location_object.sub_division = " ".join(location_segments[1:3]).replace(" ","")
-    location_object.sub_division_location = " ".join(location_segments[3:]).replace(" ","-")
+    location_object.sub_division = " ".join(location_segments[1:3]).replace(" ", "")
+    location_object.sub_division_location = " ".join(location_segments[3:]).replace(" ", "-")
     return
 
+def parse_location(location_string):
+    """
+    Takes a location string of the form:
+
+    "Criminal C\nCriminal Courts Building, Room:506\n2650 South California Avenue Room: 506\nChicago, IL 60608\n"
+
+     and returns a dict of the form:
+    {
+        'location_name': 'Criminal C',
+        'branch_name': 'Criminal Courts Building',
+        'room_number': 506,
+        'address': '2650 South California Avenue',
+        'city': 'Chicago',
+        'state': 'IL',
+        'zip_code': 60608,
+    }
+    """
+
+    # last line is always empty
+    lines = location_string.split('\n')[:-1]
+
+    if len(lines) == 4:
+        try:
+            # The first line is the location_name
+            location_name = lines[0]
+
+            # Second line must be split into room number and branch name
+            branch_line = lines[1].split(', Room:')
+            branch_name = branch_line[0].strip()
+            room_number = int(branch_line[1])
+
+            # Third line has address - remove room number and store
+            address = lines[2].split('Room:')[0].strip()
+
+            # Fourth line has city, state and zip separated by spaces,
+            # or a weird unicode space character
+            city_state_zip = lines[3].replace(u'\xa0', u' ').split(' ')
+            len_of_city_state_zip = len(city_state_zip)
+
+            city = " ".join(city_state_zip[0:-2]).replace(',', '').strip()
+            state = city_state_zip[-2].strip()
+            zip_code = int(city_state_zip[-1])
+
+            d = {
+                'location_name': location_name,
+                'branch_name': branch_name,
+                'room_number': room_number,
+                'address': address,
+                'city': city,
+                'state': state,
+                'zip_code': zip_code,
+            }
+
+            return d
+        except IndexError as e:
+            log.debug("Following location has unknown format: %s" % location_string)
+            return None
+    else:
+        log.debug("Following location doesn't have right number of lines: %s" % location_string)
+        return None
