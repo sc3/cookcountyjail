@@ -17,7 +17,7 @@ class CountyInmate(models.Model):
     age_at_booking = models.IntegerField(null=True, blank=True)
     bail_status = models.CharField(max_length=50, null=True)
     bail_amount = models.IntegerField(null=True, blank=True)
-    
+
     def __unicode__(self):
         return self.jail_id
 
@@ -42,13 +42,14 @@ class CourtLocation(models.Model):
     Model that represents a unique court location (court house and room).
     """
     location = models.TextField()
-    location_name=models.CharField(max_length=20, null=True)
+    location_name = models.CharField(max_length=20, null=True)
     branch_name = models.CharField(max_length=60, null=True)
-    room_number=models.IntegerField(null=True, blank=True)
+    room_number = models.IntegerField(null=True, blank=True)
     address = models.CharField(max_length=100, null=True)
     city = models.CharField(max_length=30, null=True)
     state = models.CharField(max_length=3, null=True)
     zip_code = models.IntegerField(null=True, blank=True)
+
 
 class HousingHistory(models.Model):
     """
@@ -72,6 +73,7 @@ class HousingLocation(models.Model):
 
     def __unicode__(self):
         return self.housing_location
+
 
 class ChargesHistory(models.Model):
     inmate = models.ForeignKey('CountyInmate', related_name='charges_history')

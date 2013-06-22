@@ -2,50 +2,52 @@ from datetime import datetime, date
 import logging
 from pyquery import PyQuery as pq
 import requests
-import string
 from time import sleep
+from random import random
 
 from django.db.utils import DatabaseError
 
-from countyapi.models import CountyInmate, CourtDate, CourtLocation, HousingHistory, HousingLocation, ChargesHistory
+from countyapi.models import CountyInmate, CourtLocation, HousingLocation
 
 
-SLEEP_INTERVAL = 0.5
+NUMBER_OF_ATTEMPTS = 5
+STD_INITIAL_SLEEP_PERIOD = 0.25
+STD_NUMBER_ATTEMPTS = 3
+STD_SLEEP_PERIODS = [1, 3, 5, 8, 13]
 
 log = logging.getLogger('main')
 
-def recursive_requests(url, limit=3, before_r_sleep=0.0, after_r_sleep=0.0, attempts=1):
-    """Recursively requests for a url while the numbers of attempts is less than the limit and the results aren't a requests(module) ok status code. Will sleep before and after every request if params are provided. Returns None if the requests were unsuccessful, else returns a 'requests.models.Response' object"""
-    sleep(before_r_sleep)
-    results = requests.get(url)
-    sleep(after_r_sleep)
-    if results.status_code != requests.codes.ok:
-        if attempts > limit:
-            return None
-        log.debug("Error getting %s, status code: %s, Attempt #: %s" % (url, results.status_code, attempts))
-        results = recursive_requests(url, limit, before_r_sleep, after_r_sleep, attempts+1)
-    return results
+
+def calculate_age(born, booking_date):
+    """From http://stackoverflow.com/questions/2217488/age-from-birthdate-in-python"""
+    if born.month <= booking_date.month and born.day <= booking_date.day:
+        return (booking_date.year - born.year)
+    else:
+        return booking_date.year - born.year - 1
+
 
 def create_update_inmate(url):
     # Get and parse inmate page
-    inmate_result = recursive_requests(url, 3, SLEEP_INTERVAL)
-    
-    if not inmate_result: 
-    # the results are not truthy so return, else it's a truthy object so continue
+
+    inmate_result = fetch_page(url, NUMBER_OF_ATTEMPTS)
+
+    # the results are not truthy so return, else it's a truthy object continue
+    if not inmate_result:
         return
+
     inmate_doc = pq(inmate_result.content)
     columns = inmate_doc('table tr:nth-child(2n) td')
-    
+
     # Jail ID is needed to get_or_create object. Everything else must
     # be set after inmate object is created or retrieved.
     jail_id = columns[0].text_content().strip()
-    
+
     # Get or create inmate based on jail_id
     inmate, created = CountyInmate.objects.get_or_create(jail_id=jail_id)
-    
+
     # Record url
     inmate.url = url
-    
+
     # Record columns with simple values
     inmate.race = columns[3].text_content().strip()
     inmate.gender = columns[4].text_content().strip()
@@ -54,7 +56,7 @@ def create_update_inmate(url):
     inmate.housing_location = columns[8].text_content().strip()
 
     # Housing location parsing
-    inmate_housing_location, created_location = HousingLocation.objects.get_or_create(housing_location = columns[8].text_content().strip())
+    inmate_housing_location, created_location = HousingLocation.objects.get_or_create(housing_location=columns[8].text_content().strip())
     process_housing_location(inmate_housing_location)
     try:
         housing_history, new_history = inmate.housing_history.get_or_create(housing_location=inmate_housing_location)
@@ -64,7 +66,7 @@ def create_update_inmate(url):
         inmate_housing_location.save()
     except DatabaseError:
         log.debug("Could not save housing location '%s'" % columns[8].text_content().strip())
-    
+
     # Age parsing
     bday_parts = columns[2].text_content().strip().split('/')
     bday = datetime(int(bday_parts[2]), int(bday_parts[0]), int(bday_parts[1]))
@@ -77,10 +79,10 @@ def create_update_inmate(url):
     # Bond: If the value can be converted to an integer, it's a dollar
     # amount. Otherwise, it's a status, e.g. "* NO BOND *".
     try:
-        bail_amount = columns[10].text_content().strip().replace(',','')
+        bail_amount = columns[10].text_content().strip().replace(',', '')
         inmate.bail_amount = int(bail_amount)
     except ValueError:
-        inmate.bail_status = columns[10].text_content().replace('*','').strip()
+        inmate.bail_status = columns[10].text_content().replace('*', '').strip()
 
     # Charges: charges come on two lines. The first line is a citation and the
     # second is an optional description of the charges.
@@ -93,10 +95,11 @@ def create_update_inmate(url):
     parsed_charges = charges[0]
     try:
         parsed_charges_citation = charges[1]
-    except IndexError: pass
-    
+    except IndexError:
+        pass
+
     if len(inmate.charges_history.all()) != 0:
-        inmate_latest_charge = inmate.charges_history.latest('date_seen') # last known charge
+        inmate_latest_charge = inmate.charges_history.latest('date_seen')  # last known charge
         # if the last known charge is different than the current info then create a new charge
         if inmate_latest_charge.charges != parsed_charges or inmate_latest_charge.charges_citation != parsed_charges_citation:
             new_charge = inmate.charges_history.create(charges=parsed_charges, charges_citation=parsed_charges_citation)
@@ -115,7 +118,7 @@ def create_update_inmate(url):
         for n, line in enumerate(next_court_location):
             next_court_location[n] = line.strip()
         next_court_location = "\n".join(next_court_location)
-        
+
         # Get or create the location object
         parsed_location = parse_location(next_court_location)
         if parsed_location is None:
@@ -124,38 +127,65 @@ def create_update_inmate(url):
 
         # Parse next court date
         next_court_date = "%s-%s-%s" % (court_date_parts[2], court_date_parts[0], court_date_parts[1])
-        
+
         # Get or create a court date for this inmate
         court_date, new_court_date = inmate.court_dates.get_or_create(date=next_court_date, location=location)
     # Save it!
     inmate.save()
-    log.debug("%s inmate %s" % ("Created" if created else "Updated" , inmate))
+    log.debug("%s inmate %s" % ("Created" if created else "Updated", inmate))
 
     return jail_id
 
-def process_urls(base_url,inmate_urls,records,limit=None):
-    seen = [] # List to store jail ids
-   
-    for url in inmate_urls:	
+
+def fetch_page(url, number_attempts=STD_NUMBER_ATTEMPTS, initial_sleep_period=STD_INITIAL_SLEEP_PERIOD):
+    attempt = 1
+    sleep_period = initial_sleep_period
+    while attempt <= number_attempts:
+        sleep(sleep_period)
+        try:
+            log.debug("%s - Retreiving inmate %s record" % (str(datetime.now()), url))
+            results = requests.get(url)
+        except requests.exceptions.RequestException:
+            results = None
+        if results is not None and results.status_code == requests.codes.ok:
+            return results
+        status_code = "Exception thrown" if results is None else results.status_code
+        log.debug("Error getting %s, status code: %s, Attempt #: %s" % (url, status_code, attempt))
+        sleep_period = get_next_sleep_period(sleep_period, attempt)
+        attempt += 1
+    return None
+
+
+def get_next_sleep_period(current_sleep_period, attempt):
+    """
+    get_next_sleep_period - implements a cascading fall off sleep period with a bit of randomness
+    control the periods by setting the values in the array, STD_SLEEP_PERIODS
+    """
+    if (attempt - 1) < len(STD_SLEEP_PERIODS):
+        index = attempt - 1
+    else:
+        index = -1
+    return current_sleep_period * random() + STD_SLEEP_PERIODS[index]
+
+
+def process_urls(base_url, inmate_urls, records, limit=None):
+    seen = []  # List to store jail ids
+
+    for url in inmate_urls:
         url = "%s/%s" % (base_url, url.attrib['href'])
         new_id = create_update_inmate(url)
-        if new_id not in seen and new_id != None:
-        	seen.append(new_id)
+        if new_id not in seen and new_id is not None:
+            seen.append(new_id)
         if (limit and (records + len(seen)) >= limit):
-    		break    
-    
+            break
+
     return seen
 
-def calculate_age(born,booking_date):
-    """From http://stackoverflow.com/questions/2217488/age-from-birthdate-in-python"""
-    if born.month <= booking_date.month and born.day <= booking_date.day:
-        return (booking_date.year - born.year) 
-    else:
-        return booking_date.year - born.year -1
 
 def process_housing_location(location_object):
     """Receives a housing location from the HousingLocation table and parses it editing the different fields"""
-    location_segments = location_object.housing_location.replace("-"," ").split() # Creates a list with the housing location information 
+    log.debug("Housing location = %s" % (location_object.housing_location))
+    location_segments = location_object.housing_location.replace("-", " ").split()  # Creates a list with the housing location information
     try:
         # If successful then the location starts with a integer, implies inmate is in a division
         int(location_segments[0])
@@ -170,7 +200,7 @@ def process_housing_location(location_object):
     housing_location = location_object.housing_location
     location_object.division = location_start
 
-    if location_segments_len == 1: # Executed only if the housing information is a single division number ex: '01-' 
+    if location_segments_len == 1:  # Executed only if the housing information is a single division number ex: '01-'
         return
 
     for element in location_segments:
@@ -183,15 +213,15 @@ def process_housing_location(location_object):
 
     if ((location_start == "02" or location_start == "08" or location_start == "09" or location_start == "11" or location_start == "14") or (location_start == "01" and "ABO" in housing_location)):
         location_object.sub_division = location_segments[1]
-        location_object.sub_division_location = " ".join(location_segments[2:]).replace(" ","-")
+        location_object.sub_division_location = " ".join(location_segments[2:]).replace(" ", "-")
         return
     if location_start == "03" and "AX" in housing_location:
         location_object.sub_division = location_segments[2]
-        location_object.sub_division_location = " ".join(location_segments[3:]).replace(" ","-")
+        location_object.sub_division_location = " ".join(location_segments[3:]).replace(" ", "-")
         return
     if location_start == "5" or location_start == "6" or location_start == "10":
         location_object.sub_division = location_segments[2] + location_segments[1]
-        location_object.sub_division_location = " ".join(location_segments[3:]).replace(" ","-")
+        location_object.sub_division_location = " ".join(location_segments[3:]).replace(" ", "-")
         return
     if location_start == "15":
         if location_segments[1] == "EM":
@@ -224,10 +254,11 @@ def process_housing_location(location_object):
             location_object.in_program = "Protective Custody"
         elif "N1" in housing_location:
             location_object.in_program = "Segregation"
-    
+
     location_object.sub_division = " ".join(location_segments[1:3]).replace(" ", "")
     location_object.sub_division_location = " ".join(location_segments[3:]).replace(" ", "-")
     return
+
 
 def parse_location(location_string):
     """
@@ -266,7 +297,6 @@ def parse_location(location_string):
             # Fourth line has city, state and zip separated by spaces,
             # or a weird unicode space character
             city_state_zip = lines[3].replace(u'\xa0', u' ').split(' ')
-            len_of_city_state_zip = len(city_state_zip)
 
             city = " ".join(city_state_zip[0:-2]).replace(',', '').strip()
             state = city_state_zip[-2].strip()
@@ -283,7 +313,7 @@ def parse_location(location_string):
             }
 
             return d
-        except IndexError as e:
+        except IndexError:
             log.debug("Following location has unknown format: %s" % location_string)
             return None
     else:
