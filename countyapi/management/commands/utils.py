@@ -4,6 +4,8 @@ from pyquery import PyQuery as pq
 import requests
 from time import sleep
 from random import random
+import re
+from sys import exit
 
 from django.db.utils import DatabaseError
 
@@ -14,6 +16,8 @@ NUMBER_OF_ATTEMPTS = 5
 STD_INITIAL_SLEEP_PERIOD = 0.25
 STD_NUMBER_ATTEMPTS = 3
 STD_SLEEP_PERIODS = [1, 3, 5, 8, 13]
+
+HOUSING_STARTING_ID = re.compile('\d+$')
 
 log = logging.getLogger('main')
 
@@ -29,10 +33,12 @@ def calculate_age(born, booking_date):
 def create_update_inmate(url):
     # Get and parse inmate page
 
+    inmate_details = InmateDetails(url)
     inmate_result = fetch_page(url, NUMBER_OF_ATTEMPTS)
 
-    # the results are not truthy so return, else it's a truthy object continue
-    if not inmate_result:
+    if not inmate_details.found() or inmate_result is None:
+        if inmate_details.found() or inmate_result is not None:
+            log.debug("Error fetch mismatch for %s" % url)
         return
 
     inmate_doc = pq(inmate_result.content)
@@ -41,6 +47,7 @@ def create_update_inmate(url):
     # Jail ID is needed to get_or_create object. Everything else must
     # be set after inmate object is created or retrieved.
     jail_id = columns[0].text_content().strip()
+    assert_same(jail_id, inmate_details.jail_id(), url, 'jail_id')
 
     # Get or create inmate based on jail_id
     inmate, created = CountyInmate.objects.get_or_create(jail_id=jail_id)
@@ -55,26 +62,27 @@ def create_update_inmate(url):
     inmate.weight = columns[6].text_content().strip()
     inmate.housing_location = columns[8].text_content().strip()
 
-    # Housing location parsing
-    inmate_housing_location, created_location = HousingLocation.objects.get_or_create(housing_location=columns[8].text_content().strip())
-    process_housing_location(inmate_housing_location)
-    try:
-        housing_history, new_history = inmate.housing_history.get_or_create(housing_location=inmate_housing_location)
-        if new_history:
-            housing_history.housing_date = date.today()
-        housing_history.save()
-        inmate_housing_location.save()
-    except DatabaseError:
-        log.debug("Could not save housing location '%s'" % columns[8].text_content().strip())
+    assert_same(inmate.race, inmate_details.race(), url, 'race')
+    assert_same(inmate.gender, inmate_details.gender(), url, 'gender')
+    assert_same(inmate.height, inmate_details.height(), url, 'height')
+    assert_same(inmate.weight, inmate_details.weight(), url, 'weight')
+    assert_same(inmate.housing_location, inmate_details.housing_location(), url, 'housing_location')
+
+    store_housing_location(inmate)
 
     # Age parsing
     bday_parts = columns[2].text_content().strip().split('/')
     bday = datetime(int(bday_parts[2]), int(bday_parts[0]), int(bday_parts[1]))
+    assert_same(bday, inmate_details.birth_date(), url, 'birth_date')
+
     # Split booked date into parts and reconstitute as string
     booked_parts = columns[7].text_content().strip().split('/')
     inmate.booking_date = "%s-%s-%s" % (booked_parts[2], booked_parts[0], booked_parts[1])
+    assert_same(inmate.booking_date, inmate_details.booking_date().strftime('%Y-%m-%d'), url, 'booking_date')
+
     booking_datetime = datetime(int(booked_parts[2]), int(booked_parts[0]), int(booked_parts[1]))
     inmate.age_at_booking = calculate_age(bday, booking_datetime)
+    assert_same(inmate.age_at_booking, inmate_details.age_at_booking(), url, 'age_at_booking)')
 
     # Bond: If the value can be converted to an integer, it's a dollar
     # amount. Otherwise, it's a status, e.g. "* NO BOND *".
@@ -84,32 +92,8 @@ def create_update_inmate(url):
     except ValueError:
         inmate.bail_status = columns[10].text_content().replace('*', '').strip()
 
-    # Charges: charges come on two lines. The first line is a citation and the
-    # second is an optional description of the charges.
-    charges = columns[11].text_content().splitlines()
-    # Variables to keep our parsed strings
-    parsed_charges = ""
-    parsed_charges_citation = ""
-    for n, line in enumerate(charges):
-        charges[n] = line.strip()
-    parsed_charges = charges[0]
-    try:
-        parsed_charges_citation = charges[1]
-    except IndexError:
-        pass
+    store_charges(inmate, inmate_details, columns, url)
 
-    if len(inmate.charges_history.all()) != 0:
-        inmate_latest_charge = inmate.charges_history.latest('date_seen')  # last known charge
-        # if the last known charge is different than the current info then create a new charge
-        if inmate_latest_charge.charges != parsed_charges or inmate_latest_charge.charges_citation != parsed_charges_citation:
-            new_charge = inmate.charges_history.create(charges=parsed_charges, charges_citation=parsed_charges_citation)
-            new_charge.date_seen = datetime.now().date()
-            new_charge.save()
-    else:
-        # if the inmate has no charges then create a new one with the parsed info
-        new_charge = inmate.charges_history.create(charges=parsed_charges, charges_citation=parsed_charges_citation)
-        new_charge.date_seen = datetime.now().date()
-        new_charge.save()
     # Court date parsing
     court_date_parts = columns[12].text_content().strip().split('/')
     if len(court_date_parts) == 3:
@@ -174,7 +158,7 @@ def process_urls(base_url, inmate_urls, records, limit=None):
     for url in inmate_urls:
         url = "%s/%s" % (base_url, url.attrib['href'])
         new_id = create_update_inmate(url)
-        if new_id not in seen and new_id is not None:
+        if new_id is not None and new_id not in seen:
             seen.append(new_id)
         if (limit and (records + len(seen)) >= limit):
             break
@@ -186,11 +170,9 @@ def process_housing_location(location_object):
     """Receives a housing location from the HousingLocation table and parses it editing the different fields"""
     log.debug("Housing location = %s" % (location_object.housing_location))
     location_segments = location_object.housing_location.replace("-", " ").split()  # Creates a list with the housing location information
-    try:
-        # If successful then the location starts with a integer, implies inmate is in a division
-        int(location_segments[0])
-    except (ValueError, IndexError):
-        # Location starts with a letter stuff here there for not in a division and no further parsing
+
+    if HOUSING_STARTING_ID.match(location_segments[0]) is None:
+        # Location did not start with a number so no further parsing
         if location_object.housing_location == "":
             location_object.housing_location = "UNKNOWN"
         return
@@ -319,3 +301,115 @@ def parse_location(location_string):
     else:
         log.debug("Following location doesn't have right number of lines: %s" % location_string)
         return None
+
+
+def store_charges(inmate, inmate_details, columns, url):
+    """
+    Stores the inmates charges if they are new or if they have been changes
+    Charges: charges come on two lines. The first line is a citation and the
+    # second is an optional description of the charges.
+    """
+    charges = columns[11].text_content().strip().splitlines()
+    assert_same(charges, inmate_details.charges().splitlines(), url, 'charges')
+
+    # Variables to keep our parsed strings
+    parsed_charges = ""
+    parsed_charges_citation = ""
+    for n, line in enumerate(charges):
+        charges[n] = line.strip()
+    parsed_charges = charges[0]
+    try:
+        parsed_charges_citation = charges[1]
+    except IndexError:
+        pass
+
+    if len(inmate.charges_history.all()) != 0:
+        inmate_latest_charge = inmate.charges_history.latest('date_seen')  # last known charge
+        # if the last known charge is different than the current info then create a new charge
+        if inmate_latest_charge.charges != parsed_charges or inmate_latest_charge.charges_citation != parsed_charges_citation:
+            new_charge = inmate.charges_history.create(charges=parsed_charges, charges_citation=parsed_charges_citation)
+            new_charge.date_seen = datetime.now().date()
+            new_charge.save()
+    else:
+        # if the inmate has no charges then create a new one with the parsed info
+        new_charge = inmate.charges_history.create(charges=parsed_charges, charges_citation=parsed_charges_citation)
+        new_charge.date_seen = datetime.now().date()
+        new_charge.save()
+
+
+def store_housing_location(inmate):
+    inmate_housing_location, created_location = HousingLocation.objects.get_or_create(housing_location=inmate.housing_location)
+    process_housing_location(inmate_housing_location)
+    try:
+        housing_history, new_history = inmate.housing_history.get_or_create(housing_location=inmate_housing_location)
+        if new_history:
+            housing_history.housing_date = date.today()
+        housing_history.save()
+        inmate_housing_location.save()
+    except DatabaseError:
+        log.debug("Could not save housing location '%s'" % inmate.housing_location)
+
+
+def assert_same(orig_value, new_value, url, field_name):
+    if orig_value != new_value:
+        log.debug("Error, mismatch %s values: %s != %s for %s" % (field_name, str(orig_value), str(new_value), url))
+        exit(1)
+
+
+class InmateDetails:
+    """
+    Handles the processing of the Inmate Detail information page on the Cook County Jail website.
+    Presents a consistent named interface to the information
+    """
+    def __init__(self, url):
+        self.__url = url
+        inmate_result = fetch_page(url, NUMBER_OF_ATTEMPTS)
+        self.__inmate_found = inmate_result is not None
+        if not self.__inmate_found:
+            return
+
+        inmate_doc = pq(inmate_result.content)
+        self.__columns = inmate_doc('table tr:nth-child(2n) td')
+
+    def age_at_booking(self):
+        """From http://stackoverflow.com/questions/2217488/age-from-birthdate-in-python"""
+        birth_date, booking_date = self.birth_date(), self.booking_date()
+        if birth_date.month <= booking_date.month and birth_date.day <= booking_date.day:
+            return (booking_date.year - birth_date.year)
+        return booking_date.year - birth_date.year - 1
+
+    def birth_date(self):
+        return self.convert_date(2)
+
+    def booking_date(self):
+        return self.convert_date(7)
+
+    def charges(self):
+        return self.column_content(11)
+
+    def column_content(self, columns_index):
+        return self.__columns[columns_index].text_content().strip()
+
+    def found(self):
+        return self.__inmate_found
+
+    def gender(self):
+        return self.column_content(4)
+
+    def height(self):
+        return self.column_content(5)
+
+    def housing_location(self):
+        return self.column_content(8)
+
+    def jail_id(self):
+        return self.column_content(0)
+
+    def convert_date(self, column_index):
+        return datetime.strptime(self.column_content(column_index), '%m/%d/%Y')
+
+    def race(self):
+        return self.column_content(3)
+
+    def weight(self):
+        return self.column_content(6)
