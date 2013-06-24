@@ -17,7 +17,7 @@ STD_INITIAL_SLEEP_PERIOD = 0.25
 STD_NUMBER_ATTEMPTS = 3
 STD_SLEEP_PERIODS = [1, 3, 5, 8, 13]
 
-HOUSING_STARTING_ID = re.compile('\d+$')
+IS_INTEGER = re.compile('\d+$')
 
 log = logging.getLogger('main')
 
@@ -28,6 +28,14 @@ def calculate_age(born, booking_date):
         return (booking_date.year - born.year)
     else:
         return booking_date.year - born.year - 1
+
+
+def convert_to_int(possible_number, use_if_not_int):
+    try:
+        result = int(possible_number)
+    except ValueError:
+        result = use_if_not_int
+    return result
 
 
 def create_update_inmate(url):
@@ -89,32 +97,18 @@ def create_update_inmate(url):
     try:
         bail_amount = columns[10].text_content().strip().replace(',', '')
         inmate.bail_amount = int(bail_amount)
+        inmate.bail_status = None
     except ValueError:
         inmate.bail_status = columns[10].text_content().replace('*', '').strip()
+        inmate.bail_amount = None
+    new_bail_amount, new_bail_status = store_bail_info(inmate, inmate_details)
+    assert_same(inmate.bail_amount, new_bail_amount, url, 'bail_amount')
+    assert_same(inmate.bail_status, new_bail_status, url, 'bail_status')
 
     store_charges(inmate, inmate_details, columns, url)
 
-    # Court date parsing
-    court_date_parts = columns[12].text_content().strip().split('/')
-    if len(court_date_parts) == 3:
-        # Get location by splitting lines, stripping, and re-joining
-        next_court_location = columns[13].text_content().splitlines()
-        for n, line in enumerate(next_court_location):
-            next_court_location[n] = line.strip()
-        next_court_location = "\n".join(next_court_location)
+    store_next_court_info(inmate, inmate_details, columns, url)
 
-        # Get or create the location object
-        parsed_location = parse_location(next_court_location)
-        if parsed_location is None:
-            parsed_location = {}
-        location, new_location = CourtLocation.objects.get_or_create(location=next_court_location, **parsed_location)
-
-        # Parse next court date
-        next_court_date = "%s-%s-%s" % (court_date_parts[2], court_date_parts[0], court_date_parts[1])
-
-        # Get or create a court date for this inmate
-        court_date, new_court_date = inmate.court_dates.get_or_create(date=next_court_date, location=location)
-    # Save it!
     inmate.save()
     log.debug("%s inmate %s" % ("Created" if created else "Updated", inmate))
 
@@ -168,10 +162,9 @@ def process_urls(base_url, inmate_urls, records, limit=None):
 
 def process_housing_location(location_object):
     """Receives a housing location from the HousingLocation table and parses it editing the different fields"""
-    log.debug("Housing location = %s" % (location_object.housing_location))
     location_segments = location_object.housing_location.replace("-", " ").split()  # Creates a list with the housing location information
 
-    if HOUSING_STARTING_ID.match(location_segments[0]) is None:
+    if location_segments == [] or IS_INTEGER.match(location_segments[0]) is None:
         # Location did not start with a number so no further parsing
         if location_object.housing_location == "":
             location_object.housing_location = "UNKNOWN"
@@ -242,13 +235,15 @@ def process_housing_location(location_object):
     return
 
 
-def parse_location(location_string):
+def parse_court_location(location_string):
     """
     Takes a location string of the form:
 
-    "Criminal C\nCriminal Courts Building, Room:506\n2650 South California Avenue Room: 506\nChicago, IL 60608\n"
+    "Criminal C\nCriminal Courts Building, Room:506\n2650 South California Avenue Room: 506\nChicago, IL 60608"
 
-     and returns a dict of the form:
+    The lines can contain spurious white-space at the beginning and end of the lines, these are stripped
+
+     and returns two values, cleaned up version the input string and a dict of the form:
     {
         'location_name': 'Criminal C',
         'branch_name': 'Criminal Courts Building',
@@ -258,20 +253,22 @@ def parse_location(location_string):
         'state': 'IL',
         'zip_code': 60608,
     }
+
+    If location is malformed, then original location string is returned with an empty dict
     """
 
-    # last line is always empty
-    lines = location_string.split('\n')[:-1]
+    lines = location_string.splitlines()
 
     if len(lines) == 4:
         try:
+            strip_the_lines(lines)
             # The first line is the location_name
             location_name = lines[0]
 
             # Second line must be split into room number and branch name
             branch_line = lines[1].split(', Room:')
             branch_name = branch_line[0].strip()
-            room_number = int(branch_line[1])
+            room_number = convert_to_int(branch_line[1], 0)
 
             # Third line has address - remove room number and store
             address = lines[2].split('Room:')[0].strip()
@@ -282,7 +279,7 @@ def parse_location(location_string):
 
             city = " ".join(city_state_zip[0:-2]).replace(',', '').strip()
             state = city_state_zip[-2].strip()
-            zip_code = int(city_state_zip[-1])
+            zip_code = convert_to_int(city_state_zip[-1], 60639)
 
             d = {
                 'location_name': location_name,
@@ -294,13 +291,28 @@ def parse_location(location_string):
                 'zip_code': zip_code,
             }
 
-            return d
+            return "\n".join(lines), d
         except IndexError:
-            log.debug("Following location has unknown format: %s" % location_string)
-            return None
+            log.debug("Following Court location has unknown format: %s" % location_string)
+            return location_string, {}
     else:
-        log.debug("Following location doesn't have right number of lines: %s" % location_string)
-        return None
+        log.debug("Following Court location doesn't have right number of lines: %s" % location_string)
+        return location_string, {}
+
+
+def store_bail_info(inmate, inmate_details):
+    # Bond: If the value is an integer, it's a dollar
+    # amount. Otherwise, it's a status, e.g. "* NO BOND *".
+    bail_amount = inmate_details.bail_amount().replace(',', '')
+    bail_status = None
+    if IS_INTEGER.match(bail_amount):
+        bail_amount = int(bail_amount)
+        # inmate.bail_amount = int(bail_amount)
+    else:
+        # inmate.bail_status = inmate_details.bail_amount().replace('*', '').strip()
+        bail_status = inmate_details.bail_amount().replace('*', '').strip()
+        bail_amount = None
+    return bail_amount, bail_status
 
 
 def store_charges(inmate, inmate_details, columns, url):
@@ -311,6 +323,10 @@ def store_charges(inmate, inmate_details, columns, url):
     """
     charges = columns[11].text_content().strip().splitlines()
     assert_same(charges, inmate_details.charges().splitlines(), url, 'charges')
+
+    # terminate early if they have no charges
+    if charges == []:
+        return
 
     # Variables to keep our parsed strings
     parsed_charges = ""
@@ -350,6 +366,44 @@ def store_housing_location(inmate):
         log.debug("Could not save housing location '%s'" % inmate.housing_location)
 
 
+def store_next_court_info(inmate, inmate_details, columns, url):
+    # Court date parsing
+    court_date_parts = columns[12].text_content().strip()
+    next_court_date = inmate_details.next_court_date()
+    if next_court_date is None:
+        next_court_date = ''
+    else:
+        next_court_date = next_court_date.strftime('%m/%d/%Y')
+    assert_same(court_date_parts, next_court_date, url, 'court_date')
+    court_date_parts = court_date_parts.split('/')
+    if len(court_date_parts) == 3:
+        # Get location by splitting lines, stripping, and re-joining
+        next_court_location = columns[13].text_content().strip()
+        new_next_court_location = inmate_details.court_house_location()
+        assert_same(next_court_location, new_next_court_location, url, 'court house location')
+        next_court_location = next_court_location.splitlines()
+        for n, line in enumerate(next_court_location):
+            next_court_location[n] = line.strip()
+        next_court_location = "\n".join(next_court_location)
+
+        # Get or create the location object
+        new_next_court_location, parsed_location = parse_court_location(new_next_court_location)
+        assert_same(next_court_location, new_next_court_location, url, 'parsed court house location')
+        location, new_location = CourtLocation.objects.get_or_create(location=next_court_location, **parsed_location)
+
+        # Parse next court date
+        next_court_date = "%s-%s-%s" % (court_date_parts[2], court_date_parts[0], court_date_parts[1])
+        assert_same(next_court_date, inmate_details.next_court_date().strftime('%Y-%m-%d'), url, 'next court appearance formatted')
+
+        # Get or create a court date for this inmate
+        court_date, new_court_date = inmate.court_dates.get_or_create(date=next_court_date, location=location)
+
+
+def strip_the_lines(lines):
+    for n, line in enumerate(lines):
+        lines[n] = line.strip()
+
+
 def assert_same(orig_value, new_value, url, field_name):
     if orig_value != new_value:
         log.debug("Error, mismatch %s values: %s != %s for %s" % (field_name, str(orig_value), str(new_value), url))
@@ -378,6 +432,9 @@ class InmateDetails:
             return (booking_date.year - birth_date.year)
         return booking_date.year - birth_date.year - 1
 
+    def bail_amount(self):
+        return self.column_content(10)
+
     def birth_date(self):
         return self.convert_date(2)
 
@@ -389,6 +446,16 @@ class InmateDetails:
 
     def column_content(self, columns_index):
         return self.__columns[columns_index].text_content().strip()
+
+    def convert_date(self, column_index):
+        try:
+            result = datetime.strptime(self.column_content(column_index), '%m/%d/%Y')
+        except ValueError:
+            result = None
+        return result
+
+    def court_house_location(self):
+        return self.column_content(13)
 
     def found(self):
         return self.__inmate_found
@@ -405,8 +472,8 @@ class InmateDetails:
     def jail_id(self):
         return self.column_content(0)
 
-    def convert_date(self, column_index):
-        return datetime.strptime(self.column_content(column_index), '%m/%d/%Y')
+    def next_court_date(self):
+        return self.convert_date(12)
 
     def race(self):
         return self.column_content(3)

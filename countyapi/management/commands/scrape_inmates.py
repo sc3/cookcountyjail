@@ -53,6 +53,7 @@ class Command(BaseCommand):
             search_list = string.uppercase
 
         # Search
+        start_date = datetime.today()
         for search_term in search_list:
             log.debug("Search: '%s'" % search_term)
 
@@ -67,7 +68,7 @@ class Command(BaseCommand):
             seen_urls = set([])
             filtered_urls = []
             for url in inmate_urls:
-                if url.attrib['href'] not in seen_urls:
+                if self.okay_to_fetch_url(url, seen_urls, start_date):
                     filtered_urls.append(url)
                     seen_urls.add(url.attrib['href'])
 
@@ -105,6 +106,20 @@ class Command(BaseCommand):
             log.debug("Discharged %s - Earliest: %s earliest, Latest: %s" % (inmate.jail_id, inmate.last_seen_date, now))
             inmate.save()
         return not_present_or_discharged
+
+    def okay_to_fetch_url(self, url, seen_urls, start_date):
+        href = url.attrib['href']
+        if href not in seen_urls:
+            # booking date must not be yesterday or less
+            # Also prior to 2010 the format of a jail id is not in the format YYYY-MMDDNNN it was YYYY-NNNNNNN
+            # so have to parse for year first and is before this one
+            booking_date = href.split('=')[1]
+            booking_year = datetime.strptime(booking_date[0:4], '%Y')
+            if booking_year.year < start_date.year:
+                return True
+            booking_month_date = datetime.strptime(booking_date[5:9], '%m%d')
+            return booking_month_date.month <= start_date.month and booking_month_date.day < start_date.day
+        return False
 
     def search_website(self, search_term):
         attempt = 1
