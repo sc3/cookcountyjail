@@ -4,11 +4,20 @@ from pyquery import PyQuery as pq
 import requests
 from time import sleep
 from random import random
-import re
 
 from django.db.utils import DatabaseError
 
 from countyapi.models import CountyInmate, CourtLocation, HousingLocation
+
+############################################################################################################
+#
+# TODO:
+#    1) this should be turned into a class
+#    2) The InmateDetails class should be put into its own file and the class passed into it
+#    3) Should also collect or log performance stats, how many inmate records fetched, how many failed,
+#       how long it took, etc.
+#
+############################################################################################################
 
 
 NUMBER_OF_ATTEMPTS = 5
