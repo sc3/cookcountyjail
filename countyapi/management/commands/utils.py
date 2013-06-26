@@ -5,7 +5,6 @@ import requests
 from time import sleep
 from random import random
 import re
-from sys import exit
 
 from django.db.utils import DatabaseError
 
@@ -15,15 +14,15 @@ from countyapi.models import CountyInmate, CourtLocation, HousingLocation
 NUMBER_OF_ATTEMPTS = 5
 STD_INITIAL_SLEEP_PERIOD = 0.25
 STD_NUMBER_ATTEMPTS = 3
-STD_SLEEP_PERIODS = [1, 3, 5, 8, 13]
-
-# Regular Expression to match number so don't have to use try/except mechanism
-IS_INTEGER = re.compile('\d+$')
+STD_SLEEP_PERIODS = [1.61, 7, 13, 23, 41]
 
 log = logging.getLogger('main')
 
 
 def convert_to_int(possible_number, use_if_not_int):
+    """
+    Save conversion of string to int with ability to specify default if string is not a number
+    """
     try:
         result = int(possible_number)
     except ValueError:
@@ -33,7 +32,8 @@ def convert_to_int(possible_number, use_if_not_int):
 
 def create_update_inmate(url):
     """
-    Fetches inmates detail page and creates or updates inmates record based on it
+    Fetches inmates detail page and creates or updates inmates record based on it,
+    otherwise returns as inmate's details were not found
     """
     inmate_details = InmateDetails(url)
     if not inmate_details.found():
@@ -75,20 +75,26 @@ def get_next_sleep_period(current_sleep_period, attempt):
     get_next_sleep_period - implements a cascading fall off sleep period with a bit of randomness
     control the periods by setting the values in the array, STD_SLEEP_PERIODS
     """
-    if (attempt - 1) < len(STD_SLEEP_PERIODS):
-        index = attempt - 1
-    else:
+    index = attempt - 1
+    if index >= len(STD_SLEEP_PERIODS):
         index = -1
     return current_sleep_period * random() + STD_SLEEP_PERIODS[index]
 
 
 def inmate_record_get_or_create(inmate_details):
     """
-    Gets or creates inmate record based on jail_id
+    Gets or creates inmate record based on jail_id and stores the url used to fetch the inmate info
     """
     inmate, created = CountyInmate.objects.get_or_create(jail_id=inmate_details.jail_id())
     inmate.url = inmate_details.url
     return inmate, created
+
+
+def join_with_space_and_convert_spaces(segments, replace_with='-'):
+    """
+    Helper function joins array pieces together and then replaces any spaces with specified value
+    """
+    return " ".join(segments).replace(" ", replace_with)
 
 
 def parse_court_location(location_string):
@@ -113,11 +119,9 @@ def parse_court_location(location_string):
     If location is malformed, then original location string is returned with an empty dict
     """
 
-    lines = location_string.splitlines()
-
+    lines = strip_the_lines(location_string.splitlines())
     if len(lines) == 4:
         try:
-            strip_the_lines(lines)
             # The first line is the location_name
             location_name = lines[0]
 
@@ -146,11 +150,12 @@ def parse_court_location(location_string):
                 'state': state,
                 'zip_code': zip_code,
             }
-
             return "\n".join(lines), d
+
         except IndexError:
             log.debug("Following Court location has unknown format: %s" % location_string)
             return location_string, {}
+
     else:
         log.debug("Following Court location doesn't have right number of lines: %s" % location_string)
         return location_string, {}
@@ -162,74 +167,42 @@ def process_housing_location(location_object):
     """
     location_segments = location_object.housing_location.replace("-", " ").split()  # Creates a list with the housing location information
 
-    if location_segments == [] or IS_INTEGER.match(location_segments[0]) is None:
+    if location_segments == [] or convert_to_int(location_segments[0], None) is None:
         # Location did not start with a number so no further parsing
         if location_object.housing_location == "":
             location_object.housing_location = "UNKNOWN"
         return
 
-    location_start = location_segments[0]
-    location_segments_len = len(location_segments)
-    housing_location = location_object.housing_location
-    location_object.division = location_start
-
-    if location_segments_len == 1:  # Executed only if the housing information is a single division number ex: '01-'
+    location_object.division = location_segments[0]
+    if len(location_segments) == 1:  # Executed only if the housing information is a single division number ex: '01-'
         return
 
-    for element in location_segments:
-        if element == "DR":
-            location_object.in_program = "Day Release"
-            location_object.in_jail = False
-        if element == "DRAW":
-            location_object.in_program == "Day Release, AWOL"
-            location_object.in_jail = False
+    set_day_release(location_object, location_segments)
 
-    if ((location_start == "02" or location_start == "08" or location_start == "09" or location_start == "11" or location_start == "14") or (location_start == "01" and "ABO" in housing_location)):
-        location_object.sub_division = location_segments[1]
-        location_object.sub_division_location = " ".join(location_segments[2:]).replace(" ", "-")
-        return
-    if location_start == "03" and "AX" in housing_location:
-        location_object.sub_division = location_segments[2]
-        location_object.sub_division_location = " ".join(location_segments[3:]).replace(" ", "-")
-        return
-    if location_start == "5" or location_start == "6" or location_start == "10":
-        location_object.sub_division = location_segments[2] + location_segments[1]
-        location_object.sub_division_location = " ".join(location_segments[3:]).replace(" ", "-")
-        return
-    if location_start == "15":
-        if location_segments[1] == "EM":
-            location_object.in_program = "Electronic Monitoring"
-            location_object.in_jail = False
-        elif location_segments[1] == "EMAW":
-            location_object.in_program = "Electronic Monitoring, AWOL"
-            location_object.in_jail = False
-        elif location_segments[1] == "KK" or location_segments[1] == "LV" or location_segments[1] == "US":
-            location_object.in_program = "Other Countie"
-            location_object.in_jail = False
-        else:
-            location_object.sub_division = location_segments[1]
-        return
-    if location_start == "16":
-        location_object.division = location_start
-        return
-    if location_start == "17":
-        if location_segments[1] == "MOMS":
-            location_object.in_program = "MOMS Program"
-        elif location_segments[1] == "SFFP":
-            location_object.in_program = "Sherrif Female Furlough Program"
-            location_object.in_jail = False
-        elif location_segments[1] == "SFFPAW":
-            location_object.in_program = "Sherrif Female Furlough Program, AWOL"
-            location_object.in_jail = False
-        return
-    if location_start == "04":
-        if "M1" in housing_location:
-            location_object.in_program = "Protective Custody"
-        elif "N1" in housing_location:
-            location_object.in_program = "Segregation"
+    location_start = convert_to_int(location_segments[0], -1)
 
-    location_object.sub_division = " ".join(location_segments[1:3]).replace(" ", "")
-    location_object.sub_division_location = " ".join(location_segments[3:]).replace(" ", "-")
+    if location_start in [2, 8, 9, 11, 14] or (location_start == 1 and "ABO" in location_object.housing_location):
+        set_sub_division(location_object, location_segments[1], location_segments[2:])
+        return
+    elif location_start == 3:
+        if "AX" in location_object.housing_location:
+            set_sub_division(location_object, location_segments[2], location_segments[3:])
+            return
+    elif location_start in [5, 6, 10]:
+        set_sub_division(location_object, location_segments[2] + location_segments[1], location_segments[3:])
+        return
+    elif location_start == 15:
+        set_location_15_values(location_object, location_segments)
+        return
+    elif location_start == 16:
+        return
+    elif location_start == 17:
+        set_location_17_values(location_object, location_segments)
+        return
+    elif location_start == 4:
+        set_location_04_values(location_object, location_segments)
+
+    set_sub_division(location_object, join_with_space_and_convert_spaces(location_segments[1:3], ""), location_segments[3:])
     return
 
 
@@ -250,17 +223,61 @@ def process_urls(base_url, inmate_urls, records, limit=None):
     return processed_jail_ids
 
 
+def set_day_release(location_object, location_segments):
+    for element in location_segments:
+        if element == "DR":
+            location_object.in_program = "Day Release"
+            location_object.in_jail = False
+        elif element == "DRAW":
+            location_object.in_program == "Day Release, AWOL"
+            location_object.in_jail = False
+
+
+def set_location_04_values(location_object, location_segments):
+    if "M1" in location_object.housing_location:
+        location_object.in_program = "Protective Custody"
+    elif "N1" in location_object.housing_location:
+        location_object.in_program = "Segregation"
+
+
+def set_location_15_values(location_object, location_segments):
+    if location_segments[1] == "EM":
+        location_object.in_program = "Electronic Monitoring"
+        location_object.in_jail = False
+    elif location_segments[1] == "EMAW":
+        location_object.in_program = "Electronic Monitoring, AWOL"
+        location_object.in_jail = False
+    elif location_segments[1] in ["KK", "LV", "US"]:
+        location_object.in_program = "Other County"
+        location_object.in_jail = False
+    else:
+        location_object.sub_division = location_segments[1]
+
+
+def set_location_17_values(location_object, location_segments):
+    if location_segments[1] == "MOMS":
+        location_object.in_program = "MOMS Program"
+    elif location_segments[1] == "SFFP":
+        location_object.in_program = "Sherrif Female Furlough Program"
+        location_object.in_jail = False
+    elif location_segments[1] == "SFFPAW":
+        location_object.in_program = "Sherrif Female Furlough Program, AWOL"
+        location_object.in_jail = False
+
+
+def set_sub_division(location_object, sub_division, sub_division_location):
+    location_object.sub_division = sub_division
+    location_object.sub_division_location = join_with_space_and_convert_spaces(sub_division_location)
+
+
 def store_bail_info(inmate, inmate_details):
     # Bond: If the value is an integer, it's a dollar
     # amount. Otherwise, it's a status, e.g. "* NO BOND *".
-    bail_amount = inmate_details.bail_amount().replace(',', '')
-    if IS_INTEGER.match(bail_amount):
-        bail_amount = int(bail_amount)
-        inmate.bail_amount = int(bail_amount)
-        inmate.bail_status = None
-    else:
+    inmate.bail_amount = convert_to_int(inmate_details.bail_amount().replace(',', ''), None)
+    if inmate.bail_amount is None:
         inmate.bail_status = inmate_details.bail_amount().replace('*', '').strip()
-        inmate.bail_amount = None
+    else:
+        inmate.bail_status = None
 
 
 def store_booking_date(inmate, inmate_details):
@@ -273,14 +290,13 @@ def store_charges(inmate, inmate_details):
     Charges: charges come on two lines. The first line is a citation and the
     # second is an optional description of the charges.
     """
-    charges = inmate_details.charges().splitlines()
+    charges = strip_the_lines(inmate_details.charges().splitlines())
     if charges == []:
         return
 
     # Capture Charges and Citations if specified
-    strip_the_lines(charges)
     parsed_charges = charges[0]
-    parsed_charges_citation = charges[1] if len(charges) > 1 else ""
+    parsed_charges_citation = charges[1] if len(charges) > 1 else ''
 
     if len(inmate.charges_history.all()) != 0:
         inmate_latest_charge = inmate.charges_history.latest('date_seen')  # last known charge
@@ -330,21 +346,21 @@ def store_physical_characteristics(inmate, inmate_details):
     inmate.age_at_booking = inmate_details.age_at_booking()
 
 
+def strip_line(line):
+    return line.strip()
+
 def strip_the_lines(lines):
-    for n, line in enumerate(lines):
-        lines[n] = line.strip()
-
-
-def assert_same(orig_value, new_value, url, field_name):
-    if orig_value != new_value:
-        log.debug("Error, mismatch %s values: %s != %s for %s" % (field_name, str(orig_value), str(new_value), url))
-        exit(1)
+    return map(strip_line, lines)
 
 
 class InmateDetails:
     """
     Handles the processing of the Inmate Detail information page on the Cook County Jail website.
     Presents a consistent named interface to the information
+
+    Strips spurious whitspace from text content before returning them
+
+    Dates are returned as datetime objects
     """
     def __init__(self, url):
         self.url = url
