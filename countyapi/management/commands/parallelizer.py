@@ -1,50 +1,73 @@
 import eventlet
-from random import random
+
 
 class Parallelizer:
     """
-    This runs functions in parallel
+    This runs functions in parallel using the Eventlet library to accomplish
+    the parallelization. This is basically what Twisted does.
+    If you have computation heavy with no I/O or almost none, then this will
+    not provide any advantage.
 
-    It is used like this:
+    Eventlet re-writes standard libraries so either it or this must be loaded
+    first in your program.
 
-    import parallelizer  # This iport needs to be before all other imports so eventlet is loaded first
+    It is used like this sample program:
 
-    def my_task(my_args, parallelizer):   # where my_args is an array with arguments about work I have to do
-        parallelizer.sleep(1.4)           #       parallelizer is object of Type Parallelizer and provides
-        print "Here I am working"         #           some OS capabilities that run off of eventlet, like sleep
+    from parallelizer import Parallelizer  # First library loaded
+    import xxx
 
-    my_servant = Parallelizer(my_task, 25)  # I want 25 my_task's running in parallel
+    # Now your function that is to be run in parallel
+    # my_args is an array with arguments to be used when doing the work
+    # parallelizer is the instance of Parallelizer that is running this
+    #      function in parallel, provides Eventlet OS re-written sevices
+    #      like sleep
+    def my_task(my_args, parallelizer):
+        parallelizer.sleep(1.4)
+        print "Hey I doing my work, here"
+
+    my_servant = Parallelizer(my_task, 25)  # 25 my_task's running in parallel
     for i in range(1000):
-        my_servant.do_task([i, other_parameters])  # do task requests the work to be done
+        my_servant.do_task([i, other_parameters])  # send work for tasks to
+                                                   # process, queue as many
+                                                   # of these as you want
 
-    # go off and do other work will the tasks work in parallel
-    # note that until you do some I/O no tasks will run.
+    # Now go off and do other work and if you use I/O then the queued tasks
+    # will be worked on in parallel, if you do no I/O then no taks will run
+    # until you do the following:
 
-    my_servant.wait_until_tasks_done()              # This will block until all of the workers have completed
-                                                    # When this is called, do_task ability is disabled
+    my_servant.wait_until_tasks_done()  # This will block until all of the
+                                        # workers have completed. Note, that
+                                        # when this is called, do_task ability
+                                        # is disabled
 
-    # it is ready to be used again
+    # When all the tasks have completed control is returned to this point and
+    # the parallelizer instance is is ready to be used again
     for i in range(2000):
-        my_servant.do_task([i, other_parameters])  # do task requests the work to be done
+        my_servant.do_task([i, other_parameters])
     my_servant.wait_until_tasks_done()
 
     """
 
-    __RUN_WORKER_MSG = random()  # generate rand number for this, just for fun
-    __KILL_MSG = -1
+    __KILL_MSG = -2013
+    __RUN_WORKER_MSG = ~__KILL_MSG
+    __manager_pool = None
+    __workers_accepting_work = False
 
     def __init__(self, worker_fn, number_of_workers=10):
         self.__worker_fn = worker_fn
         self.__number_of_workers = number_of_workers
-        self.__worker_task_queue = eventlet.Queue()
+        self.__worker_task_queue = eventlet.Queue()  # infinite size queue
         self.__create_managers()
 
+    # creates a manager for each worker
     def __create_managers(self):
-        self.__manager_pool = eventlet.GreenPool()
-        for i in range(self.__number_of_workers):
-            self.__manager_pool.spawn_n(self.__manager)
-        self.__workers_accepting_work = True
+        if self.__manager_pool is not None:
+            self.__manager_pool = eventlet.GreenPool()
+            for i in range(self.__number_of_workers):
+                self.__manager_pool.spawn_n(self.__manager)
+            self.__workers_accepting_work = True
 
+    # Only accepts work if method wait_until_tasks_done is not being executed
     def do_task(self, worker_args):
         if self.__workers_accepting_work:
             self.__worker_task_queue.put((self.__RUN_WORKER_MSG, worker_args))
@@ -56,25 +79,35 @@ class Parallelizer:
         while not self.__worker_task_queue.empty():
             self.__worker_task_queue.get(block=False)
 
+    # manager fetches messages from queue and calls worker function with passed
+    # arguments. When worker function finishes tries to get data from queue.
+    # If nothing to get blocks. Checks for Kill Message if it receives it
+    # stops running.
     def __manager(self):
         run = True
         while run:
             msg_type, worker_args = self.__worker_task_queue.get(block=True)
-            if msg_type == self.__RUN_WORKER_MSG:
-                self.__worker_fn(worker_args, self)
+            if msg_type == self.__KILL_MSG:
+                self.__send_kill_msg()  # relay kill msg so other workers
+                run = False             # will be stopped as well
             else:
-                self.__send_kill_msg()  # relay kill msg so other workers will stop
-                run = False
+                self.__worker_fn(worker_args, self)
 
     def __send_kill_msg(self):
         self.__worker_task_queue.put((self.__KILL_MSG, []))
 
-    def sleep(self, how_much=1):
+    # provides an Eventlet based sleep so other workers will run while this
+    # one sleeps. Like all sleeps, this one does not guarantee exactness of
+    # the length of the sleep
+    def sleep(self, how_much=0.1):
         eventlet.sleep(how_much)
 
+    # use this to complete worker processing. Once all workers have completed
+    # their processing then this will respawn the managers and return
     def wait_until_tasks_done(self):
         self.__workers_accepting_work = False   # stop accepting work to do
         self.__send_kill_msg()
         self.__manager_pool.waitall()
-        self.__drain_queue()
-        self.__create_managers()   # restart workers so they are ready to be used again
+        self.__drain_queue()  # remove residual kill messages
+        self.__create_managers()   # restart managers so workers are ready to
+                                   # be used again
