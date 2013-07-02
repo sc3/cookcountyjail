@@ -4,6 +4,8 @@ argparse==1.2.1
 cssselect==0.7.1
 distribute==0.6.24
 django-tastypie==0.9.14
+eventlet==0.12.1
+greenlet==0.4.1
 gunicorn==0.17.2
 lxml==3.0.1
 mimeparse==0.1.3
