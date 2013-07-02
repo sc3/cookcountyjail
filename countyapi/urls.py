@@ -11,6 +11,5 @@ v1_api.register(HousingHistoryResource())
 v1_api.register(CountyInmateResource())
 
 urlpatterns = patterns('',
-    url(r'', include(v1_api.urls)),
-    url(r'^data.json', 'countyapi.views.data_json', name='data'),
-)
+                       url(r'', include(v1_api.urls)),
+                       url(r'^data.json', 'countyapi.views.data_json', name='data'))

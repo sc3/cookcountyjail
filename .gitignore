@@ -3,3 +3,4 @@ static/bootstrap
 ccj
 *.pyc
 *.orig
+*sublime*
