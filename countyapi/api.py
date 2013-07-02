@@ -1,7 +1,10 @@
 from copy import copy
 import csv
 
-from django.http import HttpResponse, ObjectDoesNotExist, ApiFieldError
+from django.http import HttpResponse
+from django.core.exceptions import ObjectDoesNotExist
+
+from tastypie.exceptions import ApiFieldError
 from tastypie.bundle import Bundle
 from tastypie.cache import SimpleCache
 from tastypie.fields import ToManyField, ToOneField
