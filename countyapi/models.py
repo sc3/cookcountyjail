@@ -57,7 +57,7 @@ class HousingHistory(models.Model):
     """
     inmate = models.ForeignKey('CountyInmate', related_name='housing_history')
     housing_location = models.ForeignKey('HousingLocation', related_name='housing_history')
-    housing_date = models.DateField(null=True)
+    housing_date_discovered = models.DateField(null=True)
 
 
 class HousingLocation(models.Model):
