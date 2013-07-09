@@ -9,40 +9,41 @@ from django.db.utils import DatabaseError
 
 from countyapi.models import CountyInmate, CourtLocation, HousingLocation
 
-############################################################################################################
+#########################################################################
 #
 # TODO:
 #    1) this should be turned into a class
-#    2) The InmateDetails class should be put into its own file and the class passed into it
-#    3) Should also collect or log performance stats, how many inmate records fetched, how many failed,
-#       how long it took, etc.
+#    2) The InmateDetails class should be put into its own file and the 
+#       class passed into it
+#    3) Should also collect or log performance stats, how many inmate 
+#       records fetched, how many failed, how long it took, etc.
 #
-############################################################################################################
+#########################################################################
 
 
 NUMBER_OF_ATTEMPTS = 5
-STD_INITIAL_SLEEP_PERIOD = 0.25
 STD_NUMBER_ATTEMPTS = 3
+STD_INITIAL_SLEEP_PERIOD = 0.25
 STD_SLEEP_PERIODS = [1.61, 7, 13, 23, 41]
 
 log = logging.getLogger('main')
 
 
-def convert_to_int(possible_number, use_if_not_int):
+def convert_to_int(possible_number, default):
     """
-    Save conversion of string to int with ability to specify default if string is not a number
+    Save conversion of string to int with ability to specify default 
+    if string is not a number
     """
     try:
-        result = int(possible_number)
+        return int(possible_number)
     except ValueError:
-        result = use_if_not_int
-    return result
+        return default
 
 
 def create_update_inmate(url):
     """
-    Fetches inmates detail page and creates or updates inmates record based on it,
-    otherwise returns as inmate's details were not found
+    Fetches inmates detail page and creates or updates inmates record 
+    based on it, otherwise returns as inmate's details were not found
     """
     inmate_details = InmateDetails(url)
     if not inmate_details.found():
@@ -56,24 +57,31 @@ def create_update_inmate(url):
     store_charges(inmate, inmate_details)
     store_next_court_info(inmate, inmate_details)
     inmate.save()
-    log.debug("%s - %s inmate %s" % (str(datetime.now()), "Created" if created else "Updated", inmate))
+    log.debug(
+        "%s - %s inmate %s" % (str(datetime.now()), 
+        "Created" if created else "Updated", inmate))
     return inmate.jail_id
 
 
-def fetch_page(url, number_attempts=STD_NUMBER_ATTEMPTS, initial_sleep_period=STD_INITIAL_SLEEP_PERIOD):
+def fetch_page(url, number_attempts=STD_NUMBER_ATTEMPTS, 
+                initial_sleep_period=STD_INITIAL_SLEEP_PERIOD):
     attempt = 1
     sleep_period = initial_sleep_period
     while attempt <= number_attempts:
         sleep(sleep_period)
         try:
-            log.debug("%s - Retreiving inmate %s record" % (str(datetime.now()), url))
+            log.debug("%s - Retreiving inmate %s record" % 
+                (str(datetime.now()), url))
             results = requests.get(url)
         except requests.exceptions.RequestException:
             results = None
-        if results is not None and results.status_code == requests.codes.ok:
+        if results is not None and (results.status_code 
+                == requests.codes.ok):
             return results
-        status_code = "Exception thrown" if results is None else results.status_code
-        log.debug("Error getting %s, status code: %s, Attempt #: %s" % (url, status_code, attempt))
+        status_code = ("Exception thrown" if results is None
+                else results.status_code)
+        log.debug("Error getting %s, status code: %s, Attempt #: %s" \
+                    % (url, status_code, attempt))
         sleep_period = get_next_sleep_period(sleep_period, attempt)
         attempt += 1
     return None
@@ -81,8 +89,9 @@ def fetch_page(url, number_attempts=STD_NUMBER_ATTEMPTS, initial_sleep_period=ST
 
 def get_next_sleep_period(current_sleep_period, attempt):
     """
-    get_next_sleep_period - implements a cascading fall off sleep period with a bit of randomness
-    control the periods by setting the values in the array, STD_SLEEP_PERIODS
+    Implements a cascading fall off sleep period with a bit of 
+    randomness; control the periods by setting the values in the array, 
+    STD_SLEEP_PERIODS.
     """
     index = attempt - 1
     if index >= len(STD_SLEEP_PERIODS):
@@ -92,16 +101,19 @@ def get_next_sleep_period(current_sleep_period, attempt):
 
 def inmate_record_get_or_create(inmate_details):
     """
-    Gets or creates inmate record based on jail_id and stores the url used to fetch the inmate info
+    Gets or creates inmate record based on jail_id and stores the url 
+    used to fetch the inmate info.
     """
-    inmate, created = CountyInmate.objects.get_or_create(jail_id=inmate_details.jail_id())
+    inmate, created = CountyInmate.objects.get_or_create(
+            jail_id=inmate_details.jail_id())
     inmate.url = inmate_details.url
     return inmate, created
 
 
 def join_with_space_and_convert_spaces(segments, replace_with='-'):
     """
-    Helper function joins array pieces together and then replaces any spaces with specified value
+    Helper function joins array pieces together and then replaces 
+    any spaces with specified value.
     """
     return " ".join(segments).replace(" ", replace_with)
 
@@ -110,11 +122,16 @@ def parse_court_location(location_string):
     """
     Takes a location string of the form:
 
-    "Criminal C\nCriminal Courts Building, Room:506\n2650 South California Avenue Room: 506\nChicago, IL 60608"
+    ("Criminal C\n"
+    "Criminal Courts Building, Room:506\n" 
+    "2650 South California Avenuen Room: 506\n"
+    "Chicago, IL 60608")
 
-    The lines can contain spurious white-space at the beginning and end of the lines, these are stripped
+    The lines can contain spurious white-space at the beginning 
+    and end of the lines: these are stripped.
 
-     and returns two values, cleaned up version the input string and a dict of the form:
+    Returns two values, a cleaned up version of the input string 
+    as well as a dict of the form:
     {
         'location_name': 'Criminal C',
         'branch_name': 'Criminal Courts Building',
@@ -125,7 +142,8 @@ def parse_court_location(location_string):
         'zip_code': 60608,
     }
 
-    If location is malformed, then original location string is returned with an empty dict
+    If location is malformed, then original location string is 
+    returned with an empty dict.
     """
 
     lines = strip_the_lines(location_string.splitlines())
@@ -162,35 +180,44 @@ def parse_court_location(location_string):
             return "\n".join(lines), d
 
         except IndexError:
-            log.debug("Following Court location has unknown format: %s" % location_string)
+            log.debug("Following Court location has unknown format: %s" \
+                % location_string)
             return location_string, {}
 
     else:
-        log.debug("Following Court location doesn't have right number of lines: %s" % location_string)
+        log.debug("Following Court location doesn't have right number of "
+            "lines: %s" % location_string)
         return location_string, {}
 
 
 def process_housing_location(location_object):
     """
-    Receives a housing location from the HousingLocation table and parses it editing the different fields
+    Receives a housing location from the HousingLocation table and parses it, 
+    editing the different fields.
     """
-    location_segments = location_object.housing_location.replace("-", " ").split()  # Creates a list with the housing location information
+     # Creates a list with the housing location information
+    location_segments = (location_object.housing_location
+        .replace("-", " ").split()) 
 
-    if location_segments == [] or convert_to_int(location_segments[0], None) is None:
+    if (location_segments == []) or \
+            (convert_to_int(location_segments[0], None) is None):
         # Location did not start with a number so no further parsing
         if location_object.housing_location == "":
             location_object.housing_location = "UNKNOWN"
         return
 
     location_object.division = location_segments[0]
-    if len(location_segments) == 1:  # Executed only if the housing information is a single division number ex: '01-'
-        return
+    # Executed only if the housing information is a single division number,
+    # for example: '01-'
+    if len(location_segments) == 1:  
+        return 
 
     set_day_release(location_object, location_segments)
 
     location_start = convert_to_int(location_segments[0], -1)
 
-    if location_start in [2, 8, 9, 11, 14] or (location_start == 1 and "ABO" in location_object.housing_location):
+    if (location_start in [2, 8, 9, 11, 14]) or \
+            (location_start == 1 and "ABO" in location_object.housing_location):
         set_sub_division(location_object, location_segments[1], location_segments[2:])
         return
     elif location_start == 3:
