@@ -328,7 +328,7 @@ def store_housing_location(inmate, inmate_details):
     try:
         housing_history, new_history = inmate.housing_history.get_or_create(housing_location=inmate_housing_location)
         if new_history:
-            housing_history.housing_date = date.today()
+            housing_history.housing_date_discovered = date.today()
         housing_history.save()
         inmate_housing_location.save()
     except DatabaseError:
