@@ -86,7 +86,7 @@ class Command(BaseCommand):
         if options['discharge']:
             if options['limit'] or options['search']:
                 log.debug("Discharge date option is incompatible with limit and search options")
-                return
+                raise BaseException("Discharge date option is incompatible with limit and search options")
             log.debug("--discharge (-d) flag used. Calculating discharge dates.")
             discharged = self.calculate_discharge_date(seen)
             log.debug("%s inmates discharged." % len(discharged))
@@ -98,7 +98,7 @@ class Command(BaseCommand):
         Given a list of jail ids, find inmates with no discharge date that
         aren't in the list. Inmate who haven't been discharged
         """
-        now = datetime.datetime.now()
+        now = datetime.now()
         not_present_or_discharged = CountyInmate.objects.filter(discharge_date_earliest__exact=None).exclude(jail_id__in=seen)
         for inmate in not_present_or_discharged:
             inmate.discharge_date_earliest = inmate.last_seen_date
