@@ -1,12 +1,12 @@
+import logging
 from datetime import datetime, date
+from random import random
+from datetime import datetime
 import logging
 from pyquery import PyQuery as pq
-import requests
 from time import sleep
-from random import random
-
+import requests
 from django.db.utils import DatabaseError
-
 from countyapi.models import CountyInmate, CourtLocation, HousingLocation
 
 #########################################################################
@@ -16,28 +16,33 @@ from countyapi.models import CountyInmate, CourtLocation, HousingLocation
 #    2) The InmateDetails class should be put into its own file and the 
 #       class passed into it
 #    3) Should also collect or log performance stats, how many inmate 
-#       records fetched, how many failed, how long it took, etc.
+#       records fetched, how many failed,
+#       how long it took, etc.
 #
 #########################################################################
 
+log = logging.getLogger('main')
 
 NUMBER_OF_ATTEMPTS = 5
 STD_NUMBER_ATTEMPTS = 3
 STD_INITIAL_SLEEP_PERIOD = 0.25
 STD_SLEEP_PERIODS = [1.61, 7, 13, 23, 41]
 
-log = logging.getLogger('main')
-
-
-def convert_to_int(possible_number, default):
+def process_urls(base_url, inmate_urls, records, limit=None):
     """
-    Save conversion of string to int with ability to specify default 
-    if string is not a number
+    Initiates processing of based in inmate_urls
     """
-    try:
-        return int(possible_number)
-    except ValueError:
-        return default
+    processed_jail_ids = []  # List to record processed jail ids in
+
+    for url in inmate_urls:
+        url = "%s/%s" % (base_url, url.attrib['href'])
+        new_id = create_update_inmate(url)
+        if new_id is not None and new_id not in processed_jail_ids:
+            processed_jail_ids.append(new_id)
+        if limit and (records + len(processed_jail_ids)) >= limit:
+            break
+
+    return processed_jail_ids
 
 
 def create_update_inmate(url):
@@ -63,42 +68,6 @@ def create_update_inmate(url):
     return inmate.jail_id
 
 
-def fetch_page(url, number_attempts=STD_NUMBER_ATTEMPTS, 
-                initial_sleep_period=STD_INITIAL_SLEEP_PERIOD):
-    attempt = 1
-    sleep_period = initial_sleep_period
-    while attempt <= number_attempts:
-        sleep(sleep_period)
-        try:
-            log.debug("%s - Retreiving inmate %s record" % 
-                (str(datetime.now()), url))
-            results = requests.get(url)
-        except requests.exceptions.RequestException:
-            results = None
-        if results is not None and (results.status_code 
-                == requests.codes.ok):
-            return results
-        status_code = ("Exception thrown" if results is None
-                else results.status_code)
-        log.debug("Error getting %s, status code: %s, Attempt #: %s" \
-                    % (url, status_code, attempt))
-        sleep_period = get_next_sleep_period(sleep_period, attempt)
-        attempt += 1
-    return None
-
-
-def get_next_sleep_period(current_sleep_period, attempt):
-    """
-    Implements a cascading fall off sleep period with a bit of 
-    randomness; control the periods by setting the values in the array, 
-    STD_SLEEP_PERIODS.
-    """
-    index = attempt - 1
-    if index >= len(STD_SLEEP_PERIODS):
-        index = -1
-    return current_sleep_period * random() + STD_SLEEP_PERIODS[index]
-
-
 def inmate_record_get_or_create(inmate_details):
     """
     Gets or creates inmate record based on jail_id and stores the url 
@@ -110,12 +79,202 @@ def inmate_record_get_or_create(inmate_details):
     return inmate, created
 
 
-def join_with_space_and_convert_spaces(segments, replace_with='-'):
+def store_bail_info(inmate, inmate_details):
+    # Bond: If the value is an integer, it's a dollar
+    # amount. Otherwise, it's a status, e.g. "* NO BOND *".
+    inmate.bail_amount = convert_to_int(
+            inmate_details.bail_amount().replace(',', ''), None)
+    if inmate.bail_amount is None:
+        inmate.bail_status = \
+            inmate_details.bail_amount().replace('*', '').strip()
+    else:
+        inmate.bail_status = None
+
+
+def store_booking_date(inmate, inmate_details):
+    inmate.booking_date = inmate_details.booking_date().strftime('%Y-%m-%d')
+
+
+def store_charges(inmate, inmate_details):
     """
-    Helper function joins array pieces together and then replaces 
-    any spaces with specified value.
+    Stores the inmates charges if they are new or if they have been changes
+    Charges: charges come on two lines. The first line is a citation and the
+    # second is an optional description of the charges.
     """
-    return " ".join(segments).replace(" ", replace_with)
+    charges = strip_the_lines(inmate_details.charges().splitlines())
+    if charges == []:
+        return
+
+    # Capture Charges and Citations if specified
+    parsed_charges = charges[0]
+    parsed_charges_citation = charges[1] if len(charges) > 1 else ''
+
+    if len(inmate.charges_history.all()) != 0:
+         # last known charge
+        inmate_latest_charge = inmate.charges_history.latest('date_seen') 
+
+        charge_map = {
+            'c' : (inmate_latest_charge.charges, parsed_charges),
+            'cc' : (inmate_latest_charge.charges_citation, 
+                        parsed_charges_citation)
+        }
+
+        # if the last known charge is different than the current info,
+        # then create a new, updated charge.
+        if (charge_map['c'][0] != charge_map['cc'][1] or \
+                charge_map['cc'][0] != charge_map['cc'][1]):
+            new_charge = inmate.charges_history.create(
+                    charges=charge_map['c'][1], 
+                    charges_citation=charge_map['cc'][1])
+            new_charge.date_seen = datetime.now().date()
+            new_charge.save()
+    else:
+        # if the inmate has no charges,
+        # then create a new one with the parsed info
+        new_charge = inmate.charges_history.create(
+                charges=parsed_charges, 
+                charges_citation=parsed_charges_citation)
+        new_charge.date_seen = datetime.now().date()
+        new_charge.save()
+
+
+def store_housing_location(inmate, inmate_details):
+    inmate.housing_location = inmate_details.housing_location()
+    inmate_housing_location, created_location = \
+            HousingLocation.objects.get_or_create(
+                housing_location=inmate.housing_location)
+    process_housing_location(inmate_housing_location)
+    try:
+        ihl = inmate_housing_location
+        housing_history, new_history = \
+                inmate.housing_history.get_or_create(housing_location=ihl)
+        if new_history:
+            housing_history.housing_date = date.today()
+        housing_history.save()
+        inmate_housing_location.save()
+    except DatabaseError:
+        log.debug("Could not save housing location '%s'" % \
+            inmate.housing_location)
+
+def process_housing_location(location_object):
+    """
+    Receives a housing location from the HousingLocation table and parses it, 
+    editing the different fields.
+    """
+     # Creates a list with the housing location information
+    location_segments = (location_object.housing_location
+        .replace("-", " ").split()) 
+
+    if (location_segments == []) or \
+            (convert_to_int(location_segments[0], None) is None):
+        # Location did not start with a number so no further parsing
+        if location_object.housing_location == "":
+            location_object.housing_location = "UNKNOWN"
+        return
+
+    location_object.division = location_segments[0]
+    # Executed only if the housing information is a single division number,
+    # for example: '01-'.
+    if len(location_segments) == 1:  
+        return 
+
+    set_day_release(location_object, location_segments)
+
+    location_start = convert_to_int(location_segments[0], -1)
+    location_housing = location_object.housing_location
+
+    if (location_start in [2, 8, 9, 11, 14]) or \
+            (location_start == 1 and "ABO" in location_housing):
+        set_sub_division(location_object, 
+                location_segments[1], location_segments[2:])
+        return
+    elif location_start == 3:
+        if "AX" in location_housing:
+            set_sub_division(location_object, 
+                    location_segments[2], location_segments[3:])
+            return
+    elif location_start in [5, 6, 10]:
+        set_sub_division(location_object, 
+                location_segments[2] + location_segments[1], 
+                location_segments[3:])
+        return
+    elif location_start == 15:
+        set_location_15_values(location_object, location_segments)
+        return
+    elif location_start == 16:
+        return
+    elif location_start == 17:
+        set_location_17_values(location_object, location_segments)
+        return
+    elif location_start == 4:
+        set_location_04_values(location_object, location_segments)
+
+    set_sub_division(location_object, join_with_space_and_convert_spaces(
+        location_segments[1:3], ""), location_segments[3:])
+    return
+
+
+def set_day_release(location_object, location_segments):
+    for element in location_segments:
+        if element == "DR":
+            location_object.in_program = "Day Release"
+            location_object.in_jail = False
+        elif element == "DRAW":
+            location_object.in_program == "Day Release, AWOL"
+            location_object.in_jail = False
+
+
+def set_location_04_values(location_object, location_segments):
+    if "M1" in location_object.housing_location:
+        location_object.in_program = "Protective Custody"
+    elif "N1" in location_object.housing_location:
+        location_object.in_program = "Segregation"
+
+
+def set_location_15_values(location_object, location_segments):
+    if location_segments[1] == "EM":
+        location_object.in_program = "Electronic Monitoring"
+        location_object.in_jail = False
+    elif location_segments[1] == "EMAW":
+        location_object.in_program = "Electronic Monitoring, AWOL"
+        location_object.in_jail = False
+    elif location_segments[1] in ["KK", "LV", "US"]:
+        location_object.in_program = "Other County"
+        location_object.in_jail = False
+    else:
+        location_object.sub_division = location_segments[1]
+
+
+def set_location_17_values(location_object, location_segments):
+    if location_segments[1] == "MOMS":
+        location_object.in_program = "MOMS Program"
+    elif location_segments[1] == "SFFP":
+        location_object.in_program = "Sherrif Female Furlough Program"
+        location_object.in_jail = False
+    elif location_segments[1] == "SFFPAW":
+        location_object.in_program = "Sherrif Female Furlough Program, AWOL"
+        location_object.in_jail = False
+
+
+def set_sub_division(location_object, sub_division, sub_division_location):
+    location_object.sub_division = sub_division
+    location_object.sub_division_location = \
+            join_with_space_and_convert_spaces(sub_division_location)
+
+
+def store_next_court_info(inmate, inmate_details):
+    # Court date parsing
+    next_court_date = inmate_details.next_court_date()
+    if next_court_date is not None:
+        # Get location record by parsing next Court location string
+        next_court_location, parsed_location = \
+                parse_court_location(inmate_details.court_house_location())
+        location, new_location = CourtLocation.objects.get_or_create(
+                location=next_court_location, **parsed_location)
+        str_court_date = next_court_date.strftime('%Y-%m-%d')
+        # Get or create a court date for this inmate
+        court_date, new_court_date = inmate.court_dates.get_or_create(
+                date=str_court_date, location=location)
 
 
 def parse_court_location(location_string):
@@ -190,190 +349,6 @@ def parse_court_location(location_string):
         return location_string, {}
 
 
-def process_housing_location(location_object):
-    """
-    Receives a housing location from the HousingLocation table and parses it, 
-    editing the different fields.
-    """
-     # Creates a list with the housing location information
-    location_segments = (location_object.housing_location
-        .replace("-", " ").split()) 
-
-    if (location_segments == []) or \
-            (convert_to_int(location_segments[0], None) is None):
-        # Location did not start with a number so no further parsing
-        if location_object.housing_location == "":
-            location_object.housing_location = "UNKNOWN"
-        return
-
-    location_object.division = location_segments[0]
-    # Executed only if the housing information is a single division number,
-    # for example: '01-'
-    if len(location_segments) == 1:  
-        return 
-
-    set_day_release(location_object, location_segments)
-
-    location_start = convert_to_int(location_segments[0], -1)
-
-    if (location_start in [2, 8, 9, 11, 14]) or \
-            (location_start == 1 and "ABO" in location_object.housing_location):
-        set_sub_division(location_object, location_segments[1], location_segments[2:])
-        return
-    elif location_start == 3:
-        if "AX" in location_object.housing_location:
-            set_sub_division(location_object, location_segments[2], location_segments[3:])
-            return
-    elif location_start in [5, 6, 10]:
-        set_sub_division(location_object, location_segments[2] + location_segments[1], location_segments[3:])
-        return
-    elif location_start == 15:
-        set_location_15_values(location_object, location_segments)
-        return
-    elif location_start == 16:
-        return
-    elif location_start == 17:
-        set_location_17_values(location_object, location_segments)
-        return
-    elif location_start == 4:
-        set_location_04_values(location_object, location_segments)
-
-    set_sub_division(location_object, join_with_space_and_convert_spaces(location_segments[1:3], ""), location_segments[3:])
-    return
-
-
-def process_urls(base_url, inmate_urls, records, limit=None):
-    """
-    Initiates processing of based in inmate_urls
-    """
-    processed_jail_ids = []  # List to record processed jail ids in
-
-    for url in inmate_urls:
-        url = "%s/%s" % (base_url, url.attrib['href'])
-        new_id = create_update_inmate(url)
-        if new_id is not None and new_id not in processed_jail_ids:
-            processed_jail_ids.append(new_id)
-        if limit and (records + len(processed_jail_ids)) >= limit:
-            break
-
-    return processed_jail_ids
-
-
-def set_day_release(location_object, location_segments):
-    for element in location_segments:
-        if element == "DR":
-            location_object.in_program = "Day Release"
-            location_object.in_jail = False
-        elif element == "DRAW":
-            location_object.in_program == "Day Release, AWOL"
-            location_object.in_jail = False
-
-
-def set_location_04_values(location_object, location_segments):
-    if "M1" in location_object.housing_location:
-        location_object.in_program = "Protective Custody"
-    elif "N1" in location_object.housing_location:
-        location_object.in_program = "Segregation"
-
-
-def set_location_15_values(location_object, location_segments):
-    if location_segments[1] == "EM":
-        location_object.in_program = "Electronic Monitoring"
-        location_object.in_jail = False
-    elif location_segments[1] == "EMAW":
-        location_object.in_program = "Electronic Monitoring, AWOL"
-        location_object.in_jail = False
-    elif location_segments[1] in ["KK", "LV", "US"]:
-        location_object.in_program = "Other County"
-        location_object.in_jail = False
-    else:
-        location_object.sub_division = location_segments[1]
-
-
-def set_location_17_values(location_object, location_segments):
-    if location_segments[1] == "MOMS":
-        location_object.in_program = "MOMS Program"
-    elif location_segments[1] == "SFFP":
-        location_object.in_program = "Sherrif Female Furlough Program"
-        location_object.in_jail = False
-    elif location_segments[1] == "SFFPAW":
-        location_object.in_program = "Sherrif Female Furlough Program, AWOL"
-        location_object.in_jail = False
-
-
-def set_sub_division(location_object, sub_division, sub_division_location):
-    location_object.sub_division = sub_division
-    location_object.sub_division_location = join_with_space_and_convert_spaces(sub_division_location)
-
-
-def store_bail_info(inmate, inmate_details):
-    # Bond: If the value is an integer, it's a dollar
-    # amount. Otherwise, it's a status, e.g. "* NO BOND *".
-    inmate.bail_amount = convert_to_int(inmate_details.bail_amount().replace(',', ''), None)
-    if inmate.bail_amount is None:
-        inmate.bail_status = inmate_details.bail_amount().replace('*', '').strip()
-    else:
-        inmate.bail_status = None
-
-
-def store_booking_date(inmate, inmate_details):
-    inmate.booking_date = inmate_details.booking_date().strftime('%Y-%m-%d')
-
-
-def store_charges(inmate, inmate_details):
-    """
-    Stores the inmates charges if they are new or if they have been changes
-    Charges: charges come on two lines. The first line is a citation and the
-    # second is an optional description of the charges.
-    """
-    charges = strip_the_lines(inmate_details.charges().splitlines())
-    if charges == []:
-        return
-
-    # Capture Charges and Citations if specified
-    parsed_charges = charges[0]
-    parsed_charges_citation = charges[1] if len(charges) > 1 else ''
-
-    if len(inmate.charges_history.all()) != 0:
-        inmate_latest_charge = inmate.charges_history.latest('date_seen')  # last known charge
-        # if the last known charge is different than the current info then create a new charge
-        if inmate_latest_charge.charges != parsed_charges or inmate_latest_charge.charges_citation != parsed_charges_citation:
-            new_charge = inmate.charges_history.create(charges=parsed_charges, charges_citation=parsed_charges_citation)
-            new_charge.date_seen = datetime.now().date()
-            new_charge.save()
-    else:
-        # if the inmate has no charges then create a new one with the parsed info
-        new_charge = inmate.charges_history.create(charges=parsed_charges, charges_citation=parsed_charges_citation)
-        new_charge.date_seen = datetime.now().date()
-        new_charge.save()
-
-
-def store_housing_location(inmate, inmate_details):
-    inmate.housing_location = inmate_details.housing_location()
-    inmate_housing_location, created_location = HousingLocation.objects.get_or_create(housing_location=inmate.housing_location)
-    process_housing_location(inmate_housing_location)
-    try:
-        housing_history, new_history = inmate.housing_history.get_or_create(housing_location=inmate_housing_location)
-        if new_history:
-            housing_history.housing_date = date.today()
-        housing_history.save()
-        inmate_housing_location.save()
-    except DatabaseError:
-        log.debug("Could not save housing location '%s'" % inmate.housing_location)
-
-
-def store_next_court_info(inmate, inmate_details):
-    # Court date parsing
-    next_court_date = inmate_details.next_court_date()
-    if next_court_date is not None:
-        # Get location record by parsing next Court location string
-        next_court_location, parsed_location = parse_court_location(inmate_details.court_house_location())
-        location, new_location = CourtLocation.objects.get_or_create(location=next_court_location, **parsed_location)
-
-        # Get or create a court date for this inmate
-        court_date, new_court_date = inmate.court_dates.get_or_create(date=next_court_date.strftime('%Y-%m-%d'), location=location)
-
-
 def store_physical_characteristics(inmate, inmate_details):
     inmate.gender = inmate_details.gender()
     inmate.race = inmate_details.race()
@@ -382,25 +357,46 @@ def store_physical_characteristics(inmate, inmate_details):
     inmate.age_at_booking = inmate_details.age_at_booking()
 
 
-def strip_line(line):
-    return line.strip()
-
 def strip_the_lines(lines):
-    return map(strip_line, lines)
+    return [line.strip() for line in lines]
+
+
+def convert_to_int(possible_number, default):
+    """
+    Safe conversion of string to int with ability to specify default 
+    if string is not a number
+    """
+    try:
+        return int(possible_number)
+    except ValueError:
+        return default
+
+
+def join_with_space_and_convert_spaces(segments, replace_with='-'):
+    """
+    Helper function joins array pieces together and then replaces 
+    any spaces with specified value.
+    """
+    return " ".join(segments).replace(" ", replace_with)
+
+
+########################################################
 
 
 class InmateDetails:
     """
-    Handles the processing of the Inmate Detail information page on the Cook County Jail website.
-    Presents a consistent named interface to the information
+    Handles the processing of the Inmate Detail information page on the 
+    Cook County Jail website. Presents a consistent named interface to 
+    the information.
 
-    Strips spurious whitspace from text content before returning them
+    Strips spurious whitspace from text content before returning them.
 
-    Dates are returned as datetime objects
+    Dates are returned as datetime objects.
     """
+
     def __init__(self, url):
         self.url = url
-        inmate_result = fetch_page(url, NUMBER_OF_ATTEMPTS)
+        inmate_result = self.fetch_page(url, NUMBER_OF_ATTEMPTS)
         self.__inmate_found = inmate_result is not None
         if not self.__inmate_found:
             return
@@ -408,10 +404,47 @@ class InmateDetails:
         inmate_doc = pq(inmate_result.content)
         self.__columns = inmate_doc('table tr:nth-child(2n) td')
 
+    def fetch_page(self, url, number_attempts=STD_NUMBER_ATTEMPTS, 
+                    initial_sleep_period=STD_INITIAL_SLEEP_PERIOD):
+        attempt = 1
+        sleep_period = initial_sleep_period
+        while attempt <= number_attempts:
+            sleep(sleep_period)
+            try:
+                log.debug("%s - Retreiving inmate %s record" % 
+                            (str(datetime.now()), url))
+                results = requests.get(url)
+            except requests.exceptions.RequestException:
+                results = None
+            if (results is not None and results.status_code == \
+                    requests.codes.ok):
+                return results
+            status_code = ("Exception thrown" if results is None \
+                                else results.status_code)
+            log.debug("Error getting %s, status code: %s, Attempt #: %s" \
+                        % (url, status_code, attempt))
+            sleep_period = self.get_next_sleep_period(sleep_period, attempt)
+            attempt += 1
+        return None
+
+    def get_next_sleep_period(self, current_sleep_period, attempt):
+        """
+        Implements a cascading fall off sleep period with a bit of 
+        randomness; control the periods by setting the values in the
+        array, STD_SLEEP_PERIODS.
+        """
+        index = attempt - 1
+        if index >= len(STD_SLEEP_PERIODS):
+            index = -1
+        return current_sleep_period * random() + STD_SLEEP_PERIODS[index]
+
     def age_at_booking(self):
-        """From http://stackoverflow.com/questions/2217488/age-from-birthdate-in-python"""
+        """From http://stackoverflow.com/
+                questions/2217488/age-from-birthdate-in-python"""
         birth_date, booking_date = self.birth_date(), self.booking_date()
-        if birth_date.month <= booking_date.month and birth_date.day <= booking_date.day:
+        after_birth_month = birth_date.month <= booking_date.month
+        after_birth_day = birth_date.day <= booking_date.day
+        if after_birth_month and after_birth_day:
             return (booking_date.year - birth_date.year)
         return booking_date.year - birth_date.year - 1
 
@@ -432,10 +465,10 @@ class InmateDetails:
 
     def convert_date(self, column_index):
         try:
-            result = datetime.strptime(self.column_content(column_index), '%m/%d/%Y')
+            content = self.column_content(column_index)
+            return datetime.strptime(content, '%m/%d/%Y')
         except ValueError:
-            result = None
-        return result
+            pass # should return None
 
     def court_house_location(self):
         return self.column_content(13)
