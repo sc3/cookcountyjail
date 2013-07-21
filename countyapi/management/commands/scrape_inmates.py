@@ -38,7 +38,7 @@ class Command(BaseCommand):
         return document('#mainContent table tr td:last-child a')
 
     def handle(self, *args, **options):
-        log.debug("Scraping inmates from Cook County Sheriff's site.")
+        log.debug("%s - Scraping inmates from Cook County Sheriff's site." % str(datetime.now()))
 
         self.options = options
 
@@ -91,7 +91,7 @@ class Command(BaseCommand):
             discharged = self.calculate_discharge_date(seen)
             log.debug("%s inmates discharged." % len(discharged))
 
-        log.debug("Imported %s inmate records)" % (records))
+        log.debug("%s - Imported %s inmate records)" % (str(datetime.now()), records))
 
     def calculate_discharge_date(self, seen):
         """
@@ -103,7 +103,7 @@ class Command(BaseCommand):
         for inmate in not_present_or_discharged:
             inmate.discharge_date_earliest = inmate.last_seen_date
             inmate.discharge_date_latest = now
-            log.debug("Discharged %s - Earliest: %s earliest, Latest: %s" % (inmate.jail_id, inmate.last_seen_date, now))
+            log.debug("Discharged %s - Earliest: %s, Latest: %s" % (inmate.jail_id, inmate.discharge_date_earliest, now))
             inmate.save()
         return not_present_or_discharged
 
