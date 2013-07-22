@@ -81,9 +81,10 @@ class ChargesHistory(models.Model):
     charges_citation = models.TextField(null=True)
     date_seen = models.DateField(null=True)
 
+
 class InmateSummaries(models.Model):
     """
-    Model that displays count of inmates in system by date 
+    Model that displays count of inmates in system by date
     """
     date = models.DateField(null=False)
     current_inmate_count = models.IntegerField(null=False, blank=False)
