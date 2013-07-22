@@ -4,3 +4,8 @@ ccj
 *.pyc
 *.orig
 *sublime*
+bin
+include
+lib
+.Python
+.idea

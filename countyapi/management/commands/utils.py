@@ -21,7 +21,7 @@ from countyapi.models import CountyInmate, CourtLocation, HousingLocation
 
 
 NUMBER_OF_ATTEMPTS = 5
-STD_INITIAL_SLEEP_PERIOD = 0.25
+STD_INITIAL_SLEEP_PERIOD = 0.1
 STD_NUMBER_ATTEMPTS = 3
 STD_SLEEP_PERIODS = [1.61, 7, 13, 23, 41]
 
@@ -44,9 +44,10 @@ def create_update_inmate(url):
     Fetches inmates detail page and creates or updates inmates record based on it,
     otherwise returns as inmate's details were not found
     """
+    jail_id = None
     inmate_details = InmateDetails(url)
     if not inmate_details.found():
-        return None
+        return jail_id
 
     inmate, created = inmate_record_get_or_create(inmate_details)
     store_booking_date(inmate, inmate_details)
@@ -55,9 +56,13 @@ def create_update_inmate(url):
     store_bail_info(inmate, inmate_details)
     store_charges(inmate, inmate_details)
     store_next_court_info(inmate, inmate_details)
-    inmate.save()
-    log.debug("%s - %s inmate %s" % (str(datetime.now()), "Created" if created else "Updated", inmate))
-    return inmate.jail_id
+    try:
+        inmate.save()
+        log.debug("%s - %s inmate %s" % (str(datetime.now()), "Created" if created else "Updated", inmate))
+        jail_id = inmate.jail_id
+    except DatabaseError as e:
+        log.debug("Could not save inmate '%s'\nException is %s" % (inmate.jail_id, str(e)))
+    return jail_id
 
 
 def fetch_page(url, number_attempts=STD_NUMBER_ATTEMPTS, initial_sleep_period=STD_INITIAL_SLEEP_PERIOD):
@@ -104,6 +109,13 @@ def join_with_space_and_convert_spaces(segments, replace_with='-'):
     Helper function joins array pieces together and then replaces any spaces with specified value
     """
     return " ".join(segments).replace(" ", replace_with)
+
+
+def just_empty_lines(lines):
+    for line in lines:
+        if len(line) > 0:
+            return False
+    return True
 
 
 def parse_court_location(location_string):
@@ -198,7 +210,7 @@ def process_housing_location(location_object):
             set_sub_division(location_object, location_segments[2], location_segments[3:])
             return
     elif location_start in [5, 6, 10]:
-        set_sub_division(location_object, location_segments[2] + location_segments[1], location_segments[3:])
+        set_location_05_06_10_values(location_object, location_segments)
         return
     elif location_start == 15:
         set_location_15_values(location_object, location_segments)
@@ -249,6 +261,13 @@ def set_location_04_values(location_object, location_segments):
         location_object.in_program = "Segregation"
 
 
+def set_location_05_06_10_values(location_object, location_segments):
+    if len(location_segments) == 2:
+        set_sub_division(location_object, location_segments[1], [])
+    else:
+        set_sub_division(location_object, location_segments[2] + location_segments[1], location_segments[3:])
+
+
 def set_location_15_values(location_object, location_segments):
     if location_segments[1] == "EM":
         location_object.in_program = "Electronic Monitoring"
@@ -290,7 +309,7 @@ def store_bail_info(inmate, inmate_details):
 
 
 def store_booking_date(inmate, inmate_details):
-    inmate.booking_date = inmate_details.booking_date().strftime('%Y-%m-%d')
+    inmate.booking_date = inmate_details.booking_date()
 
 
 def store_charges(inmate, inmate_details):
@@ -300,39 +319,43 @@ def store_charges(inmate, inmate_details):
     # second is an optional description of the charges.
     """
     charges = strip_the_lines(inmate_details.charges().splitlines())
-    if charges == []:
+    if just_empty_lines(charges):
         return
 
     # Capture Charges and Citations if specified
     parsed_charges = charges[0]
     parsed_charges_citation = charges[1] if len(charges) > 1 else ''
 
+    create_new_charge = True
     if len(inmate.charges_history.all()) != 0:
         inmate_latest_charge = inmate.charges_history.latest('date_seen')  # last known charge
         # if the last known charge is different than the current info then create a new charge
-        if inmate_latest_charge.charges != parsed_charges or inmate_latest_charge.charges_citation != parsed_charges_citation:
+        if inmate_latest_charge.charges == parsed_charges and inmate_latest_charge.charges_citation == parsed_charges_citation:
+            create_new_charge = False
+    if create_new_charge:
+        try:
             new_charge = inmate.charges_history.create(charges=parsed_charges, charges_citation=parsed_charges_citation)
             new_charge.date_seen = datetime.now().date()
             new_charge.save()
-    else:
-        # if the inmate has no charges then create a new one with the parsed info
-        new_charge = inmate.charges_history.create(charges=parsed_charges, charges_citation=parsed_charges_citation)
-        new_charge.date_seen = datetime.now().date()
-        new_charge.save()
+        except DatabaseError as e:
+            log.debug("Could not save charges '%s' and citation '%s'\nException is %s" % (parsed_charges,
+                                                                                          parsed_charges_citation,
+                                                                                          str(e)))
 
 
 def store_housing_location(inmate, inmate_details):
-    inmate.housing_location = inmate_details.housing_location()
-    inmate_housing_location, created_location = HousingLocation.objects.get_or_create(housing_location=inmate.housing_location)
-    process_housing_location(inmate_housing_location)
-    try:
-        housing_history, new_history = inmate.housing_history.get_or_create(housing_location=inmate_housing_location)
-        if new_history:
-            housing_history.housing_date_discovered = date.today()
-        housing_history.save()
-        inmate_housing_location.save()
-    except DatabaseError:
-        log.debug("Could not save housing location '%s'" % inmate.housing_location)
+    housing_location = inmate_details.housing_location()
+    if housing_location != '':
+        inmate_housing_location, created_location = HousingLocation.objects.get_or_create(housing_location=housing_location)
+        process_housing_location(inmate_housing_location)
+        try:
+            housing_history, new_history = inmate.housing_history.get_or_create(housing_location=inmate_housing_location)
+            if new_history:
+                housing_history.housing_date_discovered = date.today()
+            housing_history.save()
+            inmate_housing_location.save()
+        except DatabaseError as e:
+            log.debug("Could not save housing location '%s'\nException is %s" % (inmate.housing_location, str(e)))
 
 
 def store_next_court_info(inmate, inmate_details):
@@ -344,7 +367,8 @@ def store_next_court_info(inmate, inmate_details):
         location, new_location = CourtLocation.objects.get_or_create(location=next_court_location, **parsed_location)
 
         # Get or create a court date for this inmate
-        court_date, new_court_date = inmate.court_dates.get_or_create(date=next_court_date.strftime('%Y-%m-%d'), location=location)
+        court_date, new_court_date = inmate.court_dates.get_or_create(date=next_court_date.strftime('%Y-%m-%d'),
+                                                                      location=location)
 
 
 def store_physical_characteristics(inmate, inmate_details):
@@ -357,6 +381,7 @@ def store_physical_characteristics(inmate, inmate_details):
 
 def strip_line(line):
     return line.strip()
+
 
 def strip_the_lines(lines):
     return map(strip_line, lines)
