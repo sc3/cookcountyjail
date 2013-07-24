@@ -47,6 +47,8 @@ for x in S M B W C H R J G P D L T A F K E N V O Y I Z Q U X;do
 done  | parallel -j $NUMBER_PARALLEL_PROCESSES
 python /home/ubuntu/apps/cookcountyjail/manage.py discharge_inmates
 echo "Cook County Jail scraper finished at `date`"
-#curl --header "clear-cache: 1" http://cookcountyjail.recoveredfactory.net/api/1.0/countyinmate?format=json&limit=0
-#curl --header "clear-cache: 1" http://cookcountyjail.recoveredfactory.net/api/1.0/countyinmate?format=csv&limit=0
-#curl --header "clear-cache: 1" http://cookcountyjail.recoveredfactory.net/api/1.0/countyinmate?format=jsonp&limit=0&callback=processJSONP
+echo "Priming the cache"
+find /var/www/cache -type f -delete
+curl -v -L -G -s -o/dev/null -d "format=jsonp&limit=0&callback=processJSONP" http://cookcountyjail.recoveredfactory.net/api/1.0/countyinmate/
+curl -v -L -G -s -o/dev/null -d "format=csv&limit=0" http://cookcountyjail.recoveredfactory.net/api/1.0/countyinmate/
+curl -v -L -G -s -o/dev/null -d "format=json&limit=0" http://cookcountyjail.recoveredfactory.net/api/1.0/countyinmate/
