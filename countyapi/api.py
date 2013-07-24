@@ -381,7 +381,7 @@ class CountyInmateResource(JailResource):
         allowed_methods = ['get']
         limit = 100
         max_limit = 0
-        cache = SimpleCache(timeout=720)
+        cache = SimpleCache(timeout=60*60*24)
         serializer = JailSerializer()
         excludes = ['last_seen_date', 'url']
         filtering = {
