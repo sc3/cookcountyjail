@@ -1,14 +1,12 @@
 from datetime import datetime
 import logging
 from pyquery import PyQuery as pq
-import requests
 import string
-from random import random
-from time import sleep
 
 from django.core.management.base import BaseCommand
 
-from countyapi.management.commands.utils import process_urls
+from countyapi.management.commands.inmate_utils import store_inmates_details
+from countyapi.management.commands.utils import http_post
 from countyapi.models import CountyInmate
 from optparse import make_option
 
@@ -17,6 +15,7 @@ log = logging.getLogger('main')
 
 BASE_URL = "http://www2.cookcountysheriff.org/search2"
 SEARCH_URL = "%s/%s" % (BASE_URL, 'locatesearchresults.asp')
+NUMBER_OF_ATTEMPTS = 5
 
 
 class Command(BaseCommand):
@@ -58,8 +57,10 @@ class Command(BaseCommand):
             log.debug("Search: '%s'" % search_term)
 
             # Simulates a search on the website
-            results = self.search_website(search_term)
+            post_values = {'LastName': search_term, 'FirstName': '', 'Submit': 'Begin Search'}
+            results = http_post(SEARCH_URL, post_values, NUMBER_OF_ATTEMPTS)
             if results is None:
+                log.debug("Search failed: '%s'." % search_term)
                 continue
 
             inmate_urls = self.extract_inmate_urls(results.content)
@@ -73,7 +74,7 @@ class Command(BaseCommand):
                     seen_urls.add(url.attrib['href'])
 
             # Process URLs
-            new_seen = (process_urls(BASE_URL, filtered_urls, records, options['limit']))
+            new_seen = store_inmates_details(BASE_URL, filtered_urls, options['limit'], records)
             seen += new_seen
             records = len(seen)
 
@@ -82,7 +83,6 @@ class Command(BaseCommand):
                 break
 
         # Calculate discharge date range
-
         if options['discharge']:
             if options['limit'] or options['search']:
                 log.debug("Discharge date option is incompatible with limit and search options")
@@ -120,20 +120,3 @@ class Command(BaseCommand):
             booking_month_date = datetime.strptime(booking_date[5:9], '%m%d')
             return booking_month_date.month <= start_date.month and booking_month_date.day < start_date.day
         return False
-
-    def search_website(self, search_term):
-        attempt = 1
-        max_attempts = 5
-        delay = 0.25
-        while attempt <= max_attempts:
-            delay += attempt * random()
-            sleep(delay)
-            try:
-                results = requests.post(SEARCH_URL, data={'LastName': search_term, 'FirstName': '', 'Submit': 'Begin Search'})
-                if results.status_code == requests.codes.ok:
-                    return results
-            except requests.exceptions.RequestException:
-                pass
-            attempt += 1
-        log.debug("Search for '%s' failed" % search_term)
-        return None
