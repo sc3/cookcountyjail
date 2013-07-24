@@ -2,7 +2,7 @@
 export CCJ_PRODUCTION=1
 echo "Cook County Jail scraper started at `date`"
 source /home/ubuntu/.virtualenvs/cookcountyjail/bin/activate
-python /home/ubuntu/apps/cookcountyjail/manage.py scrape_inmates -d
+#python /home/ubuntu/apps/cookcountyjail/manage.py scrape_inmates -d
 #
 # Parallel execution is limited by the number of database connections.
 # For Postgres the default number is 20, however a number of these are reserved.
@@ -42,13 +42,11 @@ NUMBER_PARALLEL_PROCESSES=13
 # Shortest execution time comes from executing the largest name groups first in order
 # of largest to smallest.
 
-# for x in S M B W C H R J G P D L T A F K E N V O Y I Z Q U X;do
-#     echo "python /home/ubuntu/apps/cookcountyjail/manage.py scrape_inmates --search" $x
-# done  | parallel -j $NUMBER_PARALLEL_PROCESSES
-# python /home/ubuntu/apps/cookcountyjail/manage.py discharge_inmates
+for x in S M B W C H R J G P D L T A F K E N V O Y I Z Q U X;do
+    echo "python /home/ubuntu/apps/cookcountyjail/manage.py scrape_inmates --search" $x
+done  | parallel -j $NUMBER_PARALLEL_PROCESSES
+python /home/ubuntu/apps/cookcountyjail/manage.py discharge_inmates
 echo "Cook County Jail scraper finished at `date`"
-echo "Restarting nginx at `date`"
-sudo service nginx restart
-curl --header "clear-cache: 1" http://cookcountyjail.recoveredfactory.net/api/1.0/countyinmate?format=json&limit=0
-curl --header "clear-cache: 1" http://cookcountyjail.recoveredfactory.net/api/1.0/countyinmate?format=csv&limit=0
-curl --header "clear-cache: 1" http://cookcountyjail.recoveredfactory.net/api/1.0/countyinmate?format=jsonp&limit=0&callback=processJSONP
+#curl --header "clear-cache: 1" http://cookcountyjail.recoveredfactory.net/api/1.0/countyinmate?format=json&limit=0
+#curl --header "clear-cache: 1" http://cookcountyjail.recoveredfactory.net/api/1.0/countyinmate?format=csv&limit=0
+#curl --header "clear-cache: 1" http://cookcountyjail.recoveredfactory.net/api/1.0/countyinmate?format=jsonp&limit=0&callback=processJSONP
