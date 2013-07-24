@@ -28,6 +28,15 @@ STD_SLEEP_PERIODS = [1.61, 7, 13, 23, 41]
 log = logging.getLogger('main')
 
 
+def clear_discharged(inmate):
+    """
+    Because the Cook County Jail website has issues, we can misclassify inmates as discharged. This
+    function clears the discharge fields, so the inmate is no longer classified as missing.
+    """
+    inmate.discharge_date_earliest = None
+    inmate.discharge_date_latest = None
+
+
 def convert_to_int(possible_number, use_if_not_int):
     """
     Save conversion of string to int with ability to specify default if string is not a number
@@ -50,6 +59,7 @@ def create_update_inmate(url):
         return jail_id
 
     inmate, created = inmate_record_get_or_create(inmate_details)
+    clear_discharged(inmate)
     store_booking_date(inmate, inmate_details)
     store_physical_characteristics(inmate, inmate_details)
     store_housing_location(inmate, inmate_details)
