@@ -30,6 +30,16 @@ class Command(BaseCommand):
         self.header()
         self.inmates_record_validation()
         self.look_for_missing_inmates()
+        self.flush_webserver_cache()
+
+    def flush_webserver_cache(self):
+        print('echo "Priming the cache"')
+        print('find /var/www/cache -type f -delete')
+        url = 'http://cookcountyjail.recoveredfactory.net/api/1.0/countyinmate/'
+        curl_cmd = 'curl -v -L -G -s -o/dev/null -d limit=0&format=%s %s'
+        for content_type in ['jsonp&callback=processJSONP', 'csv', 'json']:
+            print(curl_cmd % (content_type, url))
+        print('')
 
     def header(self):
         print("%s\n\n%s\n%s\n%s" %
@@ -97,3 +107,4 @@ class Command(BaseCommand):
                    start_date.strftime(self.DATE_FORMAT)))
             start_date += self.ONE_DAY
         print(") | parallel -j %d" % self.CONCURRENT_MISSING_SEARCHES)
+        print('')
