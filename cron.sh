@@ -1,8 +1,16 @@
 #!/bin/bash
+
+# set path to include /usr/local/bin so need programs are available
+export PATH=PATH:/usr/local/bin
+
+# Indicate that Production Database is to be used
 export CCJ_PRODUCTION=1
-echo "Cook County Jail scraper started at `date`"
+
+# bind in virtualev settings
 source /home/ubuntu/.virtualenvs/cookcountyjail/bin/activate
-#python /home/ubuntu/apps/cookcountyjail/manage.py scrape_inmates -d
+
+echo "Cook County Jail scraper started at `date`"
+
 #
 # Parallel execution is limited by the number of database connections.
 # For Postgres the default number is 20, however a number of these are reserved.
@@ -45,8 +53,12 @@ NUMBER_PARALLEL_PROCESSES=13
 for x in S M B W C H R J G P D L T A F K E N V O Y I Z Q U X;do
     echo "python /home/ubuntu/apps/cookcountyjail/manage.py scrape_inmates --search" $x
 done  | parallel -j $NUMBER_PARALLEL_PROCESSES
+
+# now find inamtes no longer in system and mark them as being discharged
 python /home/ubuntu/apps/cookcountyjail/manage.py discharge_inmates
+
 echo "Cook County Jail scraper finished at `date`"
+
 echo "Priming the cache"
 find /var/www/cache -type f -delete
 curl -v -L -G -s -o/dev/null -d "format=jsonp&limit=0&callback=processJSONP" http://cookcountyjail.recoveredfactory.net/api/1.0/countyinmate/

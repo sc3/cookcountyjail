@@ -55,7 +55,9 @@ class Command(BaseCommand):
         while(booking_date < today):
             for booked in range(1000):
                 booked = add_char(booked, 3)
-                url = "%s%s-%s%s%s" % (BASE_URL, booking_date.year, add_char(booking_date.month), add_char(booking_date.day), booked)
+                url = "%s%s-%s%s%s" % (BASE_URL, booking_date.year, add_char(booking_date.month),
+                                       add_char(booking_date.day), booked)
+                #TODO: change from url to InmateDetails
                 new_id = create_update_inmate(url)
                 if new_id is not None:
                     seen.append(new_id)
