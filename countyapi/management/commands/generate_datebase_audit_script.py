@@ -48,7 +48,7 @@ class Command(BaseCommand):
                "# Audit Cook County Jail Inmate Database",
                "#"))
         print('')
-        print("source bin/activate")
+        print("source /home/ubuntu/.virtualenvs/cookcountyjail/bin/activate")
         print("export CCJ_PRODUCTION=True")
         print('')
 
