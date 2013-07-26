@@ -3,7 +3,7 @@ import logging
 
 from django.core.management.base import BaseCommand
 
-from countyapi.management.commands.utils import fetch_page
+from countyapi.management.commands.utils import http_get
 from countyapi.models import CountyInmate
 
 
@@ -35,7 +35,7 @@ class Command(BaseCommand):
         log.debug("Number inmates to check is %d." % len(inmates))
         now = datetime.now()
         for inmate in inmates:
-            inmate_page = fetch_page(self.__COOK_COUNTY_INMATE_DETAILS_URL + inmate.jail_id, self.__NUMBER_OF_ATTEMPTS)
+            inmate_page = http_get(self.__COOK_COUNTY_INMATE_DETAILS_URL + inmate.jail_id, self.__NUMBER_OF_ATTEMPTS)
             if inmate_page is None:
                 inmate.discharge_date_earliest = inmate.last_seen_date
                 inmate.discharge_date_latest = now
@@ -43,7 +43,7 @@ class Command(BaseCommand):
                 log.debug("Discharged %s - Earliest: %s, Latest: %s" % (inmate.jail_id,
                                                                         inmate.discharge_date_earliest,
                                                                         now))
-            inmate.save()
+                inmate.save()
         log.debug("%s - Discharged %d." % (str(datetime.now()), discharged))
 
     def beginning_of_today(self):
