@@ -10,7 +10,7 @@ from optparse import make_option
 log = logging.getLogger('main')
 
 # Needs to be outside of the class
-MAX_INMATE_NUMBER = 5 # 350
+MAX_INMATE_NUMBER = 350  # 350
 
 
 class Command(BaseCommand):
@@ -33,7 +33,7 @@ class Command(BaseCommand):
     help = "Audits the collected inmates and scans Cook Count Sherif's website looking for uknown inmates."
     option_list = BaseCommand.option_list + (
         make_option('-d', '--day', type='string', action='store', dest='day', default=None,
-                    help='Specify day to search for missing inmates, format is YYYY-MM-DD.'),
+                    help='Specify day to search for missing inmates, format is YYYY-MM-DD. Not specified then searches all'),
     )
 
     COOK_COUNTY_JAIL_INMATE_DETAILS_URL = "http://www2.cookcountysheriff.org/search2/details.asp?jailnumber="
