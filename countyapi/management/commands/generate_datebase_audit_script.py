@@ -22,7 +22,7 @@ class Command(BaseCommand):
     help = "%s%s" % ("Generates a script to perform a full audit of inmates ",
                      "against Cook Count Sherif's website.")
 
-    CONCURRENT_MISSING_SEARCHES = 13
+    CONCURRENT_MISSING_SEARCHES = 10
     DATE_FORMAT = '%Y-%m-%d'
     ONE_DAY = timedelta(1)
 

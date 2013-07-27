@@ -60,7 +60,7 @@ for x in S M B W C H R J G P D L T A F K E N V O Y I Z Q U X;do
 done  | parallel -j $NUMBER_PARALLEL_PROCESSES
 
 # now find inamtes no longer in system and mark them as being discharged
-python /home/ubuntu/apps/cookcountyjail/manage.py discharge_inmates
+python /home/ubuntu/apps/cookcountyjail/manage.py generate_search_for_discharged_inmates_cmds | parallel -j $NUMBER_PARALLEL_PROCESSES
 
 echo "Cook County Jail scraper finished scrapping at `date`"
 
