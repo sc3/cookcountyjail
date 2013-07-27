@@ -39,7 +39,7 @@ class Command(BaseCommand):
             if inmate_details.found():
                 create_update_inmate(inmate_details)
             else:
-                inmate = CountyInmate.options.filter(jail_id=options['jail_id'])
+                inmate = CountyInmate.objects.get(jail_id=options['jail_id'])
                 if inmate:
                     now = datetime.now()
                     inmate.discharge_date_earliest = inmate.last_seen_date
