@@ -26,4 +26,4 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         inmates = CountyInmate.objects.filter(discharge_date_earliest__exact=None, last_seen_date__lt=date.today())
         for inmate in inmates:
-            print('./manage.py check_inmate -j %s' % inmate.jail_id)
+            print('python /home/ubuntu/apps/cookcountyjail/manage.py check_inmate -j %s' % inmate.jail_id)
