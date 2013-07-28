@@ -35,12 +35,15 @@ class Command(BaseCommand):
         }
         counts = {}
         for inmate in CountyInmate.objects.all().iterator():
-            day = inmate.booking_date.strftime('%Y-%m-%d')
-            if not counts.get(day):
-                counts[day] = copy(template)
-            key = "%s_%s" % (GENDER_LOOKUP[inmate.gender], inmate.race.lower())
-            counts[day][key] += 1
-            counts[day]['total'] += 1
+            try:
+                day = inmate.booking_date.strftime('%Y-%m-%d')
+                if not counts.get(day):
+                    counts[day] = copy(template)
+                key = "%s_%s" % (GENDER_LOOKUP[inmate.gender], inmate.race.lower())
+                counts[day][key] += 1
+                counts[day]['total'] += 1
+            except AttributeError:
+                pass
         for date, count in counts.items():
             # New count
             daily_count = DailyPopulationCounts.objects.create(**count)
