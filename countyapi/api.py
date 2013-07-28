@@ -11,7 +11,7 @@ from tastypie.fields import ToManyField, ToOneField
 from tastypie.resources import ModelResource, ALL, ALL_WITH_RELATIONS
 from tastypie.serializers import Serializer
 
-from countyapi.models import CountyInmate, CourtLocation, CourtDate, HousingLocation, HousingHistory
+from countyapi.models import CountyInmate, CourtLocation, CourtDate, HousingLocation, HousingHistory, DailyPopulationCounts
 
 
 DISCLAIMER = """Cook County Jail Inmate data, scraped from
@@ -423,3 +423,15 @@ class CountyInmateResource(JailResource):
                                                     request=bundle.request)
                 bundle.data["housing_history"].append(resource.full_dehydrate(date_bundle).data)
         return bundle
+
+
+class DailyPopulationCountsResource(JailResource):
+    """
+    API endpoint for DailyPopulationCounts
+    """
+
+    class Meta:
+        queryset = DailyPopulationCounts.objects.all()
+        max_limit = 0
+        cache = SimpleCache(timeout=720)
+        serializer = JailSerializer()

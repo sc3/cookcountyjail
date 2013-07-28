@@ -88,3 +88,32 @@ class InmateSummaries(models.Model):
     """
     date = models.DateField(null=False)
     current_inmate_count = models.IntegerField(null=False, blank=False)
+
+
+class DailyPopulationCounts(models.Model):
+    """
+    Population counts by day.
+    """
+    date = models.DateTimeField(null=True)
+    total = models.IntegerField(default=0)
+    female_as = models.IntegerField(default=0)
+    female_b = models.IntegerField(default=0)
+    female_bk = models.IntegerField(default=0)
+    female_in = models.IntegerField(default=0)
+    female_lb = models.IntegerField(default=0)
+    female_lw = models.IntegerField(default=0)
+    female_lt = models.IntegerField(default=0)
+    female_w = models.IntegerField(default=0)
+    female_wh = models.IntegerField(default=0)
+    male_as = models.IntegerField(default=0)
+    male_b = models.IntegerField(default=0)
+    male_bk = models.IntegerField(default=0)
+    male_in = models.IntegerField(default=0)
+    male_lb = models.IntegerField(default=0)
+    male_lw = models.IntegerField(default=0)
+    male_lt = models.IntegerField(default=0)
+    male_w = models.IntegerField(default=0)
+    male_wh = models.IntegerField(default=0)
+
+    class Meta:
+        ordering = ['date']
