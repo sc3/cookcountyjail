@@ -1,6 +1,7 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.core.management.base import BaseCommand
 from countyapi.models import CountyInmate, DailyPopulationCounts
+from django.db.models import Max, Min, Q
 from copy import copy
 
 GENDER_LOOKUP = {
@@ -9,6 +10,10 @@ GENDER_LOOKUP = {
 }
 
 class Command(BaseCommand):
+
+    def daterange(self, start_date, end_date):
+        for n in range(int ((end_date - start_date).days)):
+            yield start_date + timedelta(n)
 
     def handle(self, *args, **options):
         DailyPopulationCounts.objects.all().delete()
@@ -34,20 +39,42 @@ class Command(BaseCommand):
             'male_wh': 0,
         }
         counts = {}
-        for inmate in CountyInmate.objects.all().iterator():
-            try:
-                day = inmate.booking_date.strftime('%Y-%m-%d')
-                if not counts.get(day):
-                    counts[day] = copy(template)
+
+        min_date = CountyInmate.objects.all().aggregate(
+                Min('booking_date'))['booking_date__min']
+        max_date = CountyInmate.objects.all().aggregate(
+                Max('booking_date'))['booking_date__max'] + timedelta(days=1)
+
+        for day in self.daterange(min_date, max_date):
+            inmates = CountyInmate.objects.filter(booking_date__lte=day)\
+                    .filter(Q(discharge_date_earliest__gt=day) | Q(discharge_date_earliest__isnull=True))
+            row = copy(template)
+            for inmate in inmates:
                 key = "%s_%s" % (GENDER_LOOKUP[inmate.gender], inmate.race.lower())
-                counts[day][key] += 1
-                counts[day]['total'] += 1
-            except AttributeError:
-                pass
+                row[key] += 1
+                row['total'] += 1
+            counts[day.strftime('%Y-%m-%d')] = row
+
         for date, count in counts.items():
             # New count
             daily_count = DailyPopulationCounts.objects.create(**count)
             daily_count.date = date
             daily_count.save()
 
+        # This counts daily admissions, not total population
+        #for inmate in CountyInmate.objects.all().iterator():
+            #try:
+                #day = inmate.booking_date.strftime('%Y-%m-%d')
+                #if not counts.get(day):
+                    #counts[day] = copy(template)
+                #key = "%s_%s" % (GENDER_LOOKUP[inmate.gender], inmate.race.lower())
+                #counts[day][key] += 1
+                #counts[day]['total'] += 1
+            #except AttributeError:
+                #pass
+        #for date, count in counts.items():
+            ## New count
+            #daily_count = DailyPopulationCounts.objects.create(**count)
+            #daily_count.date = date
+            #daily_count.save()
 
