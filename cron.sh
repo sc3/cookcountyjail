@@ -1,14 +1,27 @@
 #!/bin/bash
+
+# set path to include /usr/local/bin so need programs are available
+export PATH=$PATH:/usr/local/bin
+
+# Indicate that Production Database is to be used
 export CCJ_PRODUCTION=1
-echo "Cook County Jail scraper started at `date`"
+
+# bind in virtualev settings
 source /home/ubuntu/.virtualenvs/cookcountyjail/bin/activate
-python /home/ubuntu/apps/cookcountyjail/manage.py scrape_inmates -d
+
+echo "Cook County Jail scraper started at `date`"
+
 #
 # Parallel execution is limited by the number of database connections.
-# For Postgres the default number is 20, however a number of these are reserved.
-# Expermintation has found that 13 is optimal amount. Increasing the number of
-# connections allowed means the number of parallel processes can increase.
-NUMBER_PARALLEL_PROCESSES=13
+# For Postgres the default number is 20, however a number of these are
+# reserved. Increasing the number of database connections allowed means
+# the number of parallel processes can increase.
+#
+# Expermintation has found that 13 is the optimal amount for Postgres
+# connections, however on the cookcountyjail.recoveredfactory.net as
+# of 2013-07-25 when run with 13, 3 of the processes are starved, so 10
+# is the maximum that can effectively
+NUMBER_PARALLEL_PROCESSES=10
 #
 # The order of parallel execution affects the over all time here is a sample of
 # the numer of records per Letter of the alphabet ordered from largest to smallest:
@@ -42,13 +55,19 @@ NUMBER_PARALLEL_PROCESSES=13
 # Shortest execution time comes from executing the largest name groups first in order
 # of largest to smallest.
 
-# for x in S M B W C H R J G P D L T A F K E N V O Y I Z Q U X;do
-#     echo "python /home/ubuntu/apps/cookcountyjail/manage.py scrape_inmates --search" $x
-# done  | parallel -j $NUMBER_PARALLEL_PROCESSES
-# python /home/ubuntu/apps/cookcountyjail/manage.py discharge_inmates
+for x in S M B W C H R J G P D L T A F K E N V O Y I Z Q U X;do
+    echo "python /home/ubuntu/apps/cookcountyjail/manage.py scrape_inmates --search" $x
+done  | parallel -j $NUMBER_PARALLEL_PROCESSES
+
+# now find inamtes no longer in system and mark them as being discharged
+python /home/ubuntu/apps/cookcountyjail/manage.py generate_search_for_discharged_inmates_cmds | parallel -j $NUMBER_PARALLEL_PROCESSES
+
+echo "Cook County Jail scraper finished scrapping at `date`"
+
+echo "Priming the cache"
+find /var/www/cache -type f -delete
+curl -v -L -G -s -o/dev/null -d "format=jsonp&limit=0&callback=processJSONP" http://cookcountyjail.recoveredfactory.net/api/1.0/countyinmate/
+curl -v -L -G -s -o/dev/null -d "format=csv&limit=0" http://cookcountyjail.recoveredfactory.net/api/1.0/countyinmate/
+curl -v -L -G -s -o/dev/null -d "format=json&limit=0" http://cookcountyjail.recoveredfactory.net/api/1.0/countyinmate/
+
 echo "Cook County Jail scraper finished at `date`"
-echo "Restarting nginx at `date`"
-sudo service nginx restart
-curl --header "clear-cache: 1" http://cookcountyjail.recoveredfactory.net/api/1.0/countyinmate?format=json&limit=0
-curl --header "clear-cache: 1" http://cookcountyjail.recoveredfactory.net/api/1.0/countyinmate?format=csv&limit=0
-curl --header "clear-cache: 1" http://cookcountyjail.recoveredfactory.net/api/1.0/countyinmate?format=jsonp&limit=0&callback=processJSONP
