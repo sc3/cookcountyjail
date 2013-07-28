@@ -3,7 +3,7 @@ import datetime
 from south.db import db
 from south.v2 import DataMigration
 from django.db import models
-from countyapi.management.commands.utils import process_housing_location
+#from countyapi.management.commands.utils import process_housing_location
 import logging
 
 class Migration(DataMigration):
@@ -13,7 +13,7 @@ class Migration(DataMigration):
         # Query all inmates with an empty hosing_history
         for inmate in orm.CountyInmate.objects.all().exclude(housing_history__isnull=False): # Iterate through each one
             housing_location, created_location = orm.HousingLocation.objects.get_or_create(housing_location=inmate.housing_location) # create a new housing_location record on the latest table with the inmates housing location
-            process_housing_location(housing_location) # process it as any other location
+            #process_housing_location(housing_location) # process it as any other location
             housing_history, new_history = inmate.housing_history.get_or_create(housing_location=housing_location) # New housing_history record with the inmate's housing location
             housing_history.housing_date = inmate.last_seen_date.date() # set the date to the latest possible day that inmate was moved there 
             # save it all 
