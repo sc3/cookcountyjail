@@ -10,6 +10,7 @@ from tastypie.cache import SimpleCache
 from tastypie.fields import ToManyField, ToOneField
 from tastypie.resources import ModelResource, ALL, ALL_WITH_RELATIONS
 from tastypie.serializers import Serializer
+from tastypie.authentication import Authentication
 
 from countyapi.models import CountyInmate, CourtLocation, CourtDate, HousingLocation, HousingHistory, DailyPopulationCounts
 
@@ -151,6 +152,13 @@ class JailSerializer(Serializer):
             writer.writerow(item.values())
 
         return response
+
+
+class JailAuthentication(Authentication):
+    def is_authenticated(self, request, **kwargs):
+        if len(request.POST.keys()) > 0 and request.META['REMOTE_ADDR'] != '127.0.0.1':
+            return False
+        return True
 
 
 class JailResource(ModelResource):
@@ -331,7 +339,6 @@ class HousingHistoryResource(JailResource):
         """
         Set up bidirectional relationships based on request.
         """
-        #import ipdb; ipdb.set_trace();
 
         # Include inmate ID when called from location
         if bundle.request.path.startswith(HISTORY_LOCATION_URL):
@@ -383,6 +390,7 @@ class CountyInmateResource(JailResource):
         max_limit = 0
         cache = SimpleCache(timeout=60*60*24)
         serializer = JailSerializer()
+        authentication = JailAuthentication()
         excludes = ['last_seen_date', 'url']
         filtering = {
             'jail_id': ALL,
