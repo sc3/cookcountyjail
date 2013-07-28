@@ -3,14 +3,15 @@ import csv
 
 from django.http import HttpResponse
 from django.core.exceptions import ObjectDoesNotExist
+from django.conf import settings
 
-from tastypie.exceptions import ApiFieldError
+from tastypie.exceptions import ApiFieldError, Unauthorized
 from tastypie.bundle import Bundle
 from tastypie.cache import SimpleCache
 from tastypie.fields import ToManyField, ToOneField
 from tastypie.resources import ModelResource, ALL, ALL_WITH_RELATIONS
 from tastypie.serializers import Serializer
-from tastypie.authentication import Authentication
+from tastypie.authorization import Authorization
 
 from countyapi.models import CountyInmate, CourtLocation, CourtDate, HousingLocation, HousingHistory, DailyPopulationCounts
 
@@ -154,11 +155,37 @@ class JailSerializer(Serializer):
         return response
 
 
-class JailAuthentication(Authentication):
-    def is_authenticated(self, request, **kwargs):
-        if len(request.POST.keys()) > 0 and request.META['REMOTE_ADDR'] != '127.0.0.1':
-            return False
+class JailAuthorization(Authorization):
+    def ip_check(self, object_list, bundle):
+        if bundle.request.META['REMOTE_ADDR'] in settings.ALLOWED_POST_IPS:
+            return True
+        raise Unauthorized("You are not allowed to access that resource.")
+
+    def read_list(self, object_list, bundle):
+        return self.ip_check(object_list, bundle)
+        return object_list
+
+    def read_detail(self, object_list, bundle):
         return True
+
+    def create_list(self, object_list, bundle):
+        return self.ip_check(object_list, bundle)
+
+    def create_detail(self, object_list, bundle):
+        return self.ip_check(object_list, bundle)
+
+    def update_list(self, object_list, bundle):
+        return self.ip_check(object_list, bundle)
+
+    def update_detail(self, object_list, bundle):
+        return self.ip_check(object_list, bundle)
+
+    def delete_list(self, object_list, bundle):
+        return self.ip_check(object_list, bundle)
+
+    def delete_detail(self, object_list, bundle):
+        return self.ip_check(object_list, bundle)
+
 
 
 class JailResource(ModelResource):
@@ -390,7 +417,9 @@ class CountyInmateResource(JailResource):
         max_limit = 0
         cache = SimpleCache(timeout=60*60*24)
         serializer = JailSerializer()
-        authentication = JailAuthentication()
+        list_allowed_methods = ['get', 'post', 'put', 'delete']
+        detail_allowed_methods = ['get', 'post', 'put', 'delete']
+        authorization = JailAuthorization()
         excludes = ['last_seen_date', 'url']
         filtering = {
             'jail_id': ALL,
