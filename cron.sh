@@ -59,6 +59,9 @@ for x in S M B W C H R J G P D L T A F K E N V O Y I Z Q U X;do
     echo "python /home/ubuntu/apps/cookcountyjail/manage.py scrape_inmates --search" $x
 done  | parallel -j $NUMBER_PARALLEL_PROCESSES
 
+# now check for any inmates entered into system yesterday but not in alphabetical listsing
+python /home/ubuntu/apps/cookcountyjail/manage.py look_for_missing_inmates -y
+
 # now find inamtes no longer in system and mark them as being discharged
 python /home/ubuntu/apps/cookcountyjail/manage.py generate_search_for_discharged_inmates_cmds | parallel -j $NUMBER_PARALLEL_PROCESSES
 
