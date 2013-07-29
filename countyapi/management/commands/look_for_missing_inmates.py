@@ -34,6 +34,8 @@ class Command(BaseCommand):
     option_list = BaseCommand.option_list + (
         make_option('-d', '--day', type='string', action='store', dest='day', default=None,
                     help='Specify day to search for missing inmates, format is YYYY-MM-DD. Not specified then searches all'),
+        make_option('-y', '--yesterday', action='store_true', dest='yesterday',
+                    help='Specify day to search for missing inmates is yesterday.'),
     )
 
     COOK_COUNTY_JAIL_INMATE_DETAILS_URL = "http://www2.cookcountysheriff.org/search2/details.asp?jailnumber="
@@ -41,7 +43,10 @@ class Command(BaseCommand):
     START_DATE = '2013-01-01'
 
     def handle(self, *args, **options):
-        self.check_for_missed_inmates(self.start_date(options['day']), self.end_date(options['day']))
+        if options['yesterday']:
+            self.check_yesterday_for_missing_inmates()
+        else:
+            self.check_for_missed_inmates(self.start_date(options['day']), self.end_date(options['day']))
 
     def booking_dates(self, start_date, end_date):
         while start_date <= end_date:
@@ -69,6 +74,10 @@ class Command(BaseCommand):
                         create_update_inmate(inmate_details)
         log.debug("%s - Ended search for missing inmates on %s, found %d." %
                   (str(datetime.now()), end_date.strftime('%Y-%m-%d'), found_inmates))
+
+    def check_yesterday_for_missing_inmates(self):
+        yesterday = date.today() - self.ONE_DAY
+        self.check_for_missed_inmates(yesterday, yesterday)
 
     def end_date(self, day):
         today = date.today()
