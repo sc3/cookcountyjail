@@ -162,30 +162,34 @@ class JailAuthorization(Authorization):
         raise Unauthorized("You are not allowed to access that resource.")
 
     def read_list(self, object_list, bundle):
-        return self.ip_check(object_list, bundle)
         return object_list
 
     def read_detail(self, object_list, bundle):
         return True
 
     def create_list(self, object_list, bundle):
-        return self.ip_check(object_list, bundle)
+        if self.ip_check(object_list, bundle):
+            return object_list
+        return []
 
     def create_detail(self, object_list, bundle):
         return self.ip_check(object_list, bundle)
 
     def update_list(self, object_list, bundle):
-        return self.ip_check(object_list, bundle)
+        if self.ip_check(object_list, bundle):
+            return object_list
+        return []
 
     def update_detail(self, object_list, bundle):
         return self.ip_check(object_list, bundle)
 
     def delete_list(self, object_list, bundle):
-        return self.ip_check(object_list, bundle)
+        if self.ip_check(object_list, bundle):
+            return object_list
+        return []
 
     def delete_detail(self, object_list, bundle):
         return self.ip_check(object_list, bundle)
-
 
 
 class JailResource(ModelResource):
