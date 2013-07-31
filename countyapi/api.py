@@ -195,7 +195,7 @@ class JailResource(ModelResource):
     def __init__(self, api_name=None):
         """
         Patched init that doesn't use deepcopy,
-        see https://github.com/toastdriven/django-tastypie/issues/60*60*24
+        see https://github.com/toastdriven/django-tastypie/issues/720
         """
         self.fields = {k: copy(v) for k, v in self.base_fields.iteritems()}
 

@@ -1,8 +1,8 @@
 from django.core.management.base import BaseCommand
+from django.core.exceptions import MultipleObjectsReturned
 from countyapi.models import CourtDate, CourtLocation, CountyInmate, HousingHistory, HousingLocation
 from utils import http_get
 from inmate_utils import parse_court_location
-from django.core.exceptions import MultipleObjectsReturned
 from optparse import make_option
 
 import json
@@ -15,7 +15,7 @@ class Command(BaseCommand):
         make_option('-a', '--api', type='string', action='store', dest='api', default=False,
                     help='APIs to clone by name, separated by comma'), 
         make_option('-l', '--limit', type='string', action='store', dest='limit', default=False,
-                    help='take only the first n records')
+                    help='Clone only the first n records')
         )
 
     def handle(self, *args, **options):
@@ -23,6 +23,20 @@ class Command(BaseCommand):
         """
              Copies all data from each API endpoint of the server's CookCountyJail
              database onto the caller's local machine. 
+
+             NOTE: For the time being, cloning the whole database is impossible;
+             the 'courtdate' and 'housinghistory' API endpoints aren't functional 
+             as it stands: each will stall for about 4 minutes before giving up with 
+             a 504 error if you try to query them with 'limit=0', which is the default.
+            Thus it's recommended to either supply an '--api' flag excluding those two 
+            APIs (e.g. 'countyinmate, courtlocation, housinglocation'), or to supply a 
+             '--limit' flag with some large number (e.g. '2000'). 
+
+             For best results, you might want to do both, in two separate runs:
+             "./manage.py clone_db -a 'countyinmate, courtlocation, housinglocation' "
+             And then:
+             "./manage.py clone_db -a 'courtdate, housinghistory' -l 2000 "
+             You could just see how high you can increase that limit before it fails.
         """
 
         base_url = "http://cookcountyjail.recoveredfactory.net/api/1.0/"
@@ -55,7 +69,6 @@ class Command(BaseCommand):
          # set a limit if necessary
         if options['limit']:
             suffix = '?format=json&limit=%s' % options['limit']
-
 
         # build a list of excluded APIs if necessary
         if options['api']:
