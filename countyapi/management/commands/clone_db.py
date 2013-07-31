@@ -2,10 +2,11 @@ from django.core.management.base import BaseCommand
 from countyapi.models import CourtDate, CourtLocation, CountyInmate, HousingHistory, HousingLocation
 from utils import http_get
 from inmate_utils import parse_court_location
+from django.core.exceptions import MultipleObjectsReturned
+from optparse import make_option
 
 import json
 import collections
-import pprint
 
 class Command(BaseCommand):
 
@@ -16,7 +17,6 @@ class Command(BaseCommand):
              database onto the caller's local machine. 
         """
 
-        help = "Copies all data from the CookCountyJail database."
         base_url = "http://cookcountyjail.recoveredfactory.net/api/1.0/"
         suffix = "?format=json&limit=0"
 
@@ -76,13 +76,6 @@ class Command(BaseCommand):
                         filters = {identifiers[0]: json_obj[identifiers[0]]}
                     else:
 
-                        # In this case, we need to reference objects in other other tables just to initialize
-                        # the current object. For example, the CourtDate object requires an 'inmate' 
-                        # attribute, which is a CountyInmate object, a 'location' attribute, which is a 
-                        # CourtLocation object, and a 'date' attribute. For the first two, the json object 
-                        # only provides the identifying filters (and it might even name them differently!),
-                        # so we have to go get_or_create the objects based on the keys provided.
-
                         # iterate through the filters
                         for i in identifiers:
 
@@ -94,7 +87,10 @@ class Command(BaseCommand):
                                 foreign_api = id_to_jsonkey_and_api[i][1]
                                 foreign_model = api_to_model_and_id[foreign_api][0]
                                 foreign_key = api_to_model_and_id[foreign_api][1][0]
-                                foreigner, created = foreign_model.objects.get_or_create(**{foreign_key: json_obj[json_key]})
+                                try:
+                                    foreigner, created = foreign_model.objects.get_or_create(**{foreign_key: json_obj[json_key]})
+                                except MultipleObjectsReturned:
+                                    foreigner = foreign_model.objects.filter(**{foreign_key: json_obj[json_key]})[0]
                                 filters[i] = foreigner
                             else:
 
@@ -103,7 +99,10 @@ class Command(BaseCommand):
                                 filters[i] = json_obj[i]
 
                     # here, we actually create our object.
-                    obj, created = model.objects.get_or_create(**filters)
+                    try:
+                        obj, created = model.objects.get_or_create(**filters)
+                    except MultipleObjectsReturned: 
+                        obj = model.objects.filter(**filters)[0]
 
                     # now that we've created our object, we take all the 
                     # remaining attributes from our json object, and
@@ -118,6 +117,5 @@ class Command(BaseCommand):
 
                     # finally, we're done.
                     obj.save()
-            
             
         
