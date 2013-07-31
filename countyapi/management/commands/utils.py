@@ -57,7 +57,7 @@ def get_next_sleep_period(current_sleep_period, attempt):
 
 def http_get(url, number_attempts=STD_NUMBER_ATTEMPTS,
              initial_sleep_period=STD_INITIAL_SLEEP_PERIOD,
-             quiet=False):
+             quiet=False, retrieval_msg="Retrieving inmate record at"):
     attempt = 1
     sleep_period = initial_sleep_period
     loud = not quiet
@@ -65,7 +65,7 @@ def http_get(url, number_attempts=STD_NUMBER_ATTEMPTS,
         sleep(sleep_period)
         try:
             if loud:
-                log.debug("%s - Retreiving inmate %s record" % (str(datetime.now()), url))
+                log.debug("%s - %s %s " % (str(datetime.now()), retrieval_msg, url))
             results = requests.get(url)
         except requests.exceptions.RequestException:
             results = None

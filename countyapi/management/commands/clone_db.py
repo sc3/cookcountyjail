@@ -90,7 +90,7 @@ class Command(BaseCommand):
             identifiers = api_map[api][1]
 
             # query our server to get all the data of a particular API
-            result = http_get("%s%s%s" % (base_url, api, suffix), number_attempts=1, quiet=False)
+            result = http_get("%s%s%s" % (base_url, api, suffix), number_attempts=1, quiet=False, retrieval_msg="retrieving from API:")
             if result:
 
                 # parse the json we get back into a dictionary of keys and values
