@@ -1,6 +1,4 @@
-import django
 import os
-import sys
 
 SITE_STATIC_ROOT = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'static')
 SITE_DIR = os.path.dirname(os.path.dirname(__file__))
@@ -15,7 +13,7 @@ ADMINS = (
 
 MANAGERS = ADMINS
 
-if 'CCJ_PRODUCTION' in os.environ:
+if 'CCJ_PRODUCTION' in os.environ or 'USE_POSTGRES' in os.environ:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql_psycopg2',
@@ -113,7 +111,7 @@ INSTALLED_APPS = (
     'south',
 )
 
-ALLOWED_POST_IPS = ['127.0.0.1',]
+ALLOWED_POST_IPS = ['127.0.0.1']
 
 LOGGING = {
     'version': 1,
