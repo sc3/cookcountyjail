@@ -1,5 +1,6 @@
 from copy import copy
 import csv
+import os
 
 from django.http import HttpResponse
 from django.core.exceptions import ObjectDoesNotExist
@@ -7,16 +8,43 @@ from django.conf import settings
 
 from tastypie.exceptions import ApiFieldError, Unauthorized
 from tastypie.bundle import Bundle
-from tastypie.cache import SimpleCache
 from tastypie.fields import ToManyField, ToOneField
 from tastypie.resources import ModelResource, ALL, ALL_WITH_RELATIONS
 from tastypie.serializers import Serializer
 from tastypie.authorization import Authorization
 
 from countyapi.models import CountyInmate, CourtLocation, CourtDate, HousingLocation, HousingHistory, DailyPopulationCounts
+from countyapi.management.commands.utils import convert_to_int
 
 
-DISCLAIMER = """Cook County Jail Inmate data, scraped from
+NEGATIVE_VALUES = set(['0', 'false'])
+
+
+def use_caching():
+    """
+    Calculates if ORM caching is to be turned on.
+    If environment var CCJ_PRODUCTION != False or 0 or None, then no internal caching
+    if environment var USE_INTERNAL_CACHE != False or 0 or None, then use internal caching
+    """
+    ccj_production = os.environ.get('CCJ_PRODUCTION')
+    if ccj_production and ccj_production.lower() not in NEGATIVE_VALUES:
+        return False
+    use_internal_cache = os.environ.get('USE_INTERNAL_CACHE')
+    return use_internal_cache and use_internal_cache not in NEGATIVE_VALUES
+
+
+def cache_ttl():
+    default_ttl = 60 * 12  # Time to Live in Cache: 12 minutes
+    cache_ttl = os.environ.get('CACHE_TTL')
+    return convert_to_int(cache_ttl, default_ttl) if cache_ttl else default_ttl
+
+
+if use_caching():
+    from tastypie.cache import SimpleCache
+
+
+DISCLAIMER = """
+Cook County Jail Inmate data, scraped from
 http://www2.cookcountysheriff.org/search2/ nightly.
 
 Learn more about this API at
@@ -30,7 +58,8 @@ definitive, but rather as suggestive. This data can be used to develop
 interesting questions, but it cannot be cited as factual.
 
 Developed by the Supreme Chi-Town Coding Crew
-(https://github.com/sc3/sc3)"""
+(https://github.com/sc3/sc3)
+"""
 
 COURT_DATE_URL = '/api/1.0/courtdate/'
 COURT_LOCATION_URL = '/api/1.0/courtlocation/'
@@ -230,7 +259,8 @@ class CourtLocationResource(JailResource):
         queryset = CourtLocation.objects.all()
         limit = 100
         max_limit = 0
-        cache = SimpleCache(timeout=60*60*24)
+        if use_caching():
+            cache = SimpleCache(timeout=cache_ttl())
         serializer = JailSerializer()
         filtering = {
             'location': ALL,
@@ -241,7 +271,7 @@ class CourtLocationResource(JailResource):
         Show court dates in location lists and detail views.
         """
         if bundle.request.path.startswith(COURT_LOCATION_URL) and \
-                (bundle.request.path != COURT_LOCATION_URL or \
+                (bundle.request.path != COURT_LOCATION_URL or
                  bundle.request.REQUEST.get('related') == '1'):
             dates = bundle.obj.court_dates.all()
             resource = CourtDateResource()
@@ -268,7 +298,8 @@ class CourtDateResource(JailResource):
         allowed_methods = ['get']
         limit = 100
         max_limit = 0
-        cache = SimpleCache(timeout=60*60*24)
+        if use_caching():
+            cache = SimpleCache(timeout=cache_ttl())
         serializer = JailSerializer()
         filtering = {
             'date': ALL,
@@ -329,7 +360,8 @@ class HousingLocationResource(JailResource):
         allowed_methods = ['get']
         limit = 100
         max_limit = 0
-        cache = SimpleCache(timeout=60*60*24)
+        if use_caching():
+            cache = SimpleCache(timeout=cache_ttl())
         serializer = JailSerializer()
         filtering = {
             'housing_location': ALL,
@@ -358,7 +390,8 @@ class HousingHistoryResource(JailResource):
         serializer = JailSerializer()
         limit = 100
         max_limit = 0
-        cache = SimpleCache(timeout=60*60*24)
+        if use_caching():
+            cache = SimpleCache(timeout=cache_ttl())
         filtering = {
             'inmate': ALL_WITH_RELATIONS,
             'housing_date': ALL,
@@ -419,7 +452,8 @@ class CountyInmateResource(JailResource):
         allowed_methods = ['get']
         limit = 100
         max_limit = 0
-        cache = SimpleCache(timeout=60*60*24)
+        if use_caching():
+            cache = SimpleCache(timeout=cache_ttl())
         serializer = JailSerializer()
         list_allowed_methods = ['get', 'post', 'put', 'delete']
         detail_allowed_methods = ['get', 'post', 'put', 'delete']
@@ -446,7 +480,7 @@ class CountyInmateResource(JailResource):
         Show court dates and housing history in inmate lists and detail views.
         """
         if bundle.request.path.startswith(COUNTY_INMATE_URL) and \
-                (bundle.request.path != COUNTY_INMATE_URL or \
+                (bundle.request.path != COUNTY_INMATE_URL or
                  bundle.request.REQUEST.get('related') == '1'):
             dates = bundle.obj.court_dates.all()
             resource = CourtDateResource()
@@ -474,5 +508,6 @@ class DailyPopulationCountsResource(JailResource):
     class Meta:
         queryset = DailyPopulationCounts.objects.all()
         max_limit = 0
-        cache = SimpleCache(timeout=60*60*24)
+        if use_caching():
+            cache = SimpleCache(timeout=cache_ttl())
         serializer = JailSerializer()

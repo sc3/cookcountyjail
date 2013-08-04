@@ -3,7 +3,35 @@ import os
 SITE_STATIC_ROOT = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'static')
 SITE_DIR = os.path.dirname(os.path.dirname(__file__))
 
-if not 'CCJ_PRODUCTION' in os.environ:
+NEGATIVE_VALUES = set(['0', 'false'])
+
+
+def env_var_active(env_var):
+    """
+    Calculates if an environment variable is set.
+    """
+    env_var_value = os.environ.get(env_var)
+    return env_var_value and env_var_value.lower() not in NEGATIVE_VALUES
+
+
+def in_production():
+    """
+    Calculates if to run in production mode.
+    If environment var CCJ_PRODUCTION != False or 0 or None, then in production mode
+    """
+    return env_var_active('CCJ_PRODUCTION')
+
+
+def use_postgres():
+    """
+    Calculates if Postgres database is to be used.
+    If in production mode, then use Postgres
+    if environment var USE_POSTGRES != False or 0 or None, then use Postgres
+    """
+    return in_production() or env_var_active('USE_POSTGRES')
+
+
+if not in_production():
     DEBUG = True
     TEMPLATE_DEBUG = DEBUG
 
@@ -13,7 +41,8 @@ ADMINS = (
 
 MANAGERS = ADMINS
 
-if 'CCJ_PRODUCTION' in os.environ or 'USE_POSTGRES' in os.environ:
+
+if use_postgres():
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql_psycopg2',
