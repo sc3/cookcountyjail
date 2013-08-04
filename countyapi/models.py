@@ -1,5 +1,6 @@
 from django.db import models
 
+
 class CountyInmate(models.Model):
     """
     Model that represents a Cook County Jail inmate.
