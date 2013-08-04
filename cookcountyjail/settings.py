@@ -96,7 +96,7 @@ ROOT_URLCONF = 'cookcountyjail.urls'
 # Python dotted path to the WSGI application used by Django's runserver.
 WSGI_APPLICATION = 'cookcountyjail.wsgi.application'
 
-TEMPLATE_DIRS = ()
+TEMPLATE_DIRS = (os.path.join(os.path.dirname(os.path.dirname(__file__)), 'templates'))
 
 INSTALLED_APPS = (
     'django.contrib.auth',
