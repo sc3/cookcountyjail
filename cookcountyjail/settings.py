@@ -13,7 +13,23 @@ ADMINS = (
 
 MANAGERS = ADMINS
 
-if 'CCJ_PRODUCTION' in os.environ or 'USE_POSTGRES' in os.environ:
+NEGATIVE_VALUES = set(['0', 'false'])
+
+
+def use_postgres():
+    """
+    Calculates if Postgres database is to be used.
+    If environment var CCJ_PRODUCTION != False or 0 or None, then use Postgres
+    if environment var USE_POSTGRES != False or 0 or None, then use Postgres
+    """
+    ccj_production = os.environ.get('CCJ_PRODUCTION')
+    if ccj_production and ccj_production.lower() not in NEGATIVE_VALUES:
+        return True
+    use_postgres = os.environ.get('USE_POSTGRES')
+    return use_postgres and use_postgres not in NEGATIVE_VALUES
+
+
+if use_postgres():
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql_psycopg2',

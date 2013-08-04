@@ -14,6 +14,7 @@ from tastypie.serializers import Serializer
 from tastypie.authorization import Authorization
 
 from countyapi.models import CountyInmate, CourtLocation, CourtDate, HousingLocation, HousingHistory, DailyPopulationCounts
+from countyapi.management.commands.utils import convert_to_int
 
 
 NEGATIVE_VALUES = set(['0', 'false'])
@@ -22,7 +23,7 @@ NEGATIVE_VALUES = set(['0', 'false'])
 def use_caching():
     """
     Calculates if ORM caching is to be turned on.
-    If running in production, environment var CCJ_PRODUCTION != False or 0 or None, then no internal caching
+    If environment var CCJ_PRODUCTION != False or 0 or None, then no internal caching
     if environment var USE_INTERNAL_CACHE != False or 0 or None, then use internal caching
     """
     ccj_production = os.environ.get('CCJ_PRODUCTION')
@@ -32,9 +33,14 @@ def use_caching():
     return use_internal_cache and use_internal_cache not in NEGATIVE_VALUES
 
 
+def cache_ttl():
+    default_ttl = 60 * 12  # Time to Live in Cache: 12 minutes
+    cache_ttl = os.environ.get('CACHE_TTL')
+    return convert_to_int(cache_ttl, default_ttl) if cache_ttl else default_ttl
+
+
 if use_caching():
     from tastypie.cache import SimpleCache
-    CACHE_TTL = 60 * 12  # Time to Live in Cache: 12 minutes
 
 
 DISCLAIMER = """
@@ -254,7 +260,7 @@ class CourtLocationResource(JailResource):
         limit = 100
         max_limit = 0
         if use_caching():
-            cache = SimpleCache(timeout=CACHE_TTL)
+            cache = SimpleCache(timeout=cache_ttl())
         serializer = JailSerializer()
         filtering = {
             'location': ALL,
@@ -293,7 +299,7 @@ class CourtDateResource(JailResource):
         limit = 100
         max_limit = 0
         if use_caching():
-            cache = SimpleCache(timeout=CACHE_TTL)
+            cache = SimpleCache(timeout=cache_ttl())
         serializer = JailSerializer()
         filtering = {
             'date': ALL,
@@ -355,7 +361,7 @@ class HousingLocationResource(JailResource):
         limit = 100
         max_limit = 0
         if use_caching():
-            cache = SimpleCache(timeout=CACHE_TTL)
+            cache = SimpleCache(timeout=cache_ttl())
         serializer = JailSerializer()
         filtering = {
             'housing_location': ALL,
@@ -385,7 +391,7 @@ class HousingHistoryResource(JailResource):
         limit = 100
         max_limit = 0
         if use_caching():
-            cache = SimpleCache(timeout=CACHE_TTL)
+            cache = SimpleCache(timeout=cache_ttl())
         filtering = {
             'inmate': ALL_WITH_RELATIONS,
             'housing_date': ALL,
@@ -447,7 +453,7 @@ class CountyInmateResource(JailResource):
         limit = 100
         max_limit = 0
         if use_caching():
-            cache = SimpleCache(timeout=CACHE_TTL)
+            cache = SimpleCache(timeout=cache_ttl())
         serializer = JailSerializer()
         list_allowed_methods = ['get', 'post', 'put', 'delete']
         detail_allowed_methods = ['get', 'post', 'put', 'delete']
@@ -503,5 +509,5 @@ class DailyPopulationCountsResource(JailResource):
         queryset = DailyPopulationCounts.objects.all()
         max_limit = 0
         if use_caching():
-            cache = SimpleCache(timeout=CACHE_TTL)
+            cache = SimpleCache(timeout=cache_ttl())
         serializer = JailSerializer()
