@@ -230,7 +230,7 @@ class CourtLocationResource(JailResource):
         queryset = CourtLocation.objects.all()
         limit = 100
         max_limit = 0
-        cache = SimpleCache(timeout=720)
+        cache = SimpleCache(timeout=60*60*24)
         serializer = JailSerializer()
         filtering = {
             'location': ALL,
@@ -268,7 +268,7 @@ class CourtDateResource(JailResource):
         allowed_methods = ['get']
         limit = 100
         max_limit = 0
-        cache = SimpleCache(timeout=720)
+        cache = SimpleCache(timeout=60*60*24)
         serializer = JailSerializer()
         filtering = {
             'date': ALL,
@@ -329,7 +329,7 @@ class HousingLocationResource(JailResource):
         allowed_methods = ['get']
         limit = 100
         max_limit = 0
-        cache = SimpleCache(timeout=720)
+        cache = SimpleCache(timeout=60*60*24)
         serializer = JailSerializer()
         filtering = {
             'housing_location': ALL,
@@ -358,7 +358,7 @@ class HousingHistoryResource(JailResource):
         serializer = JailSerializer()
         limit = 100
         max_limit = 0
-        cache = SimpleCache(timeout=720)
+        cache = SimpleCache(timeout=60*60*24)
         filtering = {
             'inmate': ALL_WITH_RELATIONS,
             'housing_date': ALL,
@@ -474,5 +474,5 @@ class DailyPopulationCountsResource(JailResource):
     class Meta:
         queryset = DailyPopulationCounts.objects.all()
         max_limit = 0
-        cache = SimpleCache(timeout=720)
+        cache = SimpleCache(timeout=60*60*24)
         serializer = JailSerializer()
