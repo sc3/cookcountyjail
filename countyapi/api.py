@@ -22,15 +22,10 @@ NEGATIVE_VALUES = set(['0', 'false'])
 
 def use_caching():
     """
-    Calculates if ORM caching is to be turned on.
-    If environment var CCJ_PRODUCTION != False or 0 or None, then no internal caching
-    if environment var USE_INTERNAL_CACHE != False or 0 or None, then use internal caching
+    For now this alwasy returns true until we can get better caching mechanism to work
+    See earlier version to get original implementation of function
     """
-    ccj_production = os.environ.get('CCJ_PRODUCTION')
-    if ccj_production and ccj_production.lower() not in NEGATIVE_VALUES:
-        return False
-    use_internal_cache = os.environ.get('USE_INTERNAL_CACHE')
-    return use_internal_cache and use_internal_cache not in NEGATIVE_VALUES
+    return True
 
 
 def cache_ttl():
