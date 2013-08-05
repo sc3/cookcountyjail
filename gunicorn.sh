@@ -4,6 +4,7 @@ PROJECT_DIR=/home/ubuntu/apps/cookcountyjail
 LOGFILE=/home/ubuntu/logs/cookcountyjail.log
 LOGDIR=$(dirname $LOGFILE)
 export CCJ_PRODUCTION=1
+export CACHE_TTL=86400
 NUM_WORKERS=4
 TIMEOUT=240
 
