@@ -67,12 +67,12 @@ python /home/ubuntu/apps/cookcountyjail/manage.py generate_search_for_discharged
 
 echo "Cook County Jail scraper finished scrapping at `date`"
 
-echo "Generating summaries"
+echo "Generating summaries - `date`"
 python /home/ubuntu/apps/cookcountyjail/manage.py generate_summaries
 
-echo "Priming the cache"
+echo "Priming the cache - `date`"
 sudo -u www-data find /var/www/cache -type f -delete
-time curl -v -L -G -s -o/dev/null -d "format=jsonp&limit=0&callback=processJSONP" http://cookcountyjail.recoveredfactory.net/api/1.0/countyinmate/
+time curl -v -L -G -s -o/dev/null -d "format=jsonp&callback=processJSONP&limit=0" http://cookcountyjail.recoveredfactory.net/api/1.0/countyinmate/
 time curl -v -L -G -s -o/dev/null -d "format=csv&limit=0" http://cookcountyjail.recoveredfactory.net/api/1.0/countyinmate/
 time curl -v -L -G -s -o/dev/null -d "format=json&limit=0" http://cookcountyjail.recoveredfactory.net/api/1.0/countyinmate/
 
