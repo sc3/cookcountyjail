@@ -47,19 +47,19 @@ class Command(BaseCommand):
                 Max('booking_date'))['booking_date__max'] + timedelta(days=1)
 
         for day in self.daterange(min_date, max_date):
+            print "Processing %s-%s-%s" % (day.month, day.day, day.year)
             inmates = CountyInmate.objects.filter(booking_date__lte=day)\
                     .filter(Q(discharge_date_earliest__gt=day) | Q(discharge_date_earliest__isnull=True))
             row = copy(template)
             for inmate in inmates:
                 key = "%s_%s" % (GENDER_LOOKUP[inmate.gender], inmate.race.lower())
-                row[key] += 1
-                row['total'] += 1
+                try:
+                    row[key] += 1
+                    row['total'] += 1
+                except KeyError: pass
             counts[day.strftime('%Y-%m-%d')] = row
-
         for date, count in counts.items():
-            # New count
-            daily_count = DailyPopulationCounts.objects.create(**count)
-            daily_count.date = date
+            daily_count = DailyPopulationCounts(date=date, **count)
             daily_count.save()
 
         # This counts daily admissions, not total population
