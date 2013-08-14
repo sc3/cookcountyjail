@@ -9,6 +9,8 @@ GENDER_LOOKUP = {
     'F': 'female',
 }
 
+MIN_DATE = datetime(2013, 1, 1)
+
 class Command(BaseCommand):
 
     def daterange(self, start_date, end_date):
@@ -40,8 +42,7 @@ class Command(BaseCommand):
         }
         counts = {}
 
-        min_date = CountyInmate.objects.all().aggregate(
-                Min('booking_date'))['booking_date__min']
+        min_date = MIN_DATE
         max_date = CountyInmate.objects.all().aggregate(
                 Max('booking_date'))['booking_date__max'] + timedelta(days=1)
 
