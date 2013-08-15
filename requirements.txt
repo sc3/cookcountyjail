@@ -13,3 +13,4 @@ pyquery==1.2.2
 python-dateutil==1.5
 requests==0.14.2
 wsgiref==0.1.2
+Fabric==1.7.0
