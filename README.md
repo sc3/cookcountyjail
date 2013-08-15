@@ -8,11 +8,25 @@ and summarizes trends.
 See the [API guide](https://github.com/sc3/cookcountyjail/wiki/API-guide)
 for accessing the production API service and querying the data.
 
-# Running it locally
+# Setting up for local development
+
+After you've checked out the source code repository, you need to install the requirements. You are strongly encouraged
+to create a [virtual environment](https://pypi.python.org/pypi/virtualenv) before installing them. 
+
+To install the requirements, you should have `[pip](https://pypi.python.org/pypi/pip)` installed. If you made a virtual environment, this is already done for you.
+
+    pip install -r requirements.txt
+
+By default, the locally running application uses the `[sqlite](http://www.sqlite.org/)` database, which is often already installed on modern operating systems.
+
+# Running the web application locally
+
+
+# Running the scraper locally
 
 The scraper is invoked with a management command:
 
-<pre>./manage.py scrape_inmates</pre>
+    ./manage.py scrape_inmates
 
 <code>scrape_inmates</code> also supports a <code>--limit / -l</code>
 flag which limits the number of records created and <code>--search /
