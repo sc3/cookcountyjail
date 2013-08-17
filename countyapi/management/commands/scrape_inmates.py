@@ -109,23 +109,17 @@ class Command(BaseCommand):
 
     def okay_to_fetch_url(self, url, seen_urls, start_date):
         href = url.attrib['href']
-        if href == 'details.asp?jailnumber=2013-0731005':
-            log.debug("check if brandon is okay to fetch")
         if href not in seen_urls:
             # booking date must be yesterday or less
             # Also prior to 2010 the format of a jail id is not in the format YYYY-MMDDNNN it was YYYY-NNNNNNN
             # so have to parse for year first and is before this one
             booking_date = href.split('=')[1]
-            booking_year = datetime.strptime(booking_date[0:4], '%Y')
-            if booking_year.year < start_date.year:
+            booking_year = datetime.strptime(booking_date[0:4], '%Y').year
+            if booking_year < start_date.year:
                 return True
             the_month = booking_date[5:7]
             the_day = booking_date[7:9]
-            inmates_booking_date = date(booking_year.year, convert_to_int(the_month, 1),
+            inmates_booking_date = date(booking_year, convert_to_int(the_month, 1),
                                         convert_to_int(the_day, 1))
-            if href == 'details.asp?jailnumber=2013-0731005':
-                zork = inmates_booking_date < start_date
-                log.debug("brandon's booking_date is is %s, input is %s month is %s, day is %s and start date is %s and the check result is %s" %
-                          (str(inmates_booking_date), booking_date, the_month, the_day, str(start_date), str(zork)))
             return inmates_booking_date < start_date
         return False
