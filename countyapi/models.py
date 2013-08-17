@@ -6,6 +6,7 @@ class CountyInmate(models.Model):
     Model that represents a Cook County Jail inmate.
     """
     jail_id = models.CharField(max_length=15, primary_key=True)
+    person_id = models.CharField(max_length=32, null=True) 
     url = models.CharField(max_length=255)
     race = models.CharField(max_length=4, null=True, blank=True)
     last_seen_date = models.DateTimeField(auto_now=True)
