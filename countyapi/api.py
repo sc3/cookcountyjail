@@ -506,7 +506,4 @@ class DailyPopulationCountsResource(JailResource):
         if use_caching():
             cache = SimpleCache(timeout=cache_ttl())
         serializer = JailSerializer()
-        filtering = {
-            'date': ALL,
-        }
-        ordering = ['date',]
+        ordering = ['booking_date']
