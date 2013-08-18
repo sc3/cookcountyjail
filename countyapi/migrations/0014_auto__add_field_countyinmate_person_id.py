@@ -10,7 +10,7 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         # Adding field 'CountyInmate.person_id'
         db.add_column('countyapi_countyinmate', 'person_id',
-                      self.gf('django.db.models.fields.CharField')(max_length=32, null=True),
+                      self.gf('django.db.models.fields.CharField')(max_length=64, null=True),
                       keep_default=False)
 
     def backwards(self, orm):

@@ -39,7 +39,7 @@ def create_update_inmate(inmate_details, inmate=None):
     else:
         created = False
     clear_discharged(inmate)
-    store_hash_id(inmate, inmate_details)
+    store_person_id(inmate, inmate_details)
     store_booking_date(inmate, inmate_details)
     store_physical_characteristics(inmate, inmate_details)
     store_housing_location(inmate, inmate_details)
@@ -225,8 +225,9 @@ def set_sub_division(location_object, sub_division, sub_division_location):
     location_object.sub_division_location = join_with_space_and_convert_spaces(sub_division_location)
 
 
-def store_hash_id(inmate, inmate_details):
+def store_person_id(inmate, inmate_details):
     inmate.person_id = inmate_details.hash_id()
+
 
 def store_bail_info(inmate, inmate_details):
     # Bond: If the value is an integer, it's a dollar
