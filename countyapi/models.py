@@ -6,7 +6,7 @@ class CountyInmate(models.Model):
     Model that represents a Cook County Jail inmate.
     """
     jail_id = models.CharField(max_length=15, primary_key=True)
-    person_id = models.CharField(max_length=32, null=True) 
+    person_id = models.CharField(max_length=32, null=True)
     url = models.CharField(max_length=255)
     race = models.CharField(max_length=4, null=True, blank=True)
     last_seen_date = models.DateTimeField(auto_now=True)
@@ -96,7 +96,7 @@ class DailyPopulationCounts(models.Model):
     """
     Population counts by day.
     """
-    date = models.DateTimeField(null=True)
+    booking_date = models.DateField(null=True)
     total = models.IntegerField(default=0)
     female_as = models.IntegerField(default=0)
     female_b = models.IntegerField(default=0)
@@ -118,4 +118,4 @@ class DailyPopulationCounts(models.Model):
     male_wh = models.IntegerField(default=0)
 
     class Meta:
-        ordering = ['date']
+        ordering = ['booking_date']
