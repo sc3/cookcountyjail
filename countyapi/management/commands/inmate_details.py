@@ -1,6 +1,7 @@
 from datetime import datetime
 from pyquery import PyQuery as pq
 from utils import http_get
+import hashlib
 
 NUMBER_OF_ATTEMPTS = 5
 
@@ -23,6 +24,19 @@ class InmateDetails:
         if self.__inmate_found:
             inmate_doc = pq(inmate_result.content)
             self.__columns = inmate_doc('table tr:nth-child(2n) td')
+
+    def hash_id(self):
+        id_string = "%s%s%s%s" % (
+            self.name().replace(" ", ""),
+            self.birth_date().strftime('%m%d%Y'), 
+            self.race()[0],
+            self.gender(),
+        )
+        byte_string = id_string.encode('utf-8')
+        return hashlib.sha256(byte_string).hexdigest()
+
+    def name(self):
+        return self.column_content(1)
 
     def age_at_booking(self):
         """
