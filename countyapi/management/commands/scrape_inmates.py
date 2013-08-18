@@ -69,9 +69,10 @@ class Command(BaseCommand):
             seen_urls = set([])
             filtered_urls = []
             for url in inmate_urls:
-                if self.okay_to_fetch_url(url, seen_urls, start_date):
+                href = url.attrib['href']
+                if self.okay_to_fetch_url(href, seen_urls, start_date):
                     filtered_urls.append(url)
-                    seen_urls.add(url.attrib['href'])
+                    seen_urls.add(href)
 
             # Process URLs
             new_seen = store_inmates_details(BASE_URL, filtered_urls, options['limit'], records)
@@ -107,8 +108,7 @@ class Command(BaseCommand):
             inmate.save()
         return not_present_or_discharged
 
-    def okay_to_fetch_url(self, url, seen_urls, start_date):
-        href = url.attrib['href']
+    def okay_to_fetch_url(self, href, seen_urls, start_date):
         if href not in seen_urls:
             # booking date must be yesterday or less
             # Also prior to 2010 the format of a jail id is not in the format YYYY-MMDDNNN it was YYYY-NNNNNNN
