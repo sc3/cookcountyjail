@@ -13,7 +13,7 @@ from tastypie.resources import ModelResource, ALL, ALL_WITH_RELATIONS
 from tastypie.serializers import Serializer
 from tastypie.authorization import Authorization
 
-from countyapi.models import CountyInmate, CourtLocation, CourtDate, HousingLocation, HousingHistory, DailyPopulationCounts
+from countyapi.models import CountyInmate, CourtLocation, CourtDate, HousingLocation, HousingHistory, DailyPopulationCounts, DailyBookingsCounts
 from countyapi.management.commands.utils import convert_to_int
 
 
@@ -502,6 +502,22 @@ class DailyPopulationCountsResource(JailResource):
 
     class Meta:
         queryset = DailyPopulationCounts.objects.all()
+        max_limit = 0
+        if use_caching():
+            cache = SimpleCache(timeout=cache_ttl())
+        serializer = JailSerializer()
+        filtering = {
+            'booking_date': ALL
+        }
+        ordering = filtering.keys()
+
+class DailyBookingsCountsResource(JailResource):
+    """
+    API endpoint for DailyBookingsCounts
+    """
+
+    class Meta:
+        queryset = DailyBookingsCounts.objects.all()
         max_limit = 0
         if use_caching():
             cache = SimpleCache(timeout=cache_ttl())
