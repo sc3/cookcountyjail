@@ -13,7 +13,7 @@ from tastypie.resources import ModelResource, ALL, ALL_WITH_RELATIONS
 from tastypie.serializers import Serializer
 from tastypie.authorization import Authorization
 
-from countyapi.models import CountyInmate, CourtLocation, CourtDate, HousingLocation, HousingHistory, DailyPopulationCounts, DailyBookingsCounts
+from countyapi.models import CountyInmate, CourtLocation, CourtDate, HousingLocation, HousingHistory, DailyPopulationCounts, DailyBookingsCounts, ChargesHistory
 from countyapi.management.commands.utils import convert_to_int
 
 
@@ -61,6 +61,7 @@ COURT_LOCATION_URL = '/api/1.0/courtlocation/'
 COUNTY_INMATE_URL = '/api/1.0/countyinmate/'
 HOUSING_HISTORY_URL = '/api/1.0/housinghistory/'
 HISTORY_LOCATION_URL = '/api/1.0/historylocation/'
+CHARGES_HISTORY_URL = '/api/1.0/chargeshistory/'
 
 
 class JailToOneField(ToOneField):
@@ -433,6 +434,50 @@ class HousingHistoryResource(JailResource):
             bundle.data["housing_location"] = resource.full_dehydrate(location_bundle).data
 
         return bundle
+class ChargesHistoryResource(JailResource):
+    """
+    API endpoint for ChargesHistory model.
+    """
+    inmate = JailToOneField('countyapi.api.CountyInmateResource',
+                            "inmate", null=True, full=False)
+
+    class Meta:
+        queryset = ChargesHistory.objects.select_related('inmate').all()
+        allowed_methods = ['get']
+        serializer = JailSerializer()
+        limit = 100
+        max_limit = 0
+        if use_caching():
+            cache = SimpleCache(timeout=cache_ttl())
+        filtering = {
+            'inmate': ALL_WITH_RELATIONS,
+            'charges': ALL,
+            'charges_citation': ALL,
+            'date_seen': ALL,
+            'housing_location': ALL_WITH_RELATIONS,
+        }
+        ordering = filtering.keys()
+
+    def dehydrate(self, bundle):
+        """
+        Set up bidirectional relationships based on request.
+        """
+
+        # Include primary keys on court dates
+        if bundle.request.path.startswith(CHARGES_HISTORY_URL) and not \
+                bundle.request.REQUEST.get('related') == '1':
+            bundle.data["inmate_jail_id"] = bundle.obj.inmate.pk
+
+        # Include full inmate in related query
+        if bundle.request.path.startswith(HOUSING_HISTORY_URL) and \
+                bundle.request.REQUEST.get('related') == '1':
+            inmate = bundle.obj.inmate
+            resource = CountyInmateResource()
+            inmate_bundle = resource.build_bundle(obj=inmate,
+                                                  request=bundle.request)
+            bundle.data["inmate"] = resource.full_dehydrate(inmate_bundle).data
+
+        return bundle
 
 
 class CountyInmateResource(JailResource):
@@ -441,9 +486,10 @@ class CountyInmateResource(JailResource):
     """
     court_dates = JailToManyField(CourtDateResource, 'court_dates')
     housing_history = JailToManyField(HousingHistoryResource, 'housing_history')
+    charges_history = JailToManyField(ChargesHistoryResource, 'charges_history')
 
     class Meta:
-        queryset = CountyInmate.objects.select_related('housing_history').select_related('court_dates').all()
+        queryset = CountyInmate.objects.select_related('housing_history').select_related('charges_history').select_related('court_dates').all()
         allowed_methods = ['get']
         limit = 100
         max_limit = 0
@@ -462,11 +508,12 @@ class CountyInmateResource(JailResource):
             'age_at_booking': ALL,
             'bail_amount': ALL,
             'housing_location': ALL,
-            'charges': ALL,
             'charges_citation': ALL,
             'race': ALL,
             'court_dates': ALL_WITH_RELATIONS,
             'housing_history': ALL_WITH_RELATIONS,
+            'charges_history': ALL_WITH_RELATIONS,
+
         }
         ordering = filtering.keys()
 
@@ -485,13 +532,22 @@ class CountyInmateResource(JailResource):
                                                     request=bundle.request)
                 bundle.data["court_dates"].append(resource.full_dehydrate(date_bundle).data)
 
-            dates = bundle.obj.housing_history.all()
+            housings = bundle.obj.housing_history.all()
             resource = HousingHistoryResource()
             bundle.data['housing_history'] = []
-            for court_date in dates:
-                date_bundle = resource.build_bundle(obj=court_date,
+            for housing in housings:
+                date_bundle = resource.build_bundle(obj=housing,
                                                     request=bundle.request)
                 bundle.data["housing_history"].append(resource.full_dehydrate(date_bundle).data)
+
+            charges = bundle.obj.charges_history.all()
+            resource = ChargesHistoryResource()
+            bundle.data['charges_history'] = []
+            for charge in charges:
+                date_bundle = resource.build_bundle(obj=charge,
+                                                    request=bundle.request)
+                bundle.data["charges_history"].append(resource.full_dehydrate(date_bundle).data)
+
         return bundle
 
 
