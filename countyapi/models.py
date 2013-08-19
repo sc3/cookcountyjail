@@ -119,3 +119,33 @@ class DailyPopulationCounts(models.Model):
 
     class Meta:
         ordering = ['booking_date']
+
+class DailyBookingsCounts(models.Model):
+    """
+    Bookings counts by day.
+    """
+    booking_date = models.DateField(null=True)
+    total = models.IntegerField(default=0)
+    female_as = models.IntegerField(default=0)
+    female_b = models.IntegerField(default=0)
+    female_bk = models.IntegerField(default=0)
+    female_in = models.IntegerField(default=0)
+    female_lb = models.IntegerField(default=0)
+    female_lw = models.IntegerField(default=0)
+    female_lt = models.IntegerField(default=0)
+    female_w = models.IntegerField(default=0)
+    female_wh = models.IntegerField(default=0)
+    female_minors = models.IntegerField(default=0)
+    male_as = models.IntegerField(default=0)
+    male_b = models.IntegerField(default=0)
+    male_bk = models.IntegerField(default=0)
+    male_in = models.IntegerField(default=0)
+    male_lb = models.IntegerField(default=0)
+    male_lw = models.IntegerField(default=0)
+    male_lt = models.IntegerField(default=0)
+    male_w = models.IntegerField(default=0)
+    male_wh = models.IntegerField(default=0)
+    male_minors = models.IntegerField(default=0)
+
+    class Meta:
+        ordering = ['booking_date']
