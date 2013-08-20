@@ -40,7 +40,7 @@ class Migration(DataMigration):
             'height': ('django.db.models.fields.IntegerField', [], {'null': 'True', 'blank': 'True'}),
             'jail_id': ('django.db.models.fields.CharField', [], {'max_length': '15', 'primary_key': 'True'}),
             'last_seen_date': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
-            'person_id': ('django.db.models.fields.CharField', [], {'max_length': '32', 'null': 'True'}),
+            'person_id': ('django.db.models.fields.CharField', [], {'max_length': '64', 'null': 'True'}),
             'race': ('django.db.models.fields.CharField', [], {'max_length': '4', 'null': 'True', 'blank': 'True'}),
             'url': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             'weight': ('django.db.models.fields.IntegerField', [], {'null': 'True', 'blank': 'True'})
