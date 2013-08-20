@@ -6,15 +6,9 @@ export PATH=$PATH:/usr/local/bin
 # Indicate that Production Database is to be used
 export CCJ_PRODUCTION=1
 
-HOME = /home/ubuntu
-
 # bind in virtualev settings
 source ${HOME}/.virtualenvs/cookcountyjail/bin/activate
 
-base_log_file_name = `date +"%Y-%m-%d"`
-logfile = ${HOME}/logs/${base_log_file_name}.log
-
-(
 echo "Cook County Jail scraper started at `date`"
 
 #
@@ -83,5 +77,3 @@ time curl -v -L -G -s -o/dev/null -d "format=csv&limit=0" http://cookcountyjail.
 time curl -v -L -G -s -o/dev/null -d "format=json&limit=0" http://cookcountyjail.recoveredfactory.net/api/1.0/countyinmate/
 
 echo "Cook County Jail scraper finished at `date`"
-) 2>&1 > ${logfile}
-gzip ${logfile}
