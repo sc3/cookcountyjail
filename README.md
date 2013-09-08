@@ -74,6 +74,17 @@ An information data model exists for this project and is located here:
 This project has a sister project based on sc3/26thandcalifornia that will use the
 API. Details on this project are XXXX (this is to filled in later).
 
+# Directory Structure
+
+* / - top level files, like this one
+* /ccj - website code
+** /__init.py__
+** /templates
+** appy.py - main entry point to application
+** /models - where all of the application code is located
+* /scripts - scripts used to do other activities like scrape Cook County Sheriff's website
+* /tests - tests stored here, both unit and BDD
+
 
 # Setting up for local development
 =======
