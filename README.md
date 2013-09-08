@@ -103,6 +103,12 @@ git checkout v2.0-dev
 pip install -r requirements.txt
 ```
 
+#Usage
+
+```
+python manage.py -sdb
+python manage.py
+```
 
 # License
 
