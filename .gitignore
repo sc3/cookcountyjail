@@ -1,6 +1,5 @@
 .DS_Store
 static/bootstrap
-ccj
 *.pyc
 *.orig
 *sublime*
@@ -9,3 +8,4 @@ include
 lib
 .Python
 .idea
+*.swp
