@@ -1,9 +1,7 @@
 import argparse, sys
-sys.path.append("ccj")
-sys.path.append("scripts")
 
-from app import *
-from database import *
+from ccj import app, db
+from scripts import setup_db
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
