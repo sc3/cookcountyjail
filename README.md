@@ -115,19 +115,15 @@ python manage.py
 On production servers: 
 
 You already have Gunicorn if you installed the requirements.txt. Get Nginx
-with ``` sudo apt-get install nginx ``` or an equivalent command. 
+with ``` sudo apt-get install nginx ``` or an equivalent command. Note that 
+both port 80 and 8000 must be open to run the production servers.
 
-Make sure ports 80 and 8000 are both open, with: 
-``` sudo fuser -n tcp <port-number> ```
+Now, just: 
 
-If something is running, take the pid number(s) given, and call:
-``` sudo kill <first-pid> <second-pid> ... ```
-
-Run gunicorn server as defined in gunicorn.sh
-``` source gunicorn.sh ```
-
-Run nginx server with configurations defined in nginx.conf
-``` sudo /usr/sbin/nginx -c nginx.conf ```
+```
+sudo /usr/sbin/nginx -c nginx.conf 
+source gunicorn.sh
+```
 
 You should now be able to see the app at localhost.
 
