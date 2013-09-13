@@ -21,9 +21,4 @@ def temp_api():
     return version_and_build()
 
 def version_and_build():
-    app_version_and_build = 'Version 2.0, Build 123'
-    print(app_version_and_build)
-    return (app_version_and_build)
-
-if __name__ == '__main__':
-    version_and_build()
+    return 'Version 2.0, Build 123'
