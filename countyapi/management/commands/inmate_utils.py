@@ -254,9 +254,9 @@ def store_charges(inmate, inmate_details):
         return
 
     # Capture Charges and Citations if specified
-    parsed_charges = charges[0]
-    parsed_charges_citation = charges[1] if len(charges) > 1 else ''
-
+    parsed_charges_citation = charges[0]
+    parsed_charges = charges[1] if len(charges) > 1 else ''
+    print('%s,%s' % (parsed_charges, parsed_charges_citation))
     create_new_charge = True
     if len(inmate.charges_history.all()) != 0:
         inmate_latest_charge = inmate.charges_history.latest('date_seen')  # last known charge
