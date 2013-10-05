@@ -7,7 +7,10 @@ export PATH=$PATH:/usr/local/bin
 export CCJ_PRODUCTION=1
 
 # bind in virtualev settings
-source ${HOME}/.virtualenvs/cookcountyjail/bin/activate
+source $HOME/.virtualenvs/cookcountyjail/bin/activate
+
+MANAGE='python '$HOME'/apps/cookcountyjail/manage.py'
+INMATE_API='http://cookcountyjail.recoveredfactory.net/api/1.0/countyinmate/'
 
 echo "Cook County Jail scraper started at `date`"
 
@@ -56,24 +59,29 @@ NUMBER_PARALLEL_PROCESSES=10
 # of largest to smallest.
 
 for x in S M B W C H R J G P D L T A F K E N V O Y I Z Q U X;do
-    echo "python /home/ubuntu/apps/cookcountyjail/manage.py scrape_inmates --search" $x
+    echo "$MANAGE scrape_inmates --search" $x
 done  | parallel -j $NUMBER_PARALLEL_PROCESSES
 
 # now check for any inmates entered into system yesterday but not in alphabetical listsing
-python /home/ubuntu/apps/cookcountyjail/manage.py look_for_missing_inmates -y
+$MANAGE look_for_missing_inmates -y
 
 # now find inamtes no longer in system and mark them as being discharged
-python /home/ubuntu/apps/cookcountyjail/manage.py generate_search_for_discharged_inmates_cmds | parallel -j $NUMBER_PARALLEL_PROCESSES
+$MANAGE generate_search_for_discharged_inmates_cmds | parallel -j $NUMBER_PARALLEL_PROCESSES
 
 echo "Cook County Jail scraper finished scrapping at `date`"
 
 echo "Generating summaries - `date`"
-python /home/ubuntu/apps/cookcountyjail/manage.py generate_summaries
+$MANAGE generate_summaries
 
 echo "Priming the cache - `date`"
 sudo -u www-data find /var/www/cache -type f -delete
-time curl -v -L -G -s -o/dev/null -d "format=jsonp&callback=processJSONP&limit=0" http://cookcountyjail.recoveredfactory.net/api/1.0/countyinmate/
-time curl -v -L -G -s -o/dev/null -d "format=csv&limit=0" http://cookcountyjail.recoveredfactory.net/api/1.0/countyinmate/
-time curl -v -L -G -s -o/dev/null -d "format=json&limit=0" http://cookcountyjail.recoveredfactory.net/api/1.0/countyinmate/
+time curl -v -L -G -s -o/dev/null -d "format=jsonp&callback=processJSONP&limit=0" $INMATE_API
+time curl -v -L -G -s -o/dev/null -d "format=csv&limit=0" $INMATE_API
+time curl -v -L -G -s -o/dev/null -d "format=json&limit=0" $INMATE_API
 
 echo "Cook County Jail scraper finished at `date`"
+
+echo "Dumping database for `date`"
+$MANAGE dumpdata countyapi > $HOME/backup/cookcountyjail-$(date +%Y-%m-%d).json
+ln -sf $HOME/backup/{cookcountyjail-$(date +%Y-%m-%d),latest}.json
+
