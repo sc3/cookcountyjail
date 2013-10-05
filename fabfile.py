@@ -1,6 +1,7 @@
 from fabric.api import settings, abort, local, lcd, env, prefix, cd, require, \
     run, sudo
 from fabric.contrib.console import confirm
+from fabric.contrib.files import exists
 import subprocess
 
 # Some global variables. Need some tweaking to make them more modular
@@ -71,6 +72,7 @@ def deploy():
     require('settings', provided_by=[production, staging])
     require('branch', provided_by=[stable, master, branch])
 
+    add_directories()
     checkout_latest()
     install_requirements()
     run_migrations()
@@ -126,6 +128,16 @@ def restart_nginx():
 
 def restart_gunicorn():
     sudo("service cookcountyjail restart")
+
+def add_directories():
+    dirs = ['website', 'website/db_backups']
+    for d in dirs:
+        if not exists(d):
+            run("mkdir -p '%s'" % d)
+
+def v1_static():
+    with cd('website'):
+        run('ln -sf ~/apps/cookcountyjail/templates static')
 
 #def bounce_cache(
 
