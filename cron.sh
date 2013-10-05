@@ -77,3 +77,7 @@ time curl -v -L -G -s -o/dev/null -d "format=csv&limit=0" http://cookcountyjail.
 time curl -v -L -G -s -o/dev/null -d "format=json&limit=0" http://cookcountyjail.recoveredfactory.net/api/1.0/countyinmate/
 
 echo "Cook County Jail scraper finished at `date`"
+
+echo "Dumping database for `date`"
+python /home/ubuntu/apps/cookcountyjail/manage.py dumpdata countyapi > $HOME/backup/cookcountyjail-$(date +%Y-%m-%d).json
+ln -sf $HOME/backup/{cookcountyjail-$(date +%Y-%m-%d),latest}.json
