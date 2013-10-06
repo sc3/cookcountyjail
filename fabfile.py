@@ -1,4 +1,4 @@
-from fabric.api import abort, local, lcd, env, prefix, cd, require, \
+from fabric.api import settings, abort, local, lcd, env, prefix, cd, require, \
     run, sudo
 from fabric.contrib.console import confirm
 from fabric.contrib.files import exists
@@ -20,8 +20,15 @@ env.user = 'ubuntu'
 env.project = 'cookcountyjail'
 env.home = '/home/%(user)s' % env
 env.venv = '%(home)s/.virtualenvs/%(project)s' % env
-env.path = '%(home)s/apps/%(project)s' % env
+env.apps = '%(home)s/apps' % env
+env.path = '%(apps)s/%(project)s' % env
+env.config_dir = '%(apps)s/config' % env
 env.use_ssh_config = True
+env.nginx_conf_fname = '%(config_dir)s/nginx.conf' % env
+env.installed_nginx_fname = '/etc/nginx/sites-available/cookcountyjail.conf'
+env.static_files_dir = '%(path)s/templates' % env
+env.upstart_config_fname = '%(config_dir)s/upstart.conf' % env
+env.cookcountyjail_config_fname = '/etc/init/cookcountyjail.conf'
 
 
 """
@@ -85,9 +92,8 @@ def deploy():
     checkout_latest()
     install_requirements()
     run_migrations()
-    install_nginx_config()
+    conditionally_update_restart_nginx()
     install_upstart_config()
-    restart_nginx()
     restart_gunicorn()
     # Ask about bouncing the cache
 
@@ -110,10 +116,25 @@ def checkout_latest():
     """Check out latest copy on a given branch."""
     require('settings', provided_by=[production, staging])
     require('branch', provided_by=[stable, master, branch])
-
     with cd(env.path):
         run('git fetch')
         run('git pull origin %(branch)s' % env)
+
+
+def conditionally_update_restart_nginx():
+    """
+    Updates system nginx configuration file if it has changed and restarts nginx
+    """
+    if nginx_conf_file_updated():
+        update_nginx_configuration()
+        restart_nginx()
+
+
+def files_are_different(fname_a, fname_b):
+    """Returns True if the two named files are different, False otherwise."""
+    with settings(warn_only=True):
+        result = run("diff -q '%s' '%s' > /dev/null" % (fname_a, fname_b))
+        return result.return_code == 1
 
 
 def install_requirements():
@@ -126,6 +147,17 @@ def install_requirements():
         run('pip install -U -r %(path)s/requirements.txt' % env)
 
 
+def install_upstart_config():
+    """Install new gunicorn configuration file, if it has changed."""
+    if files_are_different(env.upstart_config_fname, env.cookcountyjail_config_fname):
+        sudo_cp('%(upstart_config_fname)s %(cookcountyjail_config_fname)s' % env)
+
+
+def nginx_conf_file_updated():
+    """Returns True if local nginx configuration file different from system one."""
+    return files_are_different(env.nginx_conf_fname, env.installed_nginx_fname)
+
+
 def run_migrations():
     require('settings', provided_by=[production, staging])
     require('branch', provided_by=[stable, master, branch])
@@ -133,29 +165,35 @@ def run_migrations():
         run('%(path)s/manage.py migrate' % env)
 
 
-def install_nginx_config():
-    """Install new nginx configuration file."""
-    sudo("cp %(path)s/nginx.conf /etc/nginx/sites-available/cookcountyjail.conf" % env)
-    pass
-
-
-def install_upstart_config():
-    """Install new gunicorn configuration file."""
-    sudo("cp %(path)s/upstart.conf /etc/init/cookcountyjail.conf" % env)
-
-
 def restart_nginx():
     """Restart nginx server."""
-    sudo("service nginx restart")
+    service_restart("nginx")
 
 
 def restart_gunicorn():
-    sudo("service cookcountyjail restart")
+    """Restart Python webserver that runs the Django server."""
+    service_restart("cookcountyjail")
+
+
+def service_restart(service_name):
+    """Restarts the named service. This service needs to be run in admin mode."""
+    sudo("service %s restart" % service_name)
+
+
+def sudo_cp(src_fname, trg_fname):
+    """Copy file(s) to area that require admin level access."""
+    sudo("cp '%s' '%s'" % (src_fname, trg_fname))
+
+
+def update_nginx_configuration():
+    """Copies the nginx configuration file to system area."""
+    sudo_cp(env.nginx_conf_fname, env.installed_nginx_fname)
 
 
 def v1_static():
+    """Links the 1.0 static files to main static file location."""
     with cd(WEBSITE):
-        run('ln -sf ~/apps/cookcountyjail/templates static')
+        run("ln -sf '%(static_files_dir)s' static" % env)
 
 
 """

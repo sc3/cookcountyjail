@@ -15,7 +15,7 @@ for accessing the production API service and querying the data.
 ```
 git clone git@github.com:sc3/cookcountyjail.git
 cd cookcountyjail
-pip install -r requirements.txt
+pip install -r config/requirements.txt
 ```
 
 # Running it locally
@@ -25,21 +25,42 @@ to create a [virtual environment](https://pypi.python.org/pypi/virtualenv) befor
 
 To install the requirements, you should have `[pip](https://pypi.python.org/pypi/pip)` installed. If you made a virtual environment, this is already done for you.
 
-    pip install -r requirements.txt
+    pip install -r config/requirements.txt
 
 By default, the locally running application uses the `[sqlite](http://www.sqlite.org/)` database, which is often already installed on modern operating systems. Assuming you have it available, you may now initialize the application database:
 
     ./manage.py syncdb --noinput
     ./manage.py migrate countyapi
 
+# Cloning the database
+
+Once you have setup your database the easiest way to populate it is to download the backup of the
+database that is made everyday after the Sheriff's website has been scrapped. The url to access this is:
+
+    http://cookcountyjail.recoveredfactory.net/api/1.0/clone
+
+Here is how to download the cloned copy of the database and use it to populate your database:
+
+```
+curl http://cookcountyjail.recoveredfactory.net/api/1.0/clone > /tmp/ccj_cloned_db.json
+./manage.py loaddata /tmp/ccj_cloned_db.json
+rm /tmp/ccj_cloned_db.json
+```
+
+Note: loading your local database can take upwords of 10 minutes.
+
 # Running the scraper locally
 
-Once you've set up the database, you need to run the scraper to populate the database with records.
-The scraper is invoked with a management command:
+If you want to then keep your database up to date then you need to run the scraper to populate
+your database with the changed records. The command to run the scraper program is:
 
 ```
 ./manage.py scrape_inmates
 ```
+
+Note that the Cook County Sheriff's department typically finishes updating the inmate records for the previous day
+at around 8:30 am. It is recommend that you collect the records after this time, otherwise you can get partial
+records.
 
 Other useful commands
 ```
@@ -59,16 +80,6 @@ Other useful commands
 <code>scrape_inmates</code> also supports a <code>--limit / -l</code>
 flag which limits the number of records created and <code>--search /
 -s</code> flag which overrides the default A-Z search strategy.
-
-# Cloning the database
-
-Everyday after the Sheriff's website has been scrapped a dump of the database
-is made that is available for downloading. The url to access this copy is:
-
-    http://cookcountyjail.recoveredfactory.net/api/1.0/clone
-
-The name of the file downloaded is clone and it is JSON file.
-
 
 # License
 
