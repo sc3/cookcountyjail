@@ -39,10 +39,13 @@ database that is made everyday after the Sheriff's website has been scrapped. Th
 
     http://cookcountyjail.recoveredfactory.net/api/1.0/clone
 
+This points to a gzipped JSON file of the database.
+
 Here is how to download the cloned copy of the database and use it to populate your database:
 
 ```
-curl http://cookcountyjail.recoveredfactory.net/api/1.0/clone > /tmp/ccj_cloned_db.json
+curl http://cookcountyjail.recoveredfactory.net/api/1.0/clone > /tmp/ccj_cloned_db.json.gz
+gunzip /tmp/ccj_cloned_db.json.gz
 ./manage.py loaddata /tmp/ccj_cloned_db.json
 rm /tmp/ccj_cloned_db.json
 ```

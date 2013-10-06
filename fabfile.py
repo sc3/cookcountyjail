@@ -132,8 +132,8 @@ def conditionally_update_restart_nginx():
 
 def files_are_different(fname_a, fname_b):
     """Returns True if the two named files are different, False otherwise."""
-    with settings(hide('warnings'), warn_only=True):
-        result = run("diff -q '%s' '%s' > /dev/null" % (fname_a, fname_b))
+    with settings(hide('warnings', 'stdout', 'stderr'), warn_only=True):
+        result = run("diff -q '%s' '%s'" % (fname_a, fname_b))
         return result.return_code == 1
 
 
