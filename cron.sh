@@ -11,6 +11,8 @@ source ${HOME}/.virtualenvs/cookcountyjail/bin/activate
 
 MANAGE='python '${HOME}'/apps/cookcountyjail/manage.py'
 INMATE_API='http://cookcountyjail.recoveredfactory.net/api/1.0/countyinmate/'
+DB_BACKUPS_DIR=${HOME}/website/1.0/db_backups
+DB_BACKUP_FILE=cookcountyjail-$(date +%Y-%m-%d).json
 
 echo "Cook County Jail scraper started at `date`"
 
@@ -79,8 +81,8 @@ time curl -v -L -G -s -o/dev/null -d "format=jsonp&callback=processJSONP&limit=0
 time curl -v -L -G -s -o/dev/null -d "format=csv&limit=0" ${INMATE_API}
 time curl -v -L -G -s -o/dev/null -d "format=json&limit=0" ${INMATE_API}
 
-echo "Cook County Jail scraper finished at `date`"
-
 echo "Dumping database for `date`"
-${MANAGE} dumpdata countyapi > ${HOME}/website/db_backups/cookcountyjail-$(date +%Y-%m-%d).json
-(cd ${HOME}/website/db_backups; ln -sf {cookcountyjail-$(date +%Y-%m-%d),latest}.json)
+${MANAGE} dumpdata countyapi > ${DB_BACKUPS_DIR}/${DB_BACKUP_FILE}
+(cd ${DB_BACKUPS_DIR} && gzip ${DB_BACKUP_FILE} && ln -sf ${DB_BACKUP_FILE}.gz latest.json.gz)
+
+echo "Cook County Jail scraper finished at `date`"
