@@ -4,3 +4,4 @@ MarkupSafe>=0.18
 Werkzeug>=0.9.4
 itsdangerous>=0.23
 Flask-Sqlalchemy>=1.0
+Fabric>=1.7.0
