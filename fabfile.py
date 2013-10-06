@@ -21,6 +21,7 @@ env.project = 'cookcountyjail'
 env.home = '/home/%(user)s' % env
 env.venv = '%(home)s/.virtualenvs/%(project)s' % env
 env.path = '%(home)s/apps/%(project)s' % env
+env.use_ssh_config = True
 
 
 """
@@ -81,7 +82,6 @@ def deploy():
     require('branch', provided_by=[stable, master, branch])
 
     add_directories()
-    cp_cloned_db()
     checkout_latest()
     install_requirements()
     run_migrations()
@@ -117,10 +117,6 @@ def checkout_latest():
         run('git pull origin %(branch)s' % env)
 
 
-def cp_cloned_db():
-    run('cp %s/db_backups/* %s/1.0/db_backups' % (WEBSITE, WEBSITE))
-
-
 def install_requirements():
     """
     Install the required packages using pip.
@@ -152,10 +148,6 @@ def install_upstart_config():
 def restart_nginx():
     """Restart nginx server."""
     sudo("service nginx restart")
-
-
-def rm_old_website_dir():
-    run('r -rf website/db_backups')
 
 
 def restart_gunicorn():
