@@ -44,7 +44,6 @@ The scraper is invoked with a management command:
 Other useful commands
 ```
 ./manage.py check_inmate
-./manage.py clone_db
 ./manage.py generate_datebase_audit_script
 ./manage.py generate_search_for_discharged_inmates_cmds
 ./manage.py generate_summaries
@@ -66,7 +65,7 @@ flag which limits the number of records created and <code>--search /
 Everyday after the Sheriff's website has been scrapped a dump of the database
 is made that is available for downloading. The url to access this copy is:
 
-    [http://cookcountyjail.recoveredfactory.net/api/1.0/clone](http://cookcountyjail.recoveredfactory.net/api/1.0/clone)
+    http://cookcountyjail.recoveredfactory.net/api/1.0/clone
 
 The name of the file downloaded is clone and it is JSON file.
 
