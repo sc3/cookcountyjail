@@ -83,6 +83,6 @@ time curl -v -L -G -s -o/dev/null -d "format=json&limit=0" ${INMATE_API}
 
 echo "Dumping database for `date`"
 ${MANAGE} dumpdata countyapi > ${DB_BACKUPS_DIR}/${DB_BACKUP_FILE}
-(cd ${DB_BACKUPS_DIR}; ln -sf ${DB_BACKUP_FILE} latest.json)
+(cd ${DB_BACKUPS_DIR} && gzip ${DB_BACKUP_FILE} && ln -sf ${DB_BACKUP_FILE}.gz latest.json.gz)
 
 echo "Cook County Jail scraper finished at `date`"
