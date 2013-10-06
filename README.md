@@ -66,7 +66,7 @@ flag which limits the number of records created and <code>--search /
 Everyday after the Sheriff's website has been scrapped a dump of the database
 is made that is available for downloading. The url to access this copy is:
 
-    http://cookcountyjail.recoveredfactory.net/api/1.0/clone
+    [http://cookcountyjail.recoveredfactory.net/api/1.0/clone](http://cookcountyjail.recoveredfactory.net/api/1.0/clone)
 
 The name of the file downloaded is clone and it is JSON file.
 
