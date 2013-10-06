@@ -89,7 +89,6 @@ def deploy():
     install_upstart_config()
     restart_nginx()
     restart_gunicorn()
-    rm_old_website_dir()
     # Ask about bouncing the cache
 
 
