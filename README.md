@@ -63,15 +63,12 @@ flag which limits the number of records created and <code>--search /
 
 # Cloning the database
 
-If you'd like to copy all of the data that this project has scraped into your local database, you can run this command. It takes a while!
+Everyday after the Sheriff's website has been scrapped a dump of the database
+is made that is available for downloading. The url to access this copy is:
 
-    ./manage.py clone_db
+    http://cookcountyjail.recoveredfactory.net/api/1.0/clone
 
-# Running the API server locally
-
-    ./manage.py runserver
-
-You'll be able to use a browser to go to `http://localhost:8000` where you'll see the welcome page, or to `http://localhost:8000/api/1.0/?format=json` to see that the API is basically functional.
+The name of the file downloaded is clone and it is JSON file.
 
 
 # License
