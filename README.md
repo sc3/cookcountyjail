@@ -22,10 +22,10 @@ README documents.
 * Unit Test: ???
 * BDD: ???
 * Automated Deployment Tool: Fabric
-* Tracking Board: https://trello.com/b/dGpGzzSW/ccj-v2-0-dev
+* [Tracking Board](https://trello.com/b/dGpGzzSW/ccj-v2-0-dev)
     * If you need access to this board go to ????(need to have a request form on the net) and
 request access.
-    * Legend of cards on the board
+    * Color Legend of cards on the board:
         * Purple: Feature
         * Green: Data User Story
         * Orange: Data Provider Story
