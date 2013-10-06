@@ -1,5 +1,5 @@
 from fabric.api import settings, abort, local, lcd, env, prefix, cd, require, \
-    run, sudo
+    run, sudo, hide
 from fabric.contrib.console import confirm
 from fabric.contrib.files import exists
 import subprocess
@@ -22,7 +22,7 @@ env.home = '/home/%(user)s' % env
 env.venv = '%(home)s/.virtualenvs/%(project)s' % env
 env.apps = '%(home)s/apps' % env
 env.path = '%(apps)s/%(project)s' % env
-env.config_dir = '%(apps)s/config' % env
+env.config_dir = '%(path)s/config' % env
 env.use_ssh_config = True
 env.nginx_conf_fname = '%(config_dir)s/nginx.conf' % env
 env.installed_nginx_fname = '/etc/nginx/sites-available/cookcountyjail.conf'
@@ -132,7 +132,7 @@ def conditionally_update_restart_nginx():
 
 def files_are_different(fname_a, fname_b):
     """Returns True if the two named files are different, False otherwise."""
-    with settings(warn_only=True):
+    with settings(hide('warnings'), warn_only=True):
         result = run("diff -q '%s' '%s' > /dev/null" % (fname_a, fname_b))
         return result.return_code == 1
 
@@ -144,7 +144,7 @@ def install_requirements():
     require('settings', provided_by=[production, staging])
     require('branch', provided_by=[stable, master, branch])
     with activate_cmd():
-        run('pip install -U -r %(config)s/requirements.txt' % env)
+        run('pip install -U -r %(config_dir)s/requirements.txt' % env)
 
 
 def install_upstart_config():
