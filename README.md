@@ -23,15 +23,15 @@ README documents.
 * BDD: ???
 * Automated Deployment Tool: Fabric
 * Tracking Board: https://trello.com/b/dGpGzzSW/ccj-v2-0-dev
-** If you need access to this board go to ????(need to have a request form on the net) and
+    * If you need access to this board go to ????(need to have a request form on the net) and
 request access.
-** Legend of cards on the board
-*** Purple: Feature
-*** Green: Data User Story
-*** Orange: Data Provider Story
-*** Blue: Operation Story
-*** Yellow: Story Subtask
-*** Red: Defect
+    * Legend of cards on the board
+        * Purple: Feature
+        * Green: Data User Story
+        * Orange: Data Provider Story
+        * Blue: Operation Story
+        * Yellow: Story Subtask
+        * Red: Defect
 
 The original plan was to use Python 3, however the Python based deployment tools Fabric and Ansible do not work
 with Python 3. Given that we wil be using an automated Python deployment tool, this restriction meant that we
@@ -86,10 +86,10 @@ API. Details on this project are XXXX (this is to filled in later).
 
 * / - top level files, like this one
 * /ccj - website code
-** /__init.py__
-** /templates
-** appy.py - main entry point to application
-** /models - where all of the application code is located
+    * /__init.py__
+    * /templates
+    * appy.py - main entry point to application
+    * /models - where all of the application code is located
 * /config - where all the configuration files are located
 * /scripts - scripts used to do other activities like scrape Cook County Sheriff's website
 * /tests - tests stored here, both unit and BDD
