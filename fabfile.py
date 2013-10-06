@@ -1,4 +1,4 @@
-from fabric.api import settings, abort, local, lcd, env, prefix, cd, require, \
+from fabric.api import abort, local, lcd, env, prefix, cd, require, \
     run, sudo
 from fabric.contrib.console import confirm
 from fabric.contrib.files import exists
@@ -11,6 +11,7 @@ VIRTUALENVS_DIRECTORY = '~/ENV'  # change to the path where all the envs are gon
 COOKCOUNTY_ENV_PATH = '%s/%s' % (VIRTUALENVS_DIRECTORY, VIRTUALENV_NAME)  # where our env should be
 PROJECT_PATH = '~/cookcountyjail'  # change to where the project is located
 SOURCE_CODE_SITE = 'https://github.com/sc3/cookcountyjail'
+WEBSITE = 'website'
 
 """
 Base environment
@@ -21,9 +22,12 @@ env.home = '/home/%(user)s' % env
 env.venv = '%(home)s/.virtualenvs/%(project)s' % env
 env.path = '%(home)s/apps/%(project)s' % env
 
+
 """
 Environments
 """
+
+
 def production():
     """
     Work on production environment
@@ -43,6 +47,8 @@ def staging():
 """
 Branches
 """
+
+
 def stable():
     """
     Work on stable branch.
@@ -67,12 +73,15 @@ def branch(branch_name):
 """
 Deployment
 """
+
+
 def deploy():
     """Deploy code, run migrations, and restart services."""
     require('settings', provided_by=[production, staging])
     require('branch', provided_by=[stable, master, branch])
 
     add_directories()
+    cp_cloned_db()
     checkout_latest()
     install_requirements()
     run_migrations()
@@ -80,7 +89,22 @@ def deploy():
     install_upstart_config()
     restart_nginx()
     restart_gunicorn()
+    rm_old_website_dir()
     # Ask about bouncing the cache
+
+
+def activate_cmd():
+    return prefix('source %(venv)s/bin/activate' % env)
+
+
+def add_directories():
+    """
+    Adds directories if needed
+    """
+    dirs = [WEBSITE, WEBSITE + '/1.0/db_backups/']
+    for d in dirs:
+        if not exists(d):
+            run("mkdir -p '%s'" % d)
 
 
 def checkout_latest():
@@ -93,20 +117,24 @@ def checkout_latest():
         run('git pull origin %(branch)s' % env)
 
 
+def cp_cloned_db():
+    run('cp %s/db_backups/* %s/1.0/db_backups' % (WEBSITE, WEBSITE))
+
+
 def install_requirements():
     """
     Install the required packages using pip.
     """
     require('settings', provided_by=[production, staging])
     require('branch', provided_by=[stable, master, branch])
-    with prefix('source %(venv)s/bin/activate' % env):
+    with activate_cmd():
         run('pip install -U -r %(path)s/requirements.txt' % env)
 
 
 def run_migrations():
     require('settings', provided_by=[production, staging])
     require('branch', provided_by=[stable, master, branch])
-    with prefix('source %(venv)s/bin/activate' % env):
+    with activate_cmd():
         run('%(path)s/manage.py migrate' % env)
 
 
@@ -126,24 +154,24 @@ def restart_nginx():
     sudo("service nginx restart")
 
 
+def rm_old_website_dir():
+    run('r -rf website/db_backups')
+
+
 def restart_gunicorn():
     sudo("service cookcountyjail restart")
 
-def add_directories():
-    dirs = ['website', 'website/db_backups']
-    for d in dirs:
-        if not exists(d):
-            run("mkdir -p '%s'" % d)
 
 def v1_static():
-    with cd('website'):
+    with cd(WEBSITE):
         run('ln -sf ~/apps/cookcountyjail/templates static')
 
-#def bounce_cache(
 
 """
 Install (@TODO refactor into server setup + local bootstrap)
 """
+
+
 def pre_requirements():
     """Stuff needed before it all like virtualenv before localning project's pip install requirement.txt"""
     print("Installing pre-requisite modules and third-party software...")
@@ -190,7 +218,7 @@ def migrate(app):
 
 def complete_setup():
     """ Mash up of all other setup functions"""
-    print "Not ready"
+    print("Not ready")
     # May still not be ready for testing ... SEEMS to accept input for django user set up
     if not confirm("Warning this file is untested and incomplete. Do you want to continue? "):
         return
@@ -202,5 +230,3 @@ def complete_setup():
         install_project_requirements()
         syncdb()
         migrate('countyapi')
-
-
