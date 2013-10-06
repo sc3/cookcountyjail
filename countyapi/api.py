@@ -65,7 +65,7 @@ CHARGES_HISTORY_URL = '/api/1.0/chargeshistory/'
 
 
 class JailToOneField(ToOneField):
-    def dehydrate(self, bundle):
+    def dehydrate(self, bundle, for_list=False):
         foreign_obj = None
 
         if isinstance(self.attribute, basestring):
@@ -97,7 +97,7 @@ class JailToOneField(ToOneField):
 
 
 class JailToManyField(ToManyField):
-    def dehydrate(self, bundle):
+    def dehydrate(self, bundle, for_list=False):
         if not bundle.obj or not bundle.obj.pk:
             if not self.null:
                 raise ApiFieldError("The model '%r' does not have a primary key and can not be used in a ToMany context."
@@ -262,7 +262,7 @@ class CourtLocationResource(JailResource):
             'location': ALL,
         }
 
-    def dehydrate(self, bundle):
+    def dehydrate(self, bundle, for_list=False):
         """
         Show court dates in location lists and detail views.
         """
@@ -275,7 +275,8 @@ class CourtLocationResource(JailResource):
             for court_date in dates:
                 date_bundle = resource.build_bundle(obj=court_date,
                                                     request=bundle.request)
-                bundle.data["court_dates"].append(resource.full_dehydrate(date_bundle).data)
+                bundle.data["court_dates"].append(resource.full_dehydrate(date_bundle,
+                                                                          for_list=for_list).data)
         return bundle
 
 
@@ -304,7 +305,7 @@ class CourtDateResource(JailResource):
         }
         ordering = filtering.keys()
 
-    def dehydrate(self, bundle):
+    def dehydrate(self, bundle, for_list=False):
         """
         Set up bidirectional relationships based on request.
         """
@@ -319,7 +320,8 @@ class CourtDateResource(JailResource):
             resource = CourtLocationResource()
             location_bundle = resource.build_bundle(obj=location,
                                                     request=bundle.request)
-            bundle.data["location"] = resource.full_dehydrate(location_bundle).data
+            bundle.data["location"] = resource.full_dehydrate(location_bundle,
+                                                              for_list=for_list).data
 
         # Include primary keys on court dates
         if bundle.request.path.startswith(COURT_DATE_URL) and not \
@@ -335,13 +337,15 @@ class CourtDateResource(JailResource):
             resource = CountyInmateResource()
             inmate_bundle = resource.build_bundle(obj=inmate,
                                                   request=bundle.request)
-            bundle.data["inmate"] = resource.full_dehydrate(inmate_bundle).data
+            bundle.data["inmate"] = resource.full_dehydrate(inmate_bundle,
+                                                            for_list=for_list).data
 
             location = bundle.obj.location
             resource = CourtLocationResource()
             location_bundle = resource.build_bundle(obj=location,
                                                     request=bundle.request)
-            bundle.data["location"] = resource.full_dehydrate(location_bundle).data
+            bundle.data["location"] = resource.full_dehydrate(location_bundle,
+                                                              for_list=for_list).data
 
         return bundle
 
@@ -395,7 +399,7 @@ class HousingHistoryResource(JailResource):
         }
         ordering = filtering.keys()
 
-    def dehydrate(self, bundle):
+    def dehydrate(self, bundle, for_list=False):
         """
         Set up bidirectional relationships based on request.
         """
@@ -410,7 +414,8 @@ class HousingHistoryResource(JailResource):
             resource = HousingLocationResource()
             location_bundle = resource.build_bundle(obj=location,
                                                     request=bundle.request)
-            bundle.data["housing_location"] = resource.full_dehydrate(location_bundle).data
+            bundle.data["housing_location"] = resource.full_dehydrate(location_bundle,
+                                                                      for_list=for_list).data
 
         # Include primary keys on court dates
         if bundle.request.path.startswith(HOUSING_HISTORY_URL) and not \
@@ -425,15 +430,19 @@ class HousingHistoryResource(JailResource):
             resource = CountyInmateResource()
             inmate_bundle = resource.build_bundle(obj=inmate,
                                                   request=bundle.request)
-            bundle.data["inmate"] = resource.full_dehydrate(inmate_bundle).data
+            bundle.data["inmate"] = resource.full_dehydrate(inmate_bundle,
+                                                            for_list=for_list).data
 
             location = bundle.obj.housing_location
             resource = HousingLocationResource()
             location_bundle = resource.build_bundle(obj=location,
                                                     request=bundle.request)
-            bundle.data["housing_location"] = resource.full_dehydrate(location_bundle).data
+            bundle.data["housing_location"] = resource.full_dehydrate(location_bundle,
+                                                                      for_list=for_list).data
 
         return bundle
+
+
 class ChargesHistoryResource(JailResource):
     """
     API endpoint for ChargesHistory model.
@@ -458,7 +467,7 @@ class ChargesHistoryResource(JailResource):
         }
         ordering = filtering.keys()
 
-    def dehydrate(self, bundle):
+    def dehydrate(self, bundle, for_list=False):
         """
         Set up bidirectional relationships based on request.
         """
@@ -475,7 +484,8 @@ class ChargesHistoryResource(JailResource):
             resource = CountyInmateResource()
             inmate_bundle = resource.build_bundle(obj=inmate,
                                                   request=bundle.request)
-            bundle.data["inmate"] = resource.full_dehydrate(inmate_bundle).data
+            bundle.data["inmate"] = resource.full_dehydrate(inmate_bundle,
+                                                            for_list=for_list).data
 
         return bundle
 
@@ -489,7 +499,10 @@ class CountyInmateResource(JailResource):
     charges_history = JailToManyField(ChargesHistoryResource, 'charges_history')
 
     class Meta:
-        queryset = CountyInmate.objects.select_related('housing_history').select_related('charges_history').select_related('court_dates').all()
+        queryset = CountyInmate.objects.select_related('housing_history')\
+                                       .select_related('charges_history')\
+                                       .select_related('court_dates')\
+                                       .all()
         allowed_methods = ['get']
         limit = 100
         max_limit = 0
@@ -517,7 +530,7 @@ class CountyInmateResource(JailResource):
         }
         ordering = filtering.keys()
 
-    def dehydrate(self, bundle):
+    def dehydrate(self, bundle, for_list=False):
         """
         Show court dates and housing history in inmate lists and detail views.
         """
@@ -530,7 +543,8 @@ class CountyInmateResource(JailResource):
             for court_date in dates:
                 date_bundle = resource.build_bundle(obj=court_date,
                                                     request=bundle.request)
-                bundle.data["court_dates"].append(resource.full_dehydrate(date_bundle).data)
+                bundle.data["court_dates"].append(resource.full_dehydrate(date_bundle,
+                                                                          for_list=for_list).data)
 
             housings = bundle.obj.housing_history.all()
             resource = HousingHistoryResource()
@@ -538,7 +552,8 @@ class CountyInmateResource(JailResource):
             for housing in housings:
                 date_bundle = resource.build_bundle(obj=housing,
                                                     request=bundle.request)
-                bundle.data["housing_history"].append(resource.full_dehydrate(date_bundle).data)
+                bundle.data["housing_history"].append(resource.full_dehydrate(date_bundle,
+                                                                              for_list=for_list).data)
 
             charges = bundle.obj.charges_history.all()
             resource = ChargesHistoryResource()
@@ -546,7 +561,8 @@ class CountyInmateResource(JailResource):
             for charge in charges:
                 date_bundle = resource.build_bundle(obj=charge,
                                                     request=bundle.request)
-                bundle.data["charges_history"].append(resource.full_dehydrate(date_bundle).data)
+                bundle.data["charges_history"].append(resource.full_dehydrate(date_bundle,
+                                                                              for_list=for_list).data)
 
         return bundle
 
@@ -566,6 +582,7 @@ class DailyPopulationCountsResource(JailResource):
             'booking_date': ALL
         }
         ordering = filtering.keys()
+
 
 class DailyBookingsCountsResource(JailResource):
     """
