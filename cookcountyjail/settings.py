@@ -35,17 +35,6 @@ if not in_production():
     DEBUG = True
     TEMPLATE_DEBUG = DEBUG
 
-#####################################################################################################
-# NOTE: 2013-10-06 turning on DEBUG so cookcountyjail.recoveredfactory.net works with Django 1.5.4
-#       This is a temporary measure to get the site backup while we investigate why it does not
-#       work when set to False.
-#
-#       This temporary measure should expire by end of October 2013, if not resolved need to revert
-#       back to earlier version of Django
-#####################################################################################################
-DEBUG = True
-
-
 ADMINS = (
     # ('Your Name', 'your_email@example.com'),
 )
@@ -152,6 +141,8 @@ INSTALLED_APPS = (
 )
 
 ALLOWED_POST_IPS = ['127.0.0.1']
+
+ALLOWED_HOSTS = ['cookcountyjail.recoveredfactory.net']
 
 LOGGING = {
     'version': 1,
