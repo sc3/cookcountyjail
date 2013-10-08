@@ -26,8 +26,7 @@ env.user = 'ubuntu'
 env.project = 'cookcountyjail'
 env.home = '/home/%(user)s' % env
 env.venv = '%(home)s/.virtualenvs/%(project)s' % env
-env.apps = '%(home)s/apps' % env
-env.path = '%(apps)s/%(project)s' % env
+env.path = '%(home)s/website/2.0/websites' % env
 env.config_dir = '%(path)s/config' % env
 env.use_ssh_config = True
 env.nginx_conf_fname = '%(config_dir)s/nginx.conf' % env
@@ -35,7 +34,7 @@ env.installed_nginx_fname = '/etc/nginx/sites-available/cookcountyjail.conf'
 env.static_files_dir = '%(path)s/templates' % env
 env.upstart_config_fname = '%(config_dir)s/upstart.conf' % env
 env.cookcountyjail_config_fname = '/etc/init/cookcountyjail.conf'
-env.repo = '%(home)s/repos/%(project)s_2.0-dev'
+env.repo = '%(home)s/repos/%(project)s_2.0-dev' % env
 env.v2_0_dev_branch = 'v2.0-dev'
 env.branch = env.v2_0_dev_branch
 
@@ -68,6 +67,7 @@ def deploy():
 
     add_directories()
     checkout_latest()
+    create_latest_website()
     # install_requirements()
     # run_migrations()
     # conditionally_update_restart_nginx()
@@ -105,6 +105,11 @@ def conditionally_update_restart_nginx():
     if nginx_conf_file_updated():
         update_nginx_configuration()
         restart_nginx()
+
+
+def create_latest_website():
+    with cd(env.repo):
+        run('git log -1 --pretty="%H"')
 
 
 def files_are_different(fname_a, fname_b):
