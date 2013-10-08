@@ -3,6 +3,7 @@ from fabric.api import settings, abort, local, lcd, env, prefix, cd, require, \
 from fabric.contrib.console import confirm
 from fabric.contrib.files import exists
 import subprocess
+import pdb
 
 # Some global variables. Need some tweaking to make them more modular
 HOME = '~'
@@ -95,7 +96,8 @@ def checkout_latest():
     std_requires()
     with cd(env.repo):
         run('git checkout %(branch)s' % env)
-        run('git pull origin %(branch)s' % env)
+        run('git fetch')
+        run('git pull')
 
 
 def conditionally_update_restart_nginx():
@@ -109,7 +111,13 @@ def conditionally_update_restart_nginx():
 
 def create_latest_website():
     with cd(env.repo):
-        run('git log -1 --pretty="%H"')
+        # result = run('git log -1 --pretty="%H"')
+        result = run('git log -1')
+        # pdb.set_trace()
+        commit_str = 'commit '
+        index = result.find(commit_str) + len(commit_str)
+        run("echo found sha1 value of '%s'" % result[index:index + 10])
+        # run("echo found sha1 value of '%s'" % result[0:10])
 
 
 def files_are_different(fname_a, fname_b):
