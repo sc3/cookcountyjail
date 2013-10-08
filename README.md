@@ -14,23 +14,31 @@ README documents.
 
 # Tools
 
-* Language: Python 3.3.2 or higher
+* Language: Python 2.75 or higher in the 2.X line
 * Database: Postgres
 * Web Framework: Flask
 * Database ORM: SQLAlchemy
 * Data Transfer Format: JSON
 * Unit Test: ???
 * BDD: ???
-* Tracking Board: https://trello.com/b/dGpGzzSW/ccj-v2-0-dev
-** If you need access to this board go to ????(need to have a request form on the net) and
+* Automated Deployment Tool: Fabric
+* [Tracking Board](https://trello.com/b/dGpGzzSW/ccj-v2-0-dev)
+    * If you need access to this board go to ????(need to have a request form on the net) and
 request access.
-** Legend of cards on the board
-*** Purple: Feature
-*** Green: Data User Story
-*** Orange: Data Provider Story
-*** Blue: Operation Story
-*** Yellow: Story Subtask
-*** Red: Defect
+    * Color Legend of cards on the board:
+        * Purple: Feature
+        * Green: Data User Story
+        * Orange: Data Provider Story
+        * Blue: Operation Story
+        * Yellow: Story Subtask
+        * Red: Defect
+
+The original plan was to use Python 3, however the Python based deployment tools Fabric and Ansible do not work
+with Python 3. Given that we wil be using an automated Python deployment tool, this restriction meant that we
+had to down grade to Python 2.7. At the current time the latest version is 2.7.5, which is the required version
+for this project. We will be using the -3 option when we run the system, so that we can make sure that our code
+is complient with Python 3. Perhaps an ambitious person may work on changing some of the Open Source tools that
+are not fully version 3 ready.
 
 # Development Strategy
 
@@ -68,8 +76,8 @@ conditions are met:
 * Running in production
 
 An information data model exists for this project and is located here:
-* Requirements for Information Model: Google Doc /document/d/1ZoY-R0deM8OUGtsLfyegqE-QMwnZBp3vmbMQ3eQcXcw/edit?usp=sharing
-* Desing of Information Model: Google Doc /drawings/d/1WAXGB1l5QcX_2XV5_VjvVNNxOO9UvGIh5jXgakNnICo/edit?usp=sharing
+* Requirements for [Information Model](Google Doc /document/d/1ZoY-R0deM8OUGtsLfyegqE-QMwnZBp3vmbMQ3eQcXcw/edit?usp=sharing)
+* Design of [Information Model](Google Doc /drawings/d/1WAXGB1l5QcX_2XV5_VjvVNNxOO9UvGIh5jXgakNnICo/edit?usp=sharing)
 
 This project has a sister project based on sc3/26thandcalifornia that will use the
 API. Details on this project are XXXX (this is to filled in later).
@@ -78,10 +86,11 @@ API. Details on this project are XXXX (this is to filled in later).
 
 * / - top level files, like this one
 * /ccj - website code
-** /__init.py__
-** /templates
-** appy.py - main entry point to application
-** /models - where all of the application code is located
+    * /__init.py__
+    * /templates
+    * appy.py - main entry point to application
+    * /models - where all of the application code is located
+* /config - where all the configuration files are located
 * /scripts - scripts used to do other activities like scrape Cook County Sheriff's website
 * /tests - tests stored here, both unit and BDD
 
@@ -100,14 +109,14 @@ It is recommend that you use the virtualenv to work with this python project.
 git clone git@github.com:&lt;your github account&gt;/cookcountyjail.git
 cd cookcountyjail
 git checkout v2.0-dev
-pip install -r requirements.txt
+pip install -U -r config/requirements.txt
 ```
 
 #Usage
 
 ```
-python manage.py -sdb
-python manage.py
+python -3 manage.py -sdb
+python -3 manage.py
 ```
 
 # License
