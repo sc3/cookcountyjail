@@ -37,7 +37,7 @@ env.upstart_config_fname = '%(config_dir)s/upstart.conf' % env
 env.cookcountyjail_config_fname = '/etc/init/cookcountyjail.conf'
 env.repo = '%(home)s/repos/%(project)s_2.0-dev'
 env.v2_0_dev_branch = 'v2.0-dev'
-env.branch = 'v2.0-dev'
+env.branch = env.v2_0_dev_branch
 
 """
 Environments
@@ -94,9 +94,8 @@ def checkout_latest():
     """Check out latest copy on a given branch."""
     std_requires()
     with cd(env.repo):
-        run('git fetch')
+        run('git checkout %(branch)s' % env)
         run('git pull origin %(branch)s' % env)
-        run('git branch %(branch)s' % env)
 
 
 def conditionally_update_restart_nginx():
