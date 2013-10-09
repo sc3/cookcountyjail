@@ -125,7 +125,7 @@ On production servers:
 
 You already have Gunicorn if you installed the requirements.txt. Get Nginx
 with ``` sudo apt-get install nginx ``` or an equivalent command. Note that 
-both port 80 and 8000 must be open to run the production servers.
+both port 80 and 8080 must be open to run the production servers.
 
 Now, just: 
 
