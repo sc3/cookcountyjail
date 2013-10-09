@@ -28,7 +28,7 @@ env.project = 'cookcountyjail'
 env.home = '/home/%(user)s' % env
 env.venv = '%(home)s/.virtualenvs/%(project)s' % env
 env.path = '%(home)s/website/2.0/websites' % env
-env.config_dir = '%(path)s/config' % env
+env.config_dir = '%(path)s/active/config' % env
 env.use_ssh_config = True
 env.nginx_conf_fname = '%(config_dir)s/nginx.conf' % env
 env.installed_nginx_fname = '/etc/nginx/sites-available/cookcountyjail.conf'
@@ -68,13 +68,13 @@ def deploy():
 
     add_directories()
     checkout_latest()
+    capture_latest_commit_id()
     create_latest_website()
-    # install_requirements()
+    install_requirements()
     # run_migrations()
     # conditionally_update_restart_nginx()
     # install_upstart_config()
     # restart_gunicorn()
-    # Ask about bouncing the cache
 
 
 def activate_cmd():
@@ -89,6 +89,14 @@ def add_directories():
     for d in dirs:
         if not exists(d):
             run("mkdir -p '%s'" % d)
+
+
+def capture_latest_commit_id():
+    with cd(env.repo):
+        commit_str = 'commit '
+        result = run('git log -1', quiet=True)
+        index = result.find(commit_str) + len(commit_str)
+        env.latest_commit_id = result[index:index + 10]
 
 
 def checkout_latest():
@@ -109,15 +117,18 @@ def conditionally_update_restart_nginx():
         restart_nginx()
 
 
+def copy_repo_to_new_website():
+    run('cp -R %(repo)s/* %(path)s/%(latest_commit_id)s' % env)
+
+
 def create_latest_website():
-    with cd(env.repo):
-        # result = run('git log -1 --pretty="%H"')
-        result = run('git log -1')
-        # pdb.set_trace()
-        commit_str = 'commit '
-        index = result.find(commit_str) + len(commit_str)
-        run("echo found sha1 value of '%s'" % result[index:index + 10])
-        # run("echo found sha1 value of '%s'" % result[0:10])
+    create_new_website_directory()
+    copy_repo_to_new_website()
+    link_to_latest_website()
+
+
+def create_new_website_directory():
+    run('mkdir -p %(path)s/%(latest_commit_id)s' % env)
 
 
 def files_are_different(fname_a, fname_b):
@@ -140,6 +151,11 @@ def install_upstart_config():
     """Install new gunicorn configuration file, if it has changed."""
     if files_are_different(env.upstart_config_fname, env.cookcountyjail_config_fname):
         sudo_cp('%(upstart_config_fname)s %(cookcountyjail_config_fname)s' % env)
+
+
+def link_to_latest_website():
+    with cd(env.path):
+        run('ln -s -f %(latest_commit_id)s active' % env)
 
 
 def nginx_conf_file_updated():
