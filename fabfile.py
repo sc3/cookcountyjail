@@ -45,7 +45,7 @@ env.nginx_master_inst = '%(nginx_install_dir)s/%(nginx_master_f)s' % env
 
 ######## General Config ######## 
 
-conf_to_installed = {
+filesets = {
     'upstart' : (env.upstart_conf, env.upstart_inst),
     'nginx_1' : (env.nginx_one_conf, env.nginx_one_inst),
     'nginx_m' : (env.nginx_master_conf, env.nginx_master_inst)
@@ -162,7 +162,7 @@ def try_update_all_config_files():
 def try_update_config_file(which):
     """
     Conditionally update any one of multiple config files, as defined 
-    by 'conf_to_installed' variable
+    by 'filesets' variable
     """
     config, installed = filesets[which]:
     if files_are_different(config, installed):
