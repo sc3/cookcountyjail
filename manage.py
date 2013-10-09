@@ -1,4 +1,5 @@
-import argparse, sys
+import argparse
+import sys
 
 from ccj import app, db
 from scripts import setup_db
