@@ -2,7 +2,6 @@ from fabric.api import settings, abort, local, lcd, env, prefix, cd, require, \
     run, sudo, hide
 from fabric.contrib.console import confirm
 from fabric.contrib.files import exists
-import subprocess
 
 # Some global variables. Need some tweaking to make them more modular
 HOME = '~'
@@ -13,28 +12,51 @@ PROJECT_PATH = '~/cookcountyjail'  # change to where the project is located
 SOURCE_CODE_SITE = 'https://github.com/sc3/cookcountyjail'
 WEBSITE = 'website'
 
+
 """
 Base environment
 """
+
 env.user = 'ubuntu'
 env.project = 'cookcountyjail'
 env.home = '/home/%(user)s' % env
 env.venv = '%(home)s/.virtualenvs/%(project)s' % env
 env.apps = '%(home)s/apps' % env
 env.path = '%(apps)s/%(project)s' % env
-env.config_dir = '%(path)s/config' % env
-env.use_ssh_config = True
-env.nginx_conf_fname = '%(config_dir)s/nginx.conf' % env
-env.installed_nginx_fname = '/etc/nginx/sites-available/cookcountyjail.conf'
 env.static_files_dir = '%(path)s/templates' % env
-env.upstart_config_fname = '%(config_dir)s/upstart.conf' % env
-env.cookcountyjail_config_fname = '/etc/init/cookcountyjail.conf'
+env.config_dir = '%(path)s/config' % env
+
+######## Gunicorn Upstart Config #########
+
+env.upstart_conf = '%(config_dir)s/upstart.conf' % env
+env.upstart_inst = '/etc/init/cookcountyjail.conf'
+
+######## Nginx Config #########
+
+env.nginx_install_dir = '/etc/nginx/conf.d'
+
+env.nginx_one_f = 'nginx-v1.conf'
+env.nginx_master_f = 'nginx.conf.master'
+
+env.nginx_one_conf = '%(config_dir)s/%(nginx_one_f)s' % env
+env.nginx_master_conf = '%(config_dir)s/%(nginx_master)s' % env
+env.nginx_one_inst = '%(nginx_install_dir)s/%(nginx_one_f)s' % env
+env.nginx_master_inst = '%(nginx_install_dir)s/%(nginx_master_f)s' % env
+
+######## General Config ######## 
+
+filesets = {
+    'upstart' : (env.upstart_conf, env.upstart_inst),
+    'nginx_1' : (env.nginx_one_conf, env.nginx_one_inst),
+    'nginx_m' : (env.nginx_master_conf, env.nginx_master_inst)
+}
+
+env.use_ssh_config = True
 
 
 """
 Environments
 """
-
 
 def production():
     """
@@ -55,7 +77,6 @@ def staging():
 """
 Branches
 """
-
 
 def stable():
     """
@@ -82,7 +103,6 @@ def branch(branch_name):
 Deployment
 """
 
-
 def deploy():
     """Deploy code, run migrations, and restart services."""
     require('settings', provided_by=[production, staging])
@@ -92,8 +112,7 @@ def deploy():
     checkout_latest()
     install_requirements()
     run_migrations()
-    conditionally_update_restart_nginx()
-    install_upstart_config()
+    try_update_all_config_files()
     restart_gunicorn()
     # Ask about bouncing the cache
 
@@ -121,20 +140,35 @@ def checkout_latest():
         run('git pull origin %(branch)s' % env)
 
 
-def conditionally_update_restart_nginx():
-    """
-    Updates system nginx configuration file if it has changed and restarts nginx
-    """
-    if nginx_conf_file_updated():
-        update_nginx_configuration()
-        restart_nginx()
-
-
 def files_are_different(fname_a, fname_b):
     """Returns True if the two named files are different, False otherwise."""
     with settings(hide('warnings', 'stdout', 'stderr'), warn_only=True):
         result = run("diff -q '%s' '%s'" % (fname_a, fname_b))
         return result.return_code == 1
+
+
+def try_update_all_config_files():
+    """
+    Conditionally update all config files, and handle results.
+    """
+    result1 = try_update_config_file('upstart')
+    result2 = try_update_config_file('nginx_1')
+    result3 = try_update_config_file('nginx_m')
+
+    if result2 or result3:
+        restart_nginx()
+
+
+def try_update_config_file(which):
+    """
+    Conditionally update any one of multiple config files, as defined 
+    by 'filesets' variable
+    """
+    config, installed = filesets[which]:
+    if files_are_different(config, installed):
+        sudo_cp(config, installed)
+        return True
+    return False
 
 
 def install_requirements():
@@ -145,17 +179,6 @@ def install_requirements():
     require('branch', provided_by=[stable, master, branch])
     with activate_cmd():
         run('pip install -U -r %(config_dir)s/requirements.txt' % env)
-
-
-def install_upstart_config():
-    """Install new gunicorn configuration file, if it has changed."""
-    if files_are_different(env.upstart_config_fname, env.cookcountyjail_config_fname):
-        sudo_cp('%(upstart_config_fname)s %(cookcountyjail_config_fname)s' % env)
-
-
-def nginx_conf_file_updated():
-    """Returns True if local nginx configuration file different from system one."""
-    return files_are_different(env.nginx_conf_fname, env.installed_nginx_fname)
 
 
 def run_migrations():
@@ -185,11 +208,6 @@ def sudo_cp(src_fname, trg_fname):
     sudo("cp '%s' '%s'" % (src_fname, trg_fname))
 
 
-def update_nginx_configuration():
-    """Copies the nginx configuration file to system area."""
-    sudo_cp(env.nginx_conf_fname, env.installed_nginx_fname)
-
-
 def v1_static():
     """Links the 1.0 static files to main static file location."""
     with cd(WEBSITE):
@@ -200,7 +218,6 @@ def v1_static():
 Install (@TODO refactor into server setup + local bootstrap)
 """
 
-
 def pre_requirements():
     """Stuff needed before it all like virtualenv before localning project's pip install requirement.txt"""
     print("Installing pre-requisite modules and third-party software...")
@@ -208,7 +225,7 @@ def pre_requirements():
     unfulfilled_reqs = ['libpq-dev', 'libxml2-dev', 'libxslt1-dev', 'python2.7-dev']
     # The above are all dependencies that pip was unable to resolve later on,
     # -- at least for the system that I used to test this file.
-    subprocess.call('sudo apt-get install ' + " ".join(unfulfilled_reqs + pre_reqs), shell=True)
+    local('sudo apt-get install ' + " ".join(unfulfilled_reqs + pre_reqs))
 
 
 def install_project_requirements(file='requirements.txt'):

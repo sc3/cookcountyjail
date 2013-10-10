@@ -15,8 +15,4 @@ v1_api.register(DailyPopulationCountsResource())
 v1_api.register(DailyBookingsCountsResource())
 v1_api.register(ChargesHistoryResource())
 
-urlpatterns = patterns('',
-                       url(r'', include(v1_api.urls)),
-                       url(r'^$', views.api_index, name='index'),
-                       url(r'^data.json', 'countyapi.views.data_json', name='data')
-                       )
+urlpatterns = patterns('', url(r'', include(v1_api.urls)))

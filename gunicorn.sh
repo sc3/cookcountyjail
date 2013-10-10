@@ -12,6 +12,6 @@ USER=ubuntu
 GROUP=ubuntu
 cd $PROJECT_DIR
 source /home/ubuntu/.virtualenvs/cookcountyjail/bin/activate
-exec gunicorn_django -w $NUM_WORKERS \
-    --user=$USER --group=$GROUP --log-level=debug \
-    --timeout=$TIMEOUT --log-file=$LOGFILE 2>>$LOGFILE
+gunicorn -w $NUM_WORKERS --user=$USER --group=$GROUP \
+    --log-level=debug --timeout=$TIMEOUT --log-file=$LOGFILE \
+    cookcountyjail.wsgi:application 2>>$LOGFILE
