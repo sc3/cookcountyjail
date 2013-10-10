@@ -1,2 +1,2 @@
 # Authors
-Wilberto Morales, Brain Peterson, David Eads
+Wilberto Morales, Brian Peterson, David Eads, Norbert Winklareth
