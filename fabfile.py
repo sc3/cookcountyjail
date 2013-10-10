@@ -39,16 +39,16 @@ env.nginx_one_f = 'nginx-v1.conf'
 env.nginx_master_f = 'nginx.conf.master'
 
 env.nginx_one_conf = '%(config_dir)s/%(nginx_one_f)s' % env
-env.nginx_master_conf = '%(config_dir)s/%(nginx_master)s' % env
+env.nginx_master_conf = '%(config_dir)s/%(nginx_master_f)s' % env
 env.nginx_one_inst = '%(nginx_install_dir)s/%(nginx_one_f)s' % env
 env.nginx_master_inst = '%(nginx_install_dir)s/%(nginx_master_f)s' % env
 
-######## General Config ######## 
+######## General Config ########
 
 filesets = {
-    'upstart' : (env.upstart_conf, env.upstart_inst),
-    'nginx_1' : (env.nginx_one_conf, env.nginx_one_inst),
-    'nginx_m' : (env.nginx_master_conf, env.nginx_master_inst)
+    'upstart': (env.upstart_conf, env.upstart_inst),
+    'nginx_1': (env.nginx_one_conf, env.nginx_one_inst),
+    'nginx_m': (env.nginx_master_conf, env.nginx_master_inst)
 }
 
 env.use_ssh_config = True
@@ -57,6 +57,7 @@ env.use_ssh_config = True
 """
 Environments
 """
+
 
 def production():
     """
@@ -77,6 +78,7 @@ def staging():
 """
 Branches
 """
+
 
 def stable():
     """
@@ -102,6 +104,7 @@ def branch(branch_name):
 """
 Deployment
 """
+
 
 def deploy():
     """Deploy code, run migrations, and restart services."""
@@ -161,10 +164,10 @@ def try_update_all_config_files():
 
 def try_update_config_file(which):
     """
-    Conditionally update any one of multiple config files, as defined 
+    Conditionally update any one of multiple config files, as defined
     by 'filesets' variable
     """
-    config, installed = filesets[which]:
+    config, installed = filesets[which]
     if files_are_different(config, installed):
         sudo_cp(config, installed)
         return True
@@ -217,6 +220,7 @@ def v1_static():
 """
 Install (@TODO refactor into server setup + local bootstrap)
 """
+
 
 def pre_requirements():
     """Stuff needed before it all like virtualenv before localning project's pip install requirement.txt"""
