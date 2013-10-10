@@ -114,10 +114,27 @@ pip install -U -r config/requirements.txt
 
 #Usage
 
+On development server:
+
 ```
 python -3 manage.py -sdb
 python -3 manage.py
 ```
+
+On production servers: 
+
+You already have Gunicorn if you installed the requirements.txt. Get Nginx
+with ``` sudo apt-get install nginx ``` or an equivalent command. Note that 
+both port 80 and 8080 must be open to run the production servers.
+
+Now, just: 
+
+```
+sudo /usr/sbin/nginx -c nginx.conf 
+source gunicorn.sh
+```
+
+You should now be able to see the app at localhost.
 
 # License
 
