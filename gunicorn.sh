@@ -1,6 +1,6 @@
 #!/bin/bash
 set -e
-PROJECT_DIR=/home/ubuntu/repos/cookcountyjail_2.0-dev
+PROJECT_DIR=/home/ubuntu/website/2.0/websites/active
 LOGFILE=/home/ubuntu/logs/cookcountyjail-v2.0.log
 LOGDIR=$(dirname $LOGFILE)
 export CCJ_PRODUCTION=1
