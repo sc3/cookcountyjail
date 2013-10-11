@@ -159,13 +159,14 @@ def install_requirements():
 
 def install_upstart_config():
     """Install new gunicorn configuration file, if it has changed."""
-    if files_are_different(env.upstart_config_fname, env.cookcountyjail_v2_0_config_fname):
-        sudo_cp('%(upstart_config_fname)s %(cookcountyjail_config_fname)s' % env)
+    if files_are_different(env.upstart_config_fname, env.cookcountyjail_config_fname):
+        sudo_cp(env.upstart_config_fname, env.cookcountyjail_config_fname)
 
 
 def link_to_latest_website():
     with cd(env.websites_path):
-        run('ln -s -f %(latest_commit_id)s active' % env)
+        run('rm -f active')
+        run('ln -s %(latest_commit_id)s active' % env)
 
 
 def run_migrations():
