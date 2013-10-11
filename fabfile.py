@@ -1,8 +1,9 @@
-from fabric.api import settings, abort, local, lcd, env, prefix, cd, require, \
+#
+# Cook County Jail Fabric file for deploying V2.0 api.
+
+from fabric.api import settings, env, prefix, cd, require, \
     run, sudo, hide
-from fabric.contrib.console import confirm
 from fabric.contrib.files import exists
-import subprocess
 
 # Some global variables. Need some tweaking to make them more modular
 HOME = '~'
@@ -24,19 +25,28 @@ Base environment
 """
 env.user = 'ubuntu'
 env.project = 'cookcountyjail'
+env.use_ssh_config = True
+
 env.home = '/home/%(user)s' % env
 env.venv = '%(home)s/.virtualenvs/%(project)s' % env
-env.path = '%(home)s/website/2.0/websites' % env
+env.websites_path = '%(home)s/website/2.0/websites' % env
+env.path = '%(websites_path)s/active' % env
 env.config_dir = '%(path)s/config' % env
-env.use_ssh_config = True
-env.nginx_conf_fname = '%(config_dir)s/nginx.conf' % env
-env.installed_nginx_fname = '/etc/nginx/sites-available/cookcountyjail.conf'
-env.static_files_dir = '%(path)s/templates' % env
 env.upstart_config_fname = '%(config_dir)s/upstart.conf' % env
-env.cookcountyjail_config_fname = '/etc/init/cookcountyjail.conf'
+env.cookcountyjail = 'cookcountyjail-v2_0-dev'
+env.cookcountyjail_config_fname = '/etc/init/%(cookcountyjail)s.conf' % env
 env.repo = '%(home)s/repos/%(project)s_2.0-dev' % env
 env.v2_0_dev_branch = 'v2.0-dev'
 env.branch = env.v2_0_dev_branch
+
+######## Nginx Config #########
+
+env.nginx_install_dir = '/etc/nginx/conf.d'
+
+env.nginx_two_f = 'nginx-v2.conf'
+
+env.nginx_two_conf = '%(config_dir)s/%(nginx_two_f)s' % env
+env.nginx_two_inst = '%(nginx_install_dir)s/%(nginx_two_f)s' % env
 
 """
 Environments
@@ -67,13 +77,12 @@ def deploy():
 
     add_directories()
     checkout_latest()
+    capture_latest_commit_id()
     create_latest_website()
-    # install_requirements()
     # run_migrations()
-    # conditionally_update_restart_nginx()
-    # install_upstart_config()
-    # restart_gunicorn()
-    # Ask about bouncing the cache
+    conditionally_update_restart_nginx()
+    install_upstart_config()
+    restart_gunicorn()
 
 
 def activate_cmd():
@@ -90,33 +99,53 @@ def add_directories():
             run("mkdir -p '%s'" % d)
 
 
+def capture_latest_commit_id():
+    with cd(env.repo):
+        commit_str = 'commit '
+        result = run('git log -1', quiet=True)
+        index = result.find(commit_str) + len(commit_str)
+        env.latest_commit_id = result[index:index + 10]
+
+
 def checkout_latest():
     """Check out latest copy on a given branch."""
     std_requires()
     with cd(env.repo):
         run('git checkout %(branch)s' % env)
-        run('git pull origin %(branch)s' % env)
+        run('git fetch')
+        run('git pull')
 
 
 def conditionally_update_restart_nginx():
     """
     Updates system nginx configuration file if it has changed and restarts nginx
     """
-    if nginx_conf_file_updated():
-        update_nginx_configuration()
+    if files_are_different(env.nginx_two_conf, env.nginx_two_inst):
+        sudo_cp(env.nginx_two_conf, env.nginx_two_inst)
         restart_nginx()
 
 
+def copy_repo_to_new_website():
+    run('cp -R %(repo)s/* %(websites_path)s/%(latest_commit_id)s' % env)
+
+
 def create_latest_website():
-    with cd(env.repo):
-        run('git log -1 --pretty="%H"')
+    if not exists('%(websites_path)s/%(latest_commit_id)s' % env):
+        create_new_website_directory()
+        copy_repo_to_new_website()
+        link_to_latest_website()
+        install_requirements()
+
+
+def create_new_website_directory():
+    run('mkdir -p %(websites_path)s/%(latest_commit_id)s' % env)
 
 
 def files_are_different(fname_a, fname_b):
     """Returns True if the two named files are different, False otherwise."""
     with settings(hide('warnings', 'stdout', 'stderr'), warn_only=True):
         result = run("diff -q '%s' '%s'" % (fname_a, fname_b))
-        return result.return_code == 1
+        return result.return_code != 0
 
 
 def install_requirements():
@@ -130,13 +159,13 @@ def install_requirements():
 
 def install_upstart_config():
     """Install new gunicorn configuration file, if it has changed."""
-    if files_are_different(env.upstart_config_fname, env.cookcountyjail_config_fname):
+    if files_are_different(env.upstart_config_fname, env.cookcountyjail_v2_0_config_fname):
         sudo_cp('%(upstart_config_fname)s %(cookcountyjail_config_fname)s' % env)
 
 
-def nginx_conf_file_updated():
-    """Returns True if local nginx configuration file different from system one."""
-    return files_are_different(env.nginx_conf_fname, env.installed_nginx_fname)
+def link_to_latest_website():
+    with cd(env.websites_path):
+        run('ln -s -f %(latest_commit_id)s active' % env)
 
 
 def run_migrations():
@@ -152,7 +181,7 @@ def restart_nginx():
 
 def restart_gunicorn():
     """Restart Python webserver that runs the Django server."""
-    service_restart("cookcountyjail")
+    service_restart(env.cookcountyjail)
 
 
 def service_restart(service_name):
@@ -167,79 +196,3 @@ def std_requires():
 def sudo_cp(src_fname, trg_fname):
     """Copy file(s) to area that require admin level access."""
     sudo("cp '%s' '%s'" % (src_fname, trg_fname))
-
-
-def update_nginx_configuration():
-    """Copies the nginx configuration file to system area."""
-    sudo_cp(env.nginx_conf_fname, env.installed_nginx_fname)
-
-
-def v1_static():
-    """Links the 1.0 static files to main static file location."""
-    with cd(WEBSITE):
-        run("ln -sf '%(static_files_dir)s' static" % env)
-
-
-"""
-Install (@TODO refactor into server setup + local bootstrap)
-"""
-
-
-def pre_requirements():
-    """Stuff needed before it all like virtualenv before localning project's pip install requirement.txt"""
-    print("Installing pre-requisite modules and third-party software...")
-    pre_reqs = ['python-virtualenv', 'python-setuptools', 'git']
-    unfulfilled_reqs = ['libpq-dev', 'libxml2-dev', 'libxslt1-dev', 'python2.7-dev']
-    # The above are all dependencies that pip was unable to resolve later on,
-    # -- at least for the system that I used to test this file.
-    subprocess.call('sudo apt-get install ' + " ".join(unfulfilled_reqs + pre_reqs), shell=True)
-
-
-def install_project_requirements(file='requirements.txt'):
-    local('%s pip install -r %s' % (start_env(), file))
-
-
-def create_env(env_name=VIRTUALENV_NAME, envs_path=VIRTUALENVS_DIRECTORY, home=HOME):
-    """Make a vitualenv at the envs_path named env_name"""
-    with lcd(home):
-        local('mkdir %s' % envs_path)
-    with lcd(envs_path):
-        local('virtualenv --distribute %s' % env_name)
-
-
-def start_env(env_path=COOKCOUNTY_ENV_PATH):
-    """
-    Function to activate the virtualenv warning only returns a string to be used and not
-    actually locals the env
-    """
-    return ('source %s/bin/activate && ' % env_path)
-
-
-def clone_repo(repo_path=SOURCE_CODE_SITE):
-    local('git clone %s' % repo_path)
-
-
-def syncdb():
-    local(start_env() + './manage.py syncdb')
-
-
-def migrate(app):
-    if not app:
-        abort('Provide the app to be migrated')
-    local(start_env()+'./manage.py migrate %s' % app)
-
-
-def complete_setup():
-    """ Mash up of all other setup functions"""
-    print("Not ready")
-    # May still not be ready for testing ... SEEMS to accept input for django user set up
-    if not confirm("Warning this file is untested and incomplete. Do you want to continue? "):
-        return
-    pre_requirements()
-    create_env()
-    clone_repo()
-    start_env()
-    with lcd(PROJECT_PATH):
-        install_project_requirements()
-        syncdb()
-        migrate('countyapi')
