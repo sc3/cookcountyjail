@@ -8,8 +8,6 @@ and summarizes trends.
 See the [API guide](https://github.com/sc3/cookcountyjail/wiki/API-guide)
 for accessing the production API service and querying the data.
 
-# Setting up for local development
-=======
 # Installation
 
 ```
