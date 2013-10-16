@@ -103,6 +103,14 @@ def add_directories():
             run("mkdir -p '%s'" % d)
 
 
+def capture_current_build_id():
+    current_build_id_path = '%(path)s/%(current_build_id_path)s' % env
+    if not exists(current_build_id_path):
+        print('Error. Current installed website does not have a build_info/current file.')
+        sys.exit(1)
+    env.current_build_id = run('cat %s' % current_build_id_path)
+
+
 def capture_latest_commit_id():
     with cd(env.repo):
         commit_str = 'commit '
@@ -111,16 +119,16 @@ def capture_latest_commit_id():
         env.latest_commit_id = result[index:index + 10]
 
 
+def capture_previous_build_id():
+    previous_build_id_path = '%(path)s/%(previous_build_id_path)s' % env
+    if exists(previous_build_id_path):
+        env.previous_build_id = run('cat %s' % previous_build_id_path)
+        return True
+    return False
+
+
 def create_path_to_new_website():
     env.new_website_path = '%(websites_path)s/%(latest_commit_id)s' % env
-
-
-def capture_previous_id():
-    current_build_id_path = '%(path)s/%(current_build_id_path)s' % env
-    if not exists(current_build_id_path):
-        print('Error. Current installed website does not have a build_info/current file.')
-        sys.exit(1)
-    env.previous_build_id = run('cat %s' % current_build_id_path)
 
 
 def checkout_latest():
@@ -146,14 +154,14 @@ def copy_repo_to_new_website():
 
 
 def create_latest_website():
-    capture_previous_id()
+    capture_current_build_id()
     create_path_to_new_website()
     if okay_to_install_new_website():
         create_new_website_directory()
         copy_repo_to_new_website()
         store_build_info()
         install_requirements()
-        link_to_new_website()
+        link_to_new_website(env.latest_commit_id)
 
 
 def create_new_website_directory():
@@ -182,13 +190,18 @@ def install_upstart_config():
         sudo_cp(env.upstart_config_fname, env.cookcountyjail_config_fname)
 
 
-def link_to_new_website():
+def link_to_new_website(new_website_id):
     with cd(env.websites_path):
-        run('rm -f active; ln -s %(latest_commit_id)s active' % env)
+        run('rm -f active; ln -s %s active' % new_website_id)
 
 
 def okay_to_install_new_website():
     return not exists('%(new_website_path)s' % env)
+
+
+def remove_website(website_name):
+    with cd(env.websites_path):
+        run('rm -rf %s' % website_name)
 
 
 def restart_nginx():
@@ -199,6 +212,17 @@ def restart_nginx():
 def restart_gunicorn():
     """Restart Python webserver that runs the Django server."""
     service_restart(env.cookcountyjail)
+
+
+def rollback():
+    std_requires()
+    if capture_previous_build_id():
+        capture_current_build_id()
+        link_to_new_website(env.previous_build_id)
+        conditionally_update_restart_nginx()
+        install_upstart_config()
+        restart_gunicorn()
+        remove_website(env.current_build_id)
 
 
 def service_restart(service_name):
@@ -213,7 +237,7 @@ def std_requires():
 def store_build_info():
     with cd(env.new_website_path):
         run('mkdir %(build_info_path)s' % env)
-        run('echo %(previous_build_id)s > %(previous_build_id_path)s' % env)
+        run('echo %(current_build_id)s > %(previous_build_id_path)s' % env)
         run('echo %(latest_commit_id)s > %(current_build_id_path)s' % env)
 
 
