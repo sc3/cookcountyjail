@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, jsonify
 from flask.ext.sqlalchemy import SQLAlchemy
 from werkzeug.contrib.fixers import ProxyFix
 
@@ -12,4 +12,4 @@ def temp_api():
     """
     Temporary api return.
     """
-    return 'Version 2.0, Build 123'
+    return jsonify(Version=2.0, Build=777, Deployed='2013-10-15')
