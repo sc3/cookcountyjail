@@ -1,5 +1,57 @@
 import os
 _basedir = os.path.abspath(os.path.dirname(__file__))
 
+########################################################
+#
+# Settings are defined at the end of this file
+#
+#############################################
+
+NEGATIVE_VALUES = set(['0', 'false'])
+
+def get_db_uri():
+    if use_postgres():
+        db_config = {
+            'dialect' : 'postgresql',
+            'db_user' : 'cookcountyjail',
+            'db_name' : 'cookcountyjail_v2_0_dev',
+            'pw' : 'walblgadb;lgall',
+            'host' : 'localhost',
+        }
+        template = '%(dialect)s://%(db_user)s:%(pw)s@%(host)s/%(db_name)s'
+    else:
+        db_config = {
+            'dialect' : 'sqlite',
+            'abs_path_to_db' : '%s/ccj.db' % _basedir
+        }
+        template = '%(dialect)s:///%(abs_path_to_db)s'
+
+    return (template % db_config)
+
+def env_var_active(env_var):
+    """
+    Calculates if an environment variable is set.
+    """
+    env_var_value = os.environ.get(env_var)
+    return env_var_value and env_var_value.lower() not in NEGATIVE_VALUES
+
+
+def in_production():
+    """
+    Calculates if to run in production mode.
+    If environment var CCJ_PRODUCTION != False or 0 or None, then in production mode.
+    """
+    return env_var_active('CCJ_PRODUCTION')
+
+
+def use_postgres():
+    """
+    Calculates if Postgres database is to be used.
+    If in production mode, then use Postgres.
+    If environment var USE_POSTGRES != False or 0 or None, then use Postgres.
+    """
+    return in_production() or env_var_active('USE_POSTGRES')
+
+
 DEBUG = True
-SQLALCHEMY_DATABASE_URI = 'sqlite:///%s' % os.path.join(_basedir, 'ccjdb.db')
+SQLALCHEMY_DATABASE_URI = get_db_uri()
