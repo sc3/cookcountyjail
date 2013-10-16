@@ -2,7 +2,7 @@ from flask import Flask, jsonify
 from flask.ext.sqlalchemy import SQLAlchemy
 from werkzeug.contrib.fixers import ProxyFix
 from os.path import isfile
-from datetime.datetime import now
+from datetime import datetime
 
 
 app = Flask(__name__, static_url_path='')
@@ -37,7 +37,7 @@ def current_build_info():
 
 
 def deployed_at():
-    return file_contents('build_info/deployed_at', str(now()))
+    return file_contents('build_info/deployed_at', str(datetime.now()))
 
 
 def file_contents(fname, default_rvalue):

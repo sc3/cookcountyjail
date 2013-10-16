@@ -5,7 +5,7 @@ from fabric.api import settings, env, prefix, cd, require, \
     run, sudo, hide
 from fabric.contrib.files import exists
 import sys
-from datetime.datetime import now
+from datetime import datetime
 
 
 # Some global variables. Need some tweaking to make them more modular
@@ -241,7 +241,7 @@ def store_build_info():
         run('mkdir %(build_info_path)s' % env)
         run('echo %(current_build_id)s > %(previous_build_id_path)s' % env)
         run('echo %(latest_commit_id)s > %(current_build_id_path)s' % env)
-        run('echo %s > %(deployed_at_path)s' % (str(now()), env))
+        run('echo %s > %(deployed_at_path)s' % (str(datetime.now()), env))
 
 
 def sudo_cp(src_fname, trg_fname):
