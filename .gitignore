@@ -9,3 +9,5 @@ lib
 .Python
 .idea
 *.swp
+build_info
+build_info/**

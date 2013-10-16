@@ -4,6 +4,8 @@
 from fabric.api import settings, env, prefix, cd, require, \
     run, sudo, hide
 from fabric.contrib.files import exists
+import sys
+
 
 # Some global variables. Need some tweaking to make them more modular
 HOME = '~'
@@ -38,6 +40,9 @@ env.cookcountyjail_config_fname = '/etc/init/%(cookcountyjail)s.conf' % env
 env.repo = '%(home)s/repos/%(project)s_2.0-dev' % env
 env.v2_0_dev_branch = 'v2.0-dev'
 env.branch = env.v2_0_dev_branch
+env.build_info_path = 'build_info'
+env.current_build_id_path = '%(build_info_path)s/current' % env
+env.previous_build_id_path = '%(build_info_path)s/previous' % env
 
 ######## Nginx Config #########
 
@@ -79,7 +84,6 @@ def deploy():
     checkout_latest()
     capture_latest_commit_id()
     create_latest_website()
-    # run_migrations()
     conditionally_update_restart_nginx()
     install_upstart_config()
     restart_gunicorn()
@@ -107,6 +111,18 @@ def capture_latest_commit_id():
         env.latest_commit_id = result[index:index + 10]
 
 
+def create_path_to_new_website():
+    env.new_website_path = '%(websites_path)s/%(latest_commit_id)s' % env
+
+
+def capture_previous_id():
+    current_build_id_path = '%(path)s/%(current_build_id_path)s' % env
+    if not exists(current_build_id_path):
+        print('Error. Current installed website does not have a build_info/current file.')
+        sys.exit(1)
+    env.previous_build_id = run('cat %s' % current_build_id_path)
+
+
 def checkout_latest():
     """Check out latest copy on a given branch."""
     std_requires()
@@ -126,19 +142,22 @@ def conditionally_update_restart_nginx():
 
 
 def copy_repo_to_new_website():
-    run('cp -R %(repo)s/* %(websites_path)s/%(latest_commit_id)s' % env)
+    run('cp -R %(repo)s/* %(new_website_path)s' % env)
 
 
 def create_latest_website():
-    if not exists('%(websites_path)s/%(latest_commit_id)s' % env):
+    capture_previous_id()
+    create_path_to_new_website()
+    if okay_to_install_new_website():
         create_new_website_directory()
         copy_repo_to_new_website()
-        link_to_latest_website()
+        store_build_info()
         install_requirements()
+        link_to_new_website()
 
 
 def create_new_website_directory():
-    run('mkdir -p %(websites_path)s/%(latest_commit_id)s' % env)
+    run('mkdir -p %(new_website_path)s' % env)
 
 
 def files_are_different(fname_a, fname_b):
@@ -154,7 +173,7 @@ def install_requirements():
     """
     std_requires()
     with activate_cmd():
-        run('pip install -U -r %(config_dir)s/requirements.txt' % env)
+        run('pip install -U -r %(new_website_path)s/requirements.txt' % env)
 
 
 def install_upstart_config():
@@ -163,16 +182,13 @@ def install_upstart_config():
         sudo_cp(env.upstart_config_fname, env.cookcountyjail_config_fname)
 
 
-def link_to_latest_website():
+def link_to_new_website():
     with cd(env.websites_path):
-        run('rm -f active')
-        run('ln -s %(latest_commit_id)s active' % env)
+        run('rm -f active; ln -s %(latest_commit_id)s active' % env)
 
 
-def run_migrations():
-    std_requires()
-    with activate_cmd():
-        run('%(path)s/manage.py migrate' % env)
+def okay_to_install_new_website():
+    return not exists('%(new_website_path)s' % env)
 
 
 def restart_nginx():
@@ -192,6 +208,13 @@ def service_restart(service_name):
 
 def std_requires():
     require('settings', provided_by=[production])
+
+
+def store_build_info():
+    with cd(env.new_website_path):
+        run('mkidr %(build_info_path)s' % env)
+        run('echo %(previous_build_id)s > %(previous_build_id_path)s' % env)
+        run('echo %(latest_commit_id)s > %(current_build_id_path)s' % env)
 
 
 def sudo_cp(src_fname, trg_fname):
