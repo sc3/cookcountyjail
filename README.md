@@ -121,20 +121,35 @@ python -3 manage.py -sdb
 python -3 manage.py
 ```
 
-On production servers: 
+#Deploying
 
-You already have Gunicorn if you installed the requirements.txt. Get Nginx
-with ``` sudo apt-get install nginx ``` or an equivalent command. Note that 
-both port 80 and 8080 must be open to run the production servers.
-
-Now, just: 
+After a merge has happened on sc3/cookcountyjail project, the new version
+is deployed using the automted deployment tool, Fabric, like this:
 
 ```
-sudo /usr/sbin/nginx -c nginx.conf 
-source gunicorn.sh
+fab production deploy
 ```
 
-You should now be able to see the app at localhost.
+This will fetch the latest version, extract the latest git commit id,
+which is used to name the directory in ~/website/2.0/websites, which
+the latest version of the website is stored. The automated install
+script also updates requirements and if the Nginx configuration file
+has been changed, installs and restarts Nginx. Then it restart gunicorn.
+It also links the name active to the newly created dircetory.
+
+#Rollback
+
+If a newly released verison of the website causes problems, the website
+can be reverted back to the previous version with the command:
+
+```
+fab production rollback
+```
+
+This command points the active driectory to the previous website vetrsion,
+restarts Nginx if needed and then restart gunicorn which uses the previous
+version and then the rollbacked version of the website is deleted from
+the ~/website/2.0/websites dircetory, so it cannot be accidently used.
 
 # License
 
