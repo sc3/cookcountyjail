@@ -173,7 +173,7 @@ def install_requirements():
     """
     std_requires()
     with activate_cmd():
-        run('pip install -U -r %(new_website_path)s/requirements.txt' % env)
+        run('pip install -U -r %(new_website_path)s/config/requirements.txt' % env)
 
 
 def install_upstart_config():
@@ -212,7 +212,7 @@ def std_requires():
 
 def store_build_info():
     with cd(env.new_website_path):
-        run('mkidr %(build_info_path)s' % env)
+        run('mkdir %(build_info_path)s' % env)
         run('echo %(previous_build_id)s > %(previous_build_id_path)s' % env)
         run('echo %(latest_commit_id)s > %(current_build_id_path)s' % env)
 
