@@ -5,6 +5,7 @@ from fabric.api import settings, env, prefix, cd, require, \
     run, sudo, hide
 from fabric.contrib.files import exists
 import sys
+from datetime.datetime import now
 
 
 # Some global variables. Need some tweaking to make them more modular
@@ -43,6 +44,7 @@ env.branch = env.v2_0_dev_branch
 env.build_info_path = 'build_info'
 env.current_build_id_path = '%(build_info_path)s/current' % env
 env.previous_build_id_path = '%(build_info_path)s/previous' % env
+env.deployed_at_path = '%(build_info_path)s/deployed_at' % env
 
 ######## Nginx Config #########
 
@@ -239,6 +241,7 @@ def store_build_info():
         run('mkdir %(build_info_path)s' % env)
         run('echo %(current_build_id)s > %(previous_build_id_path)s' % env)
         run('echo %(latest_commit_id)s > %(current_build_id_path)s' % env)
+        run('echo %s > %(deployed_at_path)s' % (str(now()), env))
 
 
 def sudo_cp(src_fname, trg_fname):
