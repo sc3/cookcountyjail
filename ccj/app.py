@@ -1,15 +1,12 @@
 from flask import Flask, jsonify
 from flask.ext.sqlalchemy import SQLAlchemy
-from werkzeug.contrib.fixers import ProxyFix
+from os import getcwd
 from os.path import isfile
 from datetime import datetime
 
 
-app = Flask(__name__, static_url_path='')
-app.wsgi_app = ProxyFix(app.wsgi_app)
+app = Flask(__name__)
 db = SQLAlchemy(app)
-
-import os
 
 
 @app.route('/version')
@@ -28,7 +25,7 @@ def env_info():
     Displays information about the current OS environment.
     Used for development purposes, to be deleted when this is no longer a dev branch.
     """
-    return jsonify(cwd=os.getcwd()
+    return jsonify(cwd=getcwd()
                    )
 
 
