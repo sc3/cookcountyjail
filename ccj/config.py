@@ -9,24 +9,26 @@ _basedir = os.path.abspath(os.path.dirname(__file__))
 
 NEGATIVE_VALUES = set(['0', 'false'])
 
+
 def get_db_uri():
     if use_postgres():
         db_config = {
-            'dialect' : 'postgresql',
-            'db_user' : 'cookcountyjail',
-            'db_name' : 'cookcountyjail_v2_0_dev',
-            'pw' : 'walblgadb;lgall',
-            'host' : 'localhost',
+            'dialect': 'postgresql',
+            'db_user': 'cookcountyjail',
+            'db_name': 'cookcountyjail_v2_0_dev',
+            'pw': 'walblgadb;lgall',
+            'host': 'localhost',
         }
         template = '%(dialect)s://%(db_user)s:%(pw)s@%(host)s/%(db_name)s'
     else:
         db_config = {
-            'dialect' : 'sqlite',
-            'abs_path_to_db' : '%s/ccj.db' % _basedir
+            'dialect': 'sqlite',
+            'abs_path_to_db': '%s/ccj.db' % _basedir
         }
         template = '%(dialect)s:///%(abs_path_to_db)s'
 
     return (template % db_config)
+
 
 def env_var_active(env_var):
     """
@@ -53,5 +55,7 @@ def use_postgres():
     return in_production() or env_var_active('USE_POSTGRES')
 
 
-DEBUG = True
+if not in_production():
+    DEBUG = True
+
 SQLALCHEMY_DATABASE_URI = get_db_uri()
