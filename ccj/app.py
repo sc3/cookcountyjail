@@ -1,14 +1,17 @@
 from flask import Flask, jsonify, request
 from flask.ext.sqlalchemy import SQLAlchemy
-from os import getcwd
-from os.path import isfile
+from os import getcwd, path
+from os.path import isfile, join
 from datetime import datetime
 import json
+
 
 app = Flask(__name__)
 db = SQLAlchemy(app)
 
 
+CURRENT_FILE_PATH = 'build_info/current'
+PREVIOUS_FILE_PATH = 'build_info/previous'
 VERSION_NUMBER = "2.0"
 
 
@@ -19,13 +22,11 @@ def version_info():
     """
     args = request.args
     if 'all' in args and args['all'] == '1':
-        r_val = {'Version': VERSION_NUMBER, 'Build': current_build_info(), 'Deployed': deployed_at()}
-        r_val = [r_val, r_val, r_val]
-        return json.dumps(r_val)
+        r_val = []
+        previous_build_info('.', r_val)
     else:
-        return jsonify(Version=VERSION_NUMBER,
-                       Build=current_build_info(),
-                       Deployed=deployed_at())
+        r_val = build_info(CURRENT_FILE_PATH)
+    return json.dumps(r_val)
 
 
 @app.route('/os_env_info')
@@ -38,12 +39,21 @@ def env_info():
                    )
 
 
-def current_build_info():
-    return file_contents('build_info/current', 'running-on-dev-box')
+def build_info(fname):
+    return {'Version': VERSION_NUMBER, 'Build': current_build_info(fname), 'Deployed': deployed_at(fname)}
 
 
-def deployed_at():
-    return file_contents('build_info/deployed_at', str(datetime.now()))
+def current_build_info(fname):
+    return file_contents(fname, 'running-on-dev-box')
+
+
+def deployed_at(fname):
+    if isfile(fname):
+        mtime = path.getmtime(fname)
+        r_val = datetime.fromtimestamp(mtime)
+    else:
+        r_val = datetime.now()
+    return str(r_val)
 
 
 def file_contents(fname, default_rvalue):
@@ -51,3 +61,10 @@ def file_contents(fname, default_rvalue):
         with open(fname, 'r') as f:
             return f.read().strip()
     return default_rvalue
+
+
+def previous_build_info(dir_path, r_val):
+    r_val.append(build_info(join(dir_path, CURRENT_FILE_PATH)))
+    previous_fname = join(dir_path, PREVIOUS_FILE_PATH)
+    if isfile(previous_fname):
+        previous_build_info(join('..', file_contents(previous_fname, '')), r_val)
