@@ -12,7 +12,7 @@ db = SQLAlchemy(app)
 
 CURRENT_FILE_PATH = 'build_info/current'
 PREVIOUS_FILE_PATH = 'build_info/previous'
-VERSION_NUMBER = "2.0"
+VERSION_NUMBER = "2.0-dev"
 
 
 @app.route('/version')
