@@ -1,16 +1,12 @@
 from flask import Flask, jsonify, request
 from flask.ext.sqlalchemy import SQLAlchemy
-from werkzeug.contrib.fixers import ProxyFix
+from os import getcwd
 from os.path import isfile
 from datetime import datetime
 import json
 
-app = Flask(__name__, static_url_path='')
-app.wsgi_app = ProxyFix(app.wsgi_app)
+app = Flask(__name__)
 db = SQLAlchemy(app)
-
-import os
-import pdb
 
 
 VERSION_NUMBER = "2.0"
@@ -25,7 +21,6 @@ def version_info():
     if 'all' in args and args['all'] == '1':
         r_val = {'Version': VERSION_NUMBER, 'Build': current_build_info(), 'Deployed': deployed_at()}
         r_val = [r_val, r_val, r_val]
-        # pdb.set_trace()
         return json.dumps(r_val)
     else:
         return jsonify(Version=VERSION_NUMBER,
@@ -39,7 +34,7 @@ def env_info():
     Displays information about the current OS environment.
     Used for development purposes, to be deleted when this is no longer a dev branch.
     """
-    return jsonify(cwd=os.getcwd()
+    return jsonify(cwd=getcwd()
                    )
 
 
