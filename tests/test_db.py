@@ -3,54 +3,48 @@
 from ccj.app import app
 from ccj.app import db
 from fabric.api import local
-import sys
 
-# make sure PostgreSQL DB is being used
-db_string = app.config['SQLALCHEMY_DATABASE_URI']
-if db_string.find('postgresql') == -1:
-    sys.exit("pgsql not being used; make sure CCJ_PRODUCTION is set")
-
-# Declare a model
-class Test(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    test_string = db.Column(db.String)
-    def __init__(self, test):
-        self.test_string = test
-    def __repr__(self):
-        return '<Test %r>' % self.test_string
+def prep_db():
+    # make sure PostgreSQL DB is being used
+    db_string = app.config['SQLALCHEMY_DATABASE_URI']
+    if db_string.find('postgresql') == -1:
+        raise Exception('Make sure CCJ_PRODUCTION is set')
 
 
-# Add some new data to the DB
-db.create_all()
-one = Test('first')
-two = Test('second')
-db.session.add(one)
-db.session.add(two)
-db.session.commit()
+def add_data():
+    # Declare a model
+    class ElaborateTest(db.Model):
+        id = db.Column(db.Integer, primary_key=True)
+        test_string = db.Column(db.String)
+        def __init__(self, test):
+            self.test_string = test
+        def __repr__(self):
+            return '<Test %r>' % self.test_string
 
-################
-#
-# IF BOTH THE FOLLOWING QUERY STATEMENT AND THE LATER `DROP` 
-# STATEMENT ARE IN THE SCRIPT, SUBPROCESS (and thus Fabric) HANGS.
-# See PEP 3145 or http://bugs.python.org/issue13817 for possible 
-# explanations.
-#
-#####################
-
-#tests = Test.query.all()
-#if not (tests and tests[0].test_string == 'first' and tests[1].test_string == 'second'):
-#    sys.exit("pgsql not working: data not persisting")
+    # Add some new data to the DB
+    db.create_all()
+    one = ElaborateTest('first')
+    two = ElaborateTest('second')
+    db.session.add(one)
+    db.session.add(two)
+    db.session.commit()
 
 
-# Check if 'test' table is in DB
-result = local('psql cookcountyjail_v2_0_dev -c "\dt"', capture=True)
-if result.find('test') == -1:
-    sys.exit("pgsql not working: table not actually in DB")
-
- 
-# Drop 'test' table from DB
-local('psql cookcountyjail_v2_0_dev -c "DROP TABLE test;"', capture=True)
+def check_result():
+    # Check if 'elaborate_test' table is now in DB
+    result = local('psql cookcountyjail_v2_0_dev -c "\dt"', capture=True)
+    assert result.find('elaborate_test') != -1
 
 
-# Everything worked.
-sys.exit("pgsql working")
+def undo_changes():
+    # Clean up table we created in the test
+    local('psql cookcountyjail_v2_0_dev -c "DROP TABLE elaborate_test;"', capture=True)
+
+
+def test_db_available():
+    add_data()
+    check_result()
+
+
+test_db_available.setUp = prep_db
+test_db_available.tearDown = undo_changes
