@@ -113,10 +113,8 @@ def capture_current_build_id():
 
 def capture_latest_commit_id():
     with cd(env.repo):
-        commit_str = 'commit '
-        result = run('git log -1', quiet=True)
-        index = result.find(commit_str) + len(commit_str)
-        env.latest_commit_id = result[index:index + 10]
+        result = run('git show --pretty=%h --abbrev=10', pty=False)
+        env.latest_commit_id = result
 
 
 def capture_previous_build_id():
