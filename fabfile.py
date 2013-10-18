@@ -34,9 +34,9 @@ env.venv = '%(home)s/.virtualenvs/%(project)s' % env
 env.websites_path = '%(home)s/website/2.0/websites' % env
 env.path = '%(websites_path)s/active' % env
 env.config_dir = '%(path)s/config' % env
-env.upstart_config_fname = '%(config_dir)s/upstart.conf' % env
-env.cookcountyjail = 'cookcountyjail-v2_0-dev'
-env.cookcountyjail_config_fname = '/etc/init/%(cookcountyjail)s.conf' % env
+env.upstart_installed = '%(config_dir)s/upstart.conf' % env
+env.cookcountyjail = 'cookcountyjail_2.0-dev'
+env.upstart_repo = '/etc/init/%(cookcountyjail)s.conf' % env
 env.repo = '%(home)s/repos/%(project)s_2.0-dev' % env
 env.v2_0_dev_branch = 'v2.0-dev'
 env.branch = env.v2_0_dev_branch
@@ -47,11 +47,8 @@ env.previous_build_id_path = '%(build_info_path)s/previous' % env
 ######## Nginx Config #########
 
 env.nginx_install_dir = '/etc/nginx/conf.d'
-
-env.nginx_two_f = 'nginx-v2.conf'
-
-env.nginx_two_conf = '%(config_dir)s/%(nginx_two_f)s' % env
-env.nginx_two_inst = '%(nginx_install_dir)s/%(nginx_two_f)s' % env
+env.nginx_two_repo = '%(config_dir)s/nginx-v2.conf' % env
+env.nginx_two_installed = '%(nginx_install_dir)s/nginx-v2.conf' % env
 
 """
 Environments
@@ -84,8 +81,7 @@ def deploy():
     checkout_latest()
     capture_latest_commit_id()
     create_latest_website()
-    conditionally_update_restart_nginx()
-    install_upstart_config()
+    try_update_all_config_files()
     restart_gunicorn()
 
 
@@ -138,13 +134,35 @@ def checkout_latest():
         run('git pull')
 
 
-def conditionally_update_restart_nginx():
+def try_update_all_config_files():
     """
-    Updates system nginx configuration file if it has changed and restarts nginx
+    Update all installed config files whose repo versions 
+    have changed, then handle results.
     """
-    if files_are_different(env.nginx_two_conf, env.nginx_two_inst):
-        sudo_cp(env.nginx_two_conf, env.nginx_two_inst)
+    filesets = {
+        'upstart': (env.upstart_repo, env.upstart_installed),
+        'nginx_2': (env.nginx_two_repo, env.nginx_two_installed),
+    }
+
+    # iterate over config files
+    diffs = {}
+    for name, fileset in filesets.items():
+        diffs[name] = try_update_file(*fileset)
+    
+    # Handle results
+    if diffs['nginx_2']:
         restart_nginx()
+
+
+def try_update_file(config, installed):
+    """
+    Update an installed version of a file if the repo's 
+    copy of the file has changed.
+    """
+    if files_are_different(config, installed):
+        sudo_cp(config, installed)
+        return True
+    return False
 
 
 def copy_repo_to_new_website():
@@ -182,12 +200,6 @@ def install_requirements():
         run('pip install -U -r %(new_website_path)s/config/requirements.txt' % env)
 
 
-def install_upstart_config():
-    """Install new gunicorn configuration file, if it has changed."""
-    if files_are_different(env.upstart_config_fname, env.cookcountyjail_config_fname):
-        sudo_cp(env.upstart_config_fname, env.cookcountyjail_config_fname)
-
-
 def link_to_new_website(new_website_id):
     with cd(env.websites_path):
         run('rm -f active; ln -s %s active' % new_website_id)
@@ -217,8 +229,7 @@ def rollback():
     if capture_previous_build_id():
         capture_current_build_id()
         link_to_new_website(env.previous_build_id)
-        conditionally_update_restart_nginx()
-        install_upstart_config()
+        try_update_all_config_files()
         restart_gunicorn()
         remove_website(env.current_build_id)
 
