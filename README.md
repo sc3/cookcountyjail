@@ -112,7 +112,7 @@ Fork the sc3/cookcountyjail github repository
 It is recommend that you use the virtualenv to work with this python project.
 
 ```
-git clone git@github.com:&lt;your github account&gt;/cookcountyjail.git
+git clone git@github.com:<your github account>/cookcountyjail.git
 cd cookcountyjail
 git checkout v2.0-dev
 pip install -U -r config/requirements.txt
@@ -143,8 +143,21 @@ To run an individual test, useful when developing new functionality use the
 following command:
 
 ```
-py.test tests/&lt;test file name&gt;
+py.test tests/<test file name>
 ```
+
+#Commiting code
+
+Whenever you commit code please add the Vertical Slice id from the card on the
+[Tracking Board](https://trello.com/b/dGpGzzSW/ccj-v2-0-dev) to the beginning
+of the commit message, for example like this:
+
+```
+git commit -am 'VS 2.1.2 Fixed up documentation, correcting typos and adding missing section on committing code.'
+```
+
+The string, VS 2.1.2, indicates that the work is done against Story number 2 of Feature number 1 of
+Vertical Slice 2. This card is easy to locate on the board.
 
 #Automated Tasks
 
@@ -159,7 +172,7 @@ invoke -l
 To run a task:
 
 ```
-invoke &lt;task name&gt;
+invoke <task name>
 ```
 
 #Deploying
