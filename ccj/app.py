@@ -1,3 +1,8 @@
+#
+# app.py is a Controller file and should do very little,
+#        processing should be pushed down into model files.
+#
+
 from flask import Flask, jsonify, request
 from flask.ext.sqlalchemy import SQLAlchemy
 from os import getcwd, path
