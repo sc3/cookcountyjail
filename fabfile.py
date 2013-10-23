@@ -35,8 +35,8 @@ env.websites_path = '%(home)s/website/2.0/websites' % env
 env.path = '%(websites_path)s/active' % env
 env.config_dir = '%(path)s/config' % env
 env.upstart_installed = '%(config_dir)s/upstart.conf' % env
-env.cookcountyjail = 'cookcountyjail_2.0-dev'
-env.upstart_repo = '/etc/init/%(cookcountyjail)s.conf' % env
+env.cookcountyjail = 'cookcountyjail-2_0-dev'
+env.upstart_repo = '/etc/init/%(cookcountyjail)s.conf' % env=
 env.repo = '%(home)s/repos/%(project)s_2.0-dev' % env
 env.v2_0_dev_branch = 'v2.0-dev'
 env.branch = env.v2_0_dev_branch
@@ -216,11 +216,13 @@ def remove_website(website_name):
 
 def restart_nginx():
     """Restart nginx server."""
+    std_requires()
     service_restart("nginx")
 
 
 def restart_gunicorn():
     """Restart Python webserver that runs the Django server."""
+    std_requires()
     service_restart(env.cookcountyjail)
 
 
@@ -239,8 +241,19 @@ def service_restart(service_name):
     sudo("service %s restart" % service_name)
 
 
+def service_stop(service_name):
+    """Restarts the named service. This service needs to be run in admin mode."""
+    sudo("service %s stop" % service_name)
+
+
 def std_requires():
     require('settings', provided_by=[production])
+
+
+def stop_gunicorn():
+    """Restart Python webserver that runs the Django server."""
+    std_requires()
+    service_stop(env.cookcountyjail)
 
 
 def store_build_info():

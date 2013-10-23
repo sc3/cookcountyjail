@@ -12,6 +12,7 @@ GROUP=ubuntu
 cd $PROJECT_DIR
 source /home/ubuntu/.virtualenvs/cookcountyjail_2.0-dev/bin/activate
 gunicorn -w $NUM_WORKERS -b 127.0.0.1:8080 \
- --log-level=debug --user=$USER --group=$GROUP \
+ --user=$USER --group=$GROUP \
+ --log-level=debug \
  --timeout=$TIMEOUT --log-file=$LOGFILE \
  ccj.app:app 2>>$LOGFILE
