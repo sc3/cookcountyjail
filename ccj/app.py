@@ -3,13 +3,13 @@
 #        processing should be pushed down into model files.
 #
 
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, abort
+from flask.json import dumps
 from flask.ext.sqlalchemy import SQLAlchemy
 from os import getcwd, path
 from os.path import isfile, join
 from datetime import datetime
-import json
-from models.daily_population_changes import DailyPopulationChanges
+from .models.daily_population_changes import DailyPopulationChanges
 
 
 app = Flask(__name__)
@@ -21,12 +21,22 @@ PREVIOUS_FILE_PATH = 'build_info/previous'
 VERSION_NUMBER = "2.0-dev"
 
 
-@app.route('/daily_population_changes')
-def daily_population_changes():
+@app.route('/daily_population_changes', methods=['GET'])
+def read_daily_population_changes():
     """
     returns the set of sumarized daily population changes.
     """
     return DailyPopulationChanges().query()
+
+
+@app.route('/daily_population_changes', methods=['POST'])
+def create_daily_population_change():
+    data = request.get_json()
+    #dpc.store_all(data)
+    if request.host != 'localhost' or request.remote_addr:
+        abort(401)
+    else:
+        return jsonify(data), 201
 
 
 @app.route('/version')
@@ -40,7 +50,7 @@ def version_info():
         previous_build_info('.', r_val)
     else:
         r_val = build_info(CURRENT_FILE_PATH)
-    return json.dumps(r_val)
+    return dumps(r_val)
 
 
 @app.route('/os_env_info')
