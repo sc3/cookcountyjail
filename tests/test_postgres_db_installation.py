@@ -3,6 +3,9 @@
 from ccj.app import app
 from ccj.app import db
 from fabric.api import local
+import os
+import pytest
+
 
 def prep_db():
     # make sure PostgreSQL DB is being used
@@ -16,8 +19,10 @@ def add_data():
     class ElaborateTest(db.Model):
         id = db.Column(db.Integer, primary_key=True)
         test_string = db.Column(db.String)
+
         def __init__(self, test):
             self.test_string = test
+
         def __repr__(self):
             return '<Test %r>' % self.test_string
 
@@ -41,6 +46,8 @@ def undo_changes():
     local('psql cookcountyjail_v2_0_dev -c "DROP TABLE elaborate_test;"', capture=True)
 
 
+@pytest.mark.skipif(not ('CCJ_PRODUCTION' in os.environ and os.environ.get('CCJ_PRODUCTION') == '1'),
+                    reason="Test must be run on Prodction server.")
 def test_db_available():
     add_data()
     check_result()

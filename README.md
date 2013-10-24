@@ -93,6 +93,12 @@ API. Details on this project are XXXX (this is to filled in later).
 * /config - where all the configuration files are located
 * /scripts - scripts used to do other activities like scrape Cook County Sheriff's website
 * /tests - tests stored here, both unit and BDD
+* /AUTHORS.md - people who contributed to building this functionality
+* /fabfile.py - Fabric tasks that deploy new website and launch it and roll it back on production server
+* /gunicorn.sh - Bash script to run application usin Gunicorn Python based webserver
+* /manage.py - task to do various operations with application
+* /README.md - this file
+* /tasks.py - Invoke tasks that
 
 
 # Setting up for local development
@@ -106,7 +112,7 @@ Fork the sc3/cookcountyjail github repository
 It is recommend that you use the virtualenv to work with this python project.
 
 ```
-git clone git@github.com:&lt;your github account&gt;/cookcountyjail.git
+git clone git@github.com:<your github account>/cookcountyjail.git
 cd cookcountyjail
 git checkout v2.0-dev
 pip install -U -r config/requirements.txt
@@ -121,16 +127,65 @@ python -3 manage.py -sdb
 python -3 manage.py
 ```
 
+#Testing
+
+Whenever adding new functionality write tests. The first test file written,
+test_postgres_db_installation.py, was run using nose, however since this
+test can only be run on the production machine and since nose does not support
+conditional execution nor a simple assertion syntax, test runner was changed to
+py.test. A testing task was added to the set of Invoke tasks:
+
+```
+invoke tests
+```
+
+To run an individual test, useful when developing new functionality use the
+following command:
+
+```
+py.test tests/<test file name>
+```
+
+#Commiting code
+
+Whenever you commit code please add the Vertical Slice id from the card on the
+[Tracking Board](https://trello.com/b/dGpGzzSW/ccj-v2-0-dev) to the beginning
+of the commit message, for example like this:
+
+```
+git commit -am 'VS 2.1.2 Fixed up documentation, correcting typos and adding missing section on committing code.'
+```
+
+The string, VS 2.1.2, indicates that the work is done against Story number 2 of Feature number 1 of
+Vertical Slice 2. This card is easy to locate on the board.
+
+#Automated Tasks
+
+Projects like this have a number of tasks that people do that can be automated.
+This project used the Python based tool, Invoke, to automated tasks. These tasks
+are implemented in the, tasks.py, file. To find out the current set of tasks:
+
+```
+invoke -l
+```
+
+To run a task:
+
+```
+invoke <task name>
+```
+
 #Deploying
 
 After a merge has happened on sc3/cookcountyjail project, the new version
 is deployed using the automted deployment tool, Fabric, like this:
 
 ```
-fab production deploy
+invoke deploy
 ```
 
-This will fetch the latest version, extract the latest git commit id,
+This will call Fabric, which will in turn use git to fetch the latest
+version of the website, then will extract the latest git commit id,
 which is used to name the directory in ~/website/2.0/websites, which
 the latest version of the website is stored. The automated install
 script also updates requirements and if the Nginx configuration file

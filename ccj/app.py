@@ -1,9 +1,15 @@
+#
+# app.py is a Controller file and should do very little,
+#        processing should be pushed down into model files.
+#
+
 from flask import Flask, jsonify, request
 from flask.ext.sqlalchemy import SQLAlchemy
 from os import getcwd, path
 from os.path import isfile, join
 from datetime import datetime
 import json
+from models.daily_population_changes import DailyPopulationChanges
 
 
 app = Flask(__name__)
@@ -13,6 +19,14 @@ db = SQLAlchemy(app)
 CURRENT_FILE_PATH = 'build_info/current'
 PREVIOUS_FILE_PATH = 'build_info/previous'
 VERSION_NUMBER = "2.0-dev"
+
+
+@app.route('/daily_population_changes')
+def daily_population_changes():
+    """
+    returns the set of sumarized daily population changes.
+    """
+    return DailyPopulationChanges().query()
 
 
 @app.route('/version')
