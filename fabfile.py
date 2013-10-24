@@ -6,6 +6,10 @@ from fabric.contrib.files import exists
 import sys
 
 
+WEBSITE = 'website'
+WEBSITES = WEBSITE + 's'
+
+
 """
 Base environment
 """
@@ -16,7 +20,7 @@ env.user = 'ubuntu'
 env.project = 'cookcountyjail'
 env.home = '/home/%(user)s' % env
 env.full_project = '%(project)s_2.0-dev' % env
-env.cookcountyjail = '%(project)s-2_0-dev'
+env.cookcountyjail = '%(project)s-2_0-dev' % env
 env.venv = '%(home)s/.virtualenvs/%(project)s' % env
 env.websites_path = '%(home)s/website/2.0/websites' % env
 env.active = '%(websites_path)s/active' % env
@@ -71,6 +75,7 @@ Deployment
 def deploy():
     """Deploy code, install changed config files, and restart services."""
     std_requires()
+    add_directories()
     checkout_latest()
     capture_latest_commit_id()
     create_latest_website()
@@ -94,6 +99,16 @@ def activate_cmd():
     """ wrapper command to activate virtualenv with a context manager construct, 
         such as: 'with activate_cmd(): ...' """
     return prefix('source %(venv)s/bin/activate' % env)
+
+
+def add_directories():
+    """
+    Adds directories if needed
+    """
+    dirs = [WEBSITE, WEBSITE + '/2.0/db_backups/', WEBSITE + '/2.0/' + WEBSITES]
+    for d in dirs:
+        if not exists(d):
+            run("mkdir -p '%s'" % d)
 
 
 def build_path_to_new_website():
