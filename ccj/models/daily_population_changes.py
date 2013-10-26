@@ -14,15 +14,15 @@ class DailyPopulationChanges:
         self.initialize_file()
 
     def _expand_entry(self, entry):
-    """ Takes a tuple of (date, booked_male_as) and 
-        turns it into a dict of the form expected 
-        by the API. """
-    return {
-        'Date': entry['date'],
-        'Booked': {
-            'Males': {'AS': entry['booked_male_as']}
+        """ Takes a tuple of (date, booked_male_as) and 
+            turns it into a dict of the form expected 
+            by the API. """
+        return {
+            'Date': entry['date'],
+            'Booked': {
+                'Males': {'AS': entry['booked_male_as']}
+            }
         }
-    }
 
     def _load(self, f):
         try:
@@ -47,12 +47,12 @@ class DailyPopulationChanges:
             creating it if it doesn't already exist. """
         # lock here
         with open(self._path, 'w') as f:
-            dump([], f)
+            f.write('[]')
 
     def pop(self):
         """ Pop the last item in the list from our file."""
         # lock here
-        with open(self._path) as f:
+        with open(self._path, 'r+') as f:
             data = self._load(f)
             data.pop()
             f.seek(0)
@@ -68,7 +68,7 @@ class DailyPopulationChanges:
             data = self._load(f)
             # append to the data
             data.append(entry)
-            # overwrite with the data
+            # overwrite the old data
             f.seek(0)
             dump(data, f)
             f.truncate()

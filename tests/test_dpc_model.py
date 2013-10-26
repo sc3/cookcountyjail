@@ -19,27 +19,27 @@ class Test_DailyPopulationChanges_Model:
         assert self.dpc.query() == []
 
     def test_one_data_should_return_array_with_data(self):
-        expected = [{
+        expected = {
             'Date': '2013-10-18',
             'Booked': {
                 'Males': {'AS': randint(0, 101)}
             }
-        }]
+        }
         data = self._format(expected)
         self.dpc.store(data)
-        assert self.dpc.query() == expected
+        assert self.dpc.query() == [expected]
 
     def test_one_data_should_match_json(self):
-        expected = [{
+        expected = {
             'Date': '2013-10-18',
             'Booked': {
                 'Males': {'AS': randint(0, 101)}
             }
-        }]
+        }
         data = self._format(expected)
         self.dpc.store(data)
-        assert self.dpc.to_json == dumps(expected)
+        assert self.dpc.to_json() == dumps([expected])
 
-    def _format(self, expected):
-        return [(d['Date'], d['Booked']['Males']['AS']) for d in expected]
+    def _format(self, d):
+        return {'date': d['Date'], 'booked_male_as': d['Booked']['Males']['AS']}
 
