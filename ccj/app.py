@@ -10,7 +10,7 @@ from os import getcwd, path
 from os.path import isfile, join
 from datetime import datetime
 from .models.daily_population_changes import DailyPopulationChanges
-
+import pytest
 
 app = Flask(__name__)
 db = SQLAlchemy(app)
@@ -26,17 +26,17 @@ def read_daily_population_changes():
     """
     returns the set of sumarized daily population changes.
     """
-    return DailyPopulationChanges().query()
+    dpc = DailyPopulationChanges()
+    return dpc.to_json()
 
 
 @app.route('/daily_population_changes', methods=['POST'])
 def create_daily_population_change():
-    data = request.get_json()
-    #dpc.store_all(data)
-    if request.host != 'localhost' or request.remote_addr:
-        abort(401)
-    else:
-        return jsonify(data), 201
+    # exclude external host/remote_addr here
+    post_data = request.form
+    dpc = DailyPopulationChanges()
+    dpc.store(post_data)
+    return jsonify(post_data), 201
 
 
 @app.route('/version')
@@ -59,8 +59,7 @@ def env_info():
     Displays information about the current OS environment.
     Used for development purposes, to be deleted when this is no longer a dev branch.
     """
-    return jsonify(cwd=getcwd()
-                   )
+    return jsonify(cwd=getcwd())
 
 
 def build_info(fname):
