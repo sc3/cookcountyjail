@@ -7,10 +7,8 @@ from os.path import isfile
 
 class DailyPopulationChanges:
 
-    def __init__(self, filename='dpc.json'):
-        self._dir = '/tmp'
-        self._fname = filename
-        self._path = '{0}/{1}'.format(self._dir, self._fname)
+    def __init__(self, path):
+        self._path = path
         self.initialize_file()
 
     def _expand_entry(self, entry):

@@ -9,7 +9,7 @@ import os
 class Test_DailyPopulationChanges_Model:
 
     def setup_method(self, method):
-        self.dpc = DPC('test.json')
+        self.dpc = DPC('/tmp/test.json')
 
     def teardown_method(self, method):
         self.dpc.clear()

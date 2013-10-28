@@ -12,7 +12,7 @@ class Test_DailyPopulationChanges_API:
 
     def tear_down(self):
         # remove the last thing we added
-        dpc = DPC()
+        dpc = DPC('/tmp/dpc.json')
         dpc.pop()
 
     def test_fetch_with_nothing_stored_returns_empty_array(self):
