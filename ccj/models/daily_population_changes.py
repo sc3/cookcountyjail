@@ -52,7 +52,8 @@ class DailyPopulationChanges:
         except IOError:
             raise Exception("There's something wrong with the path " 
                 "configured for our file's creation. Check /ccj/config.py, "
-                "or check your machine's file system.")
+                "check your machine's file system, and check your 'TESTING' "
+                "env var.")
 
     def pop(self):
         """ Pop the last item in the list from our file."""
