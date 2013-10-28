@@ -3,16 +3,16 @@ from random import randint
 from flask.json import dumps
 from ccj.models.daily_population_changes \
     import DailyPopulationChanges as DPC
-
+import os
 
 class Test_DailyPopulationChanges_Model:
 
     def setup_method(self, method):
-        app.config['TESTING'] = True
         self.dpc = DPC()
 
     def teardown_method(self, method):
         self.dpc.clear()
+        os.remove(self.dpc._path)
 
     def test_no_data_should_return_empty_array(self):
         assert self.dpc.query() == []
@@ -45,7 +45,7 @@ class Test_DailyPopulationChanges_Model:
 
 ##########
 #
-# imports that dependencies are also dependent on
+# modules which this module's dependents are also dependent on
 #
 ###############
 

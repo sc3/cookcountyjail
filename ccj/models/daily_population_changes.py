@@ -10,21 +10,10 @@ from os import environ
 class DailyPopulationChanges:
 
     def __init__(self):
-        self._path = self.choose_file()
+        self._path = app.config['DPC_PATH']
         self.initialize_file()
 
-    def choose_file(self):
-        if not app.config['DEBUG'] and not app.config['TESTING']:
-            # production
-            return '/home/ubuntu/website/2.0/db_backups'
-        elif app.config['TESTING']:
-            # testing
-            return '/tmp/test.json'
-        else:
-            # local
-            return '/tmp/dpc.json'
-
-    def _expand_entry(self, entry):
+    def expand_entry(self, entry):
         """ Takes a tuple of (date, booked_male_as) and 
             turns it into a dict of the form expected 
             by the API. """
@@ -57,8 +46,13 @@ class DailyPopulationChanges:
         """ Write an empty JSON array to the file, 
             creating it if it doesn't already exist. """
         # lock here
-        with open(self._path, 'w') as f:
-            f.write('[]')
+        try:
+            with open(self._path, 'w') as f:
+                f.write('[]')
+        except IOError:
+            raise Exception("There's something wrong with the path " 
+                "configured for our file's creation. Check /ccj/config.py, "
+                "or check your machine's file system.")
 
     def pop(self):
         """ Pop the last item in the list from our file."""
@@ -94,7 +88,7 @@ class DailyPopulationChanges:
         #lock here
         with open(self._path) as f:
             data = self._load(f)
-        return map(self._expand_entry, data)
+        return map(self.expand_entry, data)
 
     def to_json(self):
         """ Return the data stored in our file as JSON. """
@@ -103,7 +97,7 @@ class DailyPopulationChanges:
 
 ##########
 #
-# imports that dependencies are also dependent on
+# modules which this module's dependents are also dependent on
 #
 ###############
 

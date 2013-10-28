@@ -7,17 +7,18 @@ from flask.json import dumps
 from random import randint
 from ccj.models.daily_population_changes \
         import DailyPopulationChanges as DPC
+import os
 
 
 class Test_DailyPopulationChanges_API:
 
     def setup_method(self, method):
-        app.config['TESTING'] = True
         self.dpc = DPC()
         self.client = app.test_client()
 
     def teardown_method(self, method):
         self.dpc.clear()
+        os.remove(self.dpc._path)
 
     def test_fetch_with_nothing_stored_returns_empty_array(self):
 
@@ -48,7 +49,7 @@ class Test_DailyPopulationChanges_API:
 
 ##########
 #
-# imports that dependencies are also dependent on
+# modules which this module's dependents are also dependent on
 #
 ###############
 

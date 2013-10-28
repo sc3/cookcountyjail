@@ -90,7 +90,7 @@ def previous_build_info(dir_path, r_val):
 
 ##########
 #
-# imports that dependencies are also dependent on
+# modules which this module's dependents are also dependent on
 #
 ###############
 

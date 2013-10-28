@@ -30,12 +30,29 @@ def get_db_uri():
     return (template % db_config)
 
 
+def get_dpc_path():
+    if in_production() and not in_testing():
+        # production
+        return '/home/ubuntu/website/2.0/db_backups/dpc.json'
+    elif in_testing():
+        # testing
+        return '/tmp/test.json'
+    else:
+        # local development
+        return '/tmp/dpc.json'
+
+
 def env_var_active(env_var):
     """
     Calculates if an environment variable is set.
     """
     env_var_value = os.environ.get(env_var)
     return env_var_value and env_var_value.lower() not in NEGATIVE_VALUES
+
+
+def in_testing():
+    """ Checks to see if we are testing the application. """
+    return env_var_active('TESTING')
 
 
 def in_production():
@@ -59,3 +76,4 @@ if not in_production():
     DEBUG = True
 
 SQLALCHEMY_DATABASE_URI = get_db_uri()
+DPC_PATH = get_dpc_path()
