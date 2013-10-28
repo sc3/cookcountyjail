@@ -24,7 +24,7 @@ class Test_DailyPopulationChanges_Model:
                 'Male': {'AS': randint(0, 101)}
             }
         }
-        data = self._format(expected)
+        data = self.dpc._expected_to_storage(expected)
         self.dpc.store(data)
         assert self.dpc.query() == [expected]
 
@@ -35,12 +35,9 @@ class Test_DailyPopulationChanges_Model:
                 'Male': {'AS': randint(0, 101)}
             }
         }
-        data = self._format(expected)
+        data = self.dpc._expected_to_storage(expected)
         self.dpc.store(data)
         assert self.dpc.to_json() == dumps([expected])
-
-    def _format(self, d):
-        return {'date': d['Date'], 'booked_male_as': d['Booked']['Male']['AS']}
 
 
 ##########

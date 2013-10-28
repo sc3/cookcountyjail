@@ -13,10 +13,10 @@ class DailyPopulationChanges:
         self._path = app.config['DPC_PATH']
         self.initialize_file()
 
-    def expand_entry(self, entry):
-        """ Takes a tuple of (date, booked_male_as) and 
-            turns it into a dict of the form expected 
-            by the API. """
+
+    def _storage_to_expected(self, entry):
+        """ Takes a flat dict, and turns it into a nested dict
+            of the form expected by the API. """
         return {
             'Date': entry['date'],
             'Booked': {
@@ -24,13 +24,11 @@ class DailyPopulationChanges:
             }
         }
 
-    def _load(self, f):
-        try:
-            return load(f)
-        except ValueError as e:
-            raise Exception(
-                "Your JSON file at '{0}' may be empty or "
-                'corrupted.'.format(self._path))
+
+    def _expected_to_storage(self, entry):
+        """ Takes a nested dict of the form expected by the API
+            and turns it into a flat dict. """
+        return {'date': d['Date'], 'booked_male_as': d['Booked']['Male']['AS']}
 
 
     def initialize_file(self):
@@ -41,6 +39,7 @@ class DailyPopulationChanges:
             # If not, create a file and 
             # put an empty list inside it
             self.clear()
+
 
     def clear(self):
         """ Write an empty JSON array to the file, 
@@ -54,6 +53,7 @@ class DailyPopulationChanges:
                 "configured for our file's creation. Check /ccj/config.py, "
                 "check your machine's file system, and check your 'TESTING' "
                 "env var.")
+
 
     def pop(self):
         """ Pop the last item in the list from our file."""

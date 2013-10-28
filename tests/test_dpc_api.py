@@ -37,14 +37,12 @@ class Test_DailyPopulationChanges_API:
             }
         }]
 
-        result = self.client.post('/daily_population_changes', data=self._format(expected[0]))
+        result = self.client.post('/daily_population_changes', 
+                                    data=self.dpc._expected_to_storage(expected[0]))
         assert result.status_code == 201
 
         result = self.client.get('/daily_population_changes')
         assert result.data == dumps(expected)
-
-    def _format(self, d):
-        return {'date': d['Date'], 'booked_male_as': d['Booked']['Male']['AS']}
 
 
 ##########
