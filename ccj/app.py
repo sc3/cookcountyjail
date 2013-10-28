@@ -26,7 +26,7 @@ def read_daily_population_changes():
     """
     returns the set of sumarized daily population changes.
     """
-    dpc = DailyPopulationChanges()
+    dpc = DailyPopulationChanges('/tmp/dpc.json')
     return dpc.to_json()
 
 
@@ -34,7 +34,7 @@ def read_daily_population_changes():
 def create_daily_population_change():
     # exclude external host/remote_addr here
     post_data = request.form
-    dpc = DailyPopulationChanges()
+    dpc = DailyPopulationChanges('/tmp/dpc.json')
     dpc.store(post_data)
     return jsonify(post_data), 201
 
