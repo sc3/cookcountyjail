@@ -7,13 +7,6 @@ import os
 import pytest
 
 
-def prep_db():
-    # make sure PostgreSQL DB is being used
-    db_string = app.config['SQLALCHEMY_DATABASE_URI']
-    if db_string.find('postgresql') == -1:
-        raise Exception('Make sure CCJ_PRODUCTION is set')
-
-
 def add_data():
     # Declare a model
     class ElaborateTest(db.Model):
@@ -53,5 +46,4 @@ def test_db_available():
     check_result()
 
 
-test_db_available.setUp = prep_db
 test_db_available.tearDown = undo_changes
