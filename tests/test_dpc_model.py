@@ -22,7 +22,7 @@ class Test_DailyPopulationChanges_Model:
         expected = {
             'Date': '2013-10-18',
             'Booked': {
-                'Males': {'AS': randint(0, 101)}
+                'Male': {'AS': randint(0, 101)}
             }
         }
         data = self._format(expected)
@@ -33,7 +33,7 @@ class Test_DailyPopulationChanges_Model:
         expected = {
             'Date': '2013-10-18',
             'Booked': {
-                'Males': {'AS': randint(0, 101)}
+                'Male': {'AS': randint(0, 101)}
             }
         }
         data = self._format(expected)
@@ -41,5 +41,4 @@ class Test_DailyPopulationChanges_Model:
         assert self.dpc.to_json() == dumps([expected])
 
     def _format(self, d):
-        return {'date': d['Date'], 'booked_male_as': d['Booked']['Males']['AS']}
-
+        return {'date': d['Date'], 'booked_male_as': d['Booked']['Male']['AS']}

@@ -18,7 +18,7 @@ class DailyPopulationChanges:
         return {
             'Date': entry['date'],
             'Booked': {
-                'Males': {'AS': entry['booked_male_as']}
+                'Male': {'AS': entry['booked_male_as']}
             }
         }
 
@@ -51,11 +51,15 @@ class DailyPopulationChanges:
         """ Pop the last item in the list from our file."""
         # lock here
         with open(self._path, 'r+') as f:
-            data = self._load(f)
-            data.pop()
-            f.seek(0)
-            dump(data, f)
-            f.truncate()
+            try:
+                data = self._load(f)
+                data.pop()
+                f.seek(0)
+                dump(data, f)
+                f.truncate()
+            except IndexError:
+                # if empty list, do nothing
+                pass
 
     def store(self, entry):
         """ Append the entry to our file. """
