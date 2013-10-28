@@ -4,12 +4,25 @@
 
 from flask.json import dumps, dump, load
 from os.path import isfile
+from os import environ
+
 
 class DailyPopulationChanges:
 
-    def __init__(self, path):
-        self._path = path
+    def __init__(self):
+        self._path = self.choose_file()
         self.initialize_file()
+
+    def choose_file(self):
+        if not app.config['DEBUG'] and not app.config['TESTING']:
+            # production
+            return '/home/ubuntu/website/2.0/db_backups'
+        elif app.config['TESTING']:
+            # testing
+            return '/tmp/test.json'
+        else:
+            # local
+            return '/tmp/dpc.json'
 
     def _expand_entry(self, entry):
         """ Takes a tuple of (date, booked_male_as) and 
@@ -87,3 +100,12 @@ class DailyPopulationChanges:
         """ Return the data stored in our file as JSON. """
         return dumps(self.query())
 
+
+##########
+#
+# imports that dependencies are also dependent on
+#
+###############
+
+
+from ccj.app import app

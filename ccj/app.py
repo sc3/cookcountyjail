@@ -9,8 +9,6 @@ from flask.ext.sqlalchemy import SQLAlchemy
 from os import getcwd, path
 from os.path import isfile, join
 from datetime import datetime
-from .models.daily_population_changes import DailyPopulationChanges
-import pytest
 
 app = Flask(__name__)
 db = SQLAlchemy(app)
@@ -26,16 +24,14 @@ def read_daily_population_changes():
     """
     returns the set of sumarized daily population changes.
     """
-    dpc = DailyPopulationChanges('/tmp/dpc.json')
-    return dpc.to_json()
+    return DPC().to_json()
 
 
 @app.route('/daily_population_changes', methods=['POST'])
 def create_daily_population_change():
     # exclude external host/remote_addr here
     post_data = request.form
-    dpc = DailyPopulationChanges('/tmp/dpc.json')
-    dpc.store(post_data)
+    DPC().store(post_data)
     return jsonify(post_data), 201
 
 
@@ -91,3 +87,12 @@ def previous_build_info(dir_path, r_val):
     previous_fname = join(dir_path, PREVIOUS_FILE_PATH)
     if isfile(previous_fname):
         previous_build_info(join('..', file_contents(previous_fname, '')), r_val)
+
+##########
+#
+# imports that dependencies are also dependent on
+#
+###############
+
+from ccj.models.daily_population_changes \
+        import DailyPopulationChanges as DPC
