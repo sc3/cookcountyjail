@@ -33,12 +33,12 @@ class Test_DailyPopulationChanges_API:
         {
             'Date': '2013-10-30',
             'Booked': {
-                'Male': {'AS': str(randint(0, 101))}
+                'Male': {'As': str(randint(0, 101))}
             }
         }]
 
         result = self.client.post('/daily_population_changes', 
-                                    data=self.dpc._expected_to_storage(expected[0]))
+                                    data=self.dpc._format_expected(expected[0]))
         assert result.status_code == 201
 
         result = self.client.get('/daily_population_changes')
