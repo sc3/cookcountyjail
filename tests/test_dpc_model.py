@@ -5,11 +5,10 @@ from ccj.models.daily_population_changes \
     import DailyPopulationChanges as DPC
 import os
 
-
 class Test_DailyPopulationChanges_Model:
 
     def setup_method(self, method):
-        self.dpc = DPC('test.json')
+        self.dpc = DPC()
 
     def teardown_method(self, method):
         self.dpc.clear()
@@ -19,27 +18,51 @@ class Test_DailyPopulationChanges_Model:
         assert self.dpc.query() == []
 
     def test_one_data_should_return_array_with_data(self):
-        expected = {
+        expected = [{
             'Date': '2013-10-18',
             'Booked': {
-                'Males': {'AS': randint(0, 101)}
+                'Male': {'As': str(randint(0, 101))}
             }
-        }
-        data = self._format(expected)
+        }]
+        data = self.dpc._format_expected(expected[0])
         self.dpc.store(data)
-        assert self.dpc.query() == [expected]
+        assert self.dpc.query() == expected
 
-    def test_one_data_should_match_json(self):
-        expected = {
+    def test_multiple_data_should_return_array_with_data(self):
+        expected = [
+        {
             'Date': '2013-10-18',
             'Booked': {
-                'Males': {'AS': randint(0, 101)}
+                'Male': {'As': str(randint(0, 101))}
+            }
+        },
+        {
+            'Date': '2013-10-19',
+            'Booked': {
+                'Male': {'As': str(randint(0, 101))}
+            }
+        },
+        {
+            'Date': '2013-10-20',
+            'Booked': {
+                'Male': {'As': str(randint(0, 101))}
             }
         }
-        data = self._format(expected)
-        self.dpc.store(data)
-        assert self.dpc.to_json() == dumps([expected])
+        ]
+        for entry in expected:
+            e = self.dpc._format_expected(entry)
+            self.dpc.store(e)
+        assert self.dpc.query() == expected
 
-    def _format(self, d):
-        return {'date': d['Date'], 'booked_male_as': d['Booked']['Males']['AS']}
+
+
+
+##########
+#
+# modules which this module's dependents are also dependent on
+#
+###############
+
+
+from ccj.app import app
 

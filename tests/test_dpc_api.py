@@ -1,39 +1,55 @@
 #
-# Tests the web API wiring to class that provides daily popultaion changes
+# Tests the web API wiring to class that provides daily population changes
 # functionality.
 #
 
-from ccj import app
 from flask.json import dumps
-from ccj.models.daily_population_changes import DailyPopulationChanges as DPC
-import pytest
+from random import randint
+from ccj.models.daily_population_changes \
+        import DailyPopulationChanges as DPC
+import os
+
 
 class Test_DailyPopulationChanges_API:
 
-    def tear_down(self):
-        # remove the last thing we added
-        dpc = DPC()
-        dpc.pop()
+    def setup_method(self, method):
+        self.dpc = DPC()
+        self.client = app.test_client()
+
+    def teardown_method(self, method):
+        self.dpc.clear()
+        os.remove(self.dpc._path)
 
     def test_fetch_with_nothing_stored_returns_empty_array(self):
-        c = app.test_client()
-        result = c.get('/daily_population_changes')
+
+        expected = []
+        result = self.client.get('/daily_population_changes')
         assert result.status_code == 200
+        assert result.data == dumps(expected)
 
-    def test_post_data_should_succeed(self):
+    def test_post_with_one_entry_should_store_result(self):
 
-        # key-value pairs with fake data
-        data = dict(
-            date='2222-02-22',
-            booked_male_as='22',
-        )
+        expected = [
+        {
+            'Date': '2013-10-30',
+            'Booked': {
+                'Male': {'As': str(randint(0, 101))}
+            }
+        }]
 
-        # simulate a client for our application
-        c = app.test_client()
-        # make a POST request with data
-        result = c.post('/daily_population_changes', data=data)
-        # make sure data was received
+        result = self.client.post('/daily_population_changes', 
+                                    data=self.dpc._format_expected(expected[0]))
         assert result.status_code == 201
 
-        # undo what we just did 
-        self.tear_down()
+        result = self.client.get('/daily_population_changes')
+        assert result.data == dumps(expected)
+
+
+##########
+#
+# modules which this module's dependents are also dependent on
+#
+###############
+
+
+from ccj.app import app
