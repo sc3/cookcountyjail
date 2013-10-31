@@ -13,6 +13,6 @@ def deploy():
 
 @task
 def tests():
-    os.environ['TESTING'] = '1'
+    os.environ['CCJ_TESTING'] = '1'
     pytest.main()
-    os.environ['TESTING'] = '0'
+    os.environ['CCJ_TESTING'] = '0'
