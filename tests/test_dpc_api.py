@@ -34,7 +34,7 @@ class Test_DailyPopulationChanges_API:
             {
                 'Date': '2013-10-30',
                 'Booked': {
-                    'Male': {'As': str(randint(0, 101))}
+                    'Male': {'AS': str(randint(0, 101))}
                 }
             }
         ]
@@ -43,4 +43,4 @@ class Test_DailyPopulationChanges_API:
         assert result.status_code == 201
 
         result = self.client.get('/daily_population_changes')
-        assert loads(result.data) == expected
+        assert loads(result.data, encoding='ASCII') == expected

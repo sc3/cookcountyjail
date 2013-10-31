@@ -13,7 +13,7 @@ class DailyPopulationChanges:
 
     def __init__(self):
         self._path = app.config['DPC_PATH']
-        self._column_names = ['date', 'booked_male_as']
+        self._column_names = ['date', 'booked_males_as']
         self.initialize_file()
 
     def _format_stored(self, entry):
@@ -23,33 +23,29 @@ class DailyPopulationChanges:
 
         {
             'date': '2013-10-18',
-            'booked_male_as': '5'
+            'booked_males_as': '5'
         }
 
         BECOMES
 
         {
             'Date': '2013-10-18',
-            'Booked': {
-                'Male': {'As': '5'}
+            'Males': {
+                'Booked': {'AS': '5'}
             }
         }
         """
 
-        mydict = {}
+        mydict = {'Males': {'Booked': {'AS': None}}}
         for k, v in entry.iteritems():
             levels = k.split('_')
             if len(levels) == 1:
                 mydict[k.title()] = v
             else:
-                temp = mydict
-                for i, l in enumerate(levels):
-                    l = l.title()
-                    if i == len(levels)-1:
-                        temp[l] = v
-                    else:
-                        temp[l] = {}
-                    temp = temp[l]
+                change = levels[0].capitalize()
+                gender = levels[1].capitalize()
+                race = levels[2].upper()
+                mydict[gender][change][race] = v
         return mydict
 
     def initialize_file(self):

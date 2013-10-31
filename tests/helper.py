@@ -10,8 +10,8 @@ def flatten_dpc_dict(entry):
 
     {
         'Date': '2013-10-18',
-        'Booked': {
-            'Male': {'As': '5'}
+        'Males': {
+            'Booked': {'AS': '5'}
         }
     }
 
@@ -25,19 +25,13 @@ def flatten_dpc_dict(entry):
 
     # ugly, non-DRY code
     mydict = {}
-    temp = entry
     name = ''
-    depth = 0
-    while isinstance(temp, dict):
-        depth += 1
-        for k, v in temp.iteritems():
-            temp = v
-            if depth <= 1:
-                name = k.lower()
-            else:
-                name += k.lower()
-            if not isinstance(temp, dict):
-                mydict[name] = temp
-            else:
-                name += '_'
+    for k, v in entry.iteritems():
+        name = k.lower()
+        if name == 'date':
+            mydict['date'] = v
+        else:
+            for change, population in v.iteritems():
+                for race, number in population.iteritems():
+                    mydict['%s_%s_%s' % (change.lower(), name, race.lower())] = number
     return mydict

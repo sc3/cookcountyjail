@@ -20,8 +20,8 @@ class Test_DailyPopulationChanges_Model:
     def test_one_data_should_return_array_with_data(self):
         expected = [{
             'Date': '2013-10-18',
-            'Booked': {
-                'Male': {'As': str(randint(0, 101))}
+            'Males': {
+                'Booked': {'AS': str(randint(0, 101))}
             }
         }]
         data = flatten_dpc_dict(expected[0])
@@ -32,20 +32,20 @@ class Test_DailyPopulationChanges_Model:
         expected = [
             {
                 'Date': '2013-10-18',
-                'Booked': {
-                    'Male': {'As': str(randint(0, 101))}
+                'Males': {
+                    'Booked': {'AS': str(randint(0, 101))}
                 }
             },
             {
                 'Date': '2013-10-19',
-                'Booked': {
-                    'Male': {'As': str(randint(0, 101))}
+                'Males': {
+                    'Booked': {'AS': str(randint(0, 101))}
                 }
             },
             {
                 'Date': '2013-10-20',
-                'Booked': {
-                    'Male': {'As': str(randint(0, 101))}
+                'Males': {
+                    'Booked': {'AS': str(randint(0, 101))}
                 }
             }
         ]
