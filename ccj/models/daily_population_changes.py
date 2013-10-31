@@ -101,8 +101,8 @@ class DailyPopulationChanges:
 
 
     def clear(self):
-        """ Write just our fieldnames in CSV format to the file we're 
-            wrapping, creating the file if it doesn't already exist. """
+        """ Write our fieldnames in CSV format to the file we're wrapping,
+            creating the file if it doesn't already exist. """
         # lock here
         try:
             with open(self._path, 'w') as f:
