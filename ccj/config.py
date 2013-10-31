@@ -52,7 +52,7 @@ def env_var_active(env_var):
 
 def in_testing():
     """ Checks to see if we are testing the application. """
-    return env_var_active('TESTING')
+    return env_var_active('CCJ_TESTING')
 
 
 def in_production():
