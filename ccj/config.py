@@ -33,13 +33,13 @@ def get_db_uri():
 def get_dpc_path():
     if in_production() and not in_testing():
         # production
-        return '/home/ubuntu/website/2.0/db_backups/dpc.json'
+        return '/home/ubuntu/website/2.0/db_backups/dpc.csv'
     elif in_testing():
         # testing
-        return '/tmp/test.json'
+        return '/tmp/test.csv'
     else:
         # local development
-        return '/tmp/dpc.json'
+        return '/tmp/dpc.csv'
 
 
 def env_var_active(env_var):
