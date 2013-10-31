@@ -3,11 +3,14 @@
 # functionality.
 #
 
-from flask.json import dumps
+from json import loads
 from random import randint
-from ccj.models.daily_population_changes \
-        import DailyPopulationChanges as DPC
 import os
+
+from ccj.models.daily_population_changes \
+    import DailyPopulationChanges as DPC
+from ccj.app import app
+from helper import flatten_dpc_dict
 
 
 class Test_DailyPopulationChanges_API:
@@ -21,35 +24,23 @@ class Test_DailyPopulationChanges_API:
         os.remove(self.dpc._path)
 
     def test_fetch_with_nothing_stored_returns_empty_array(self):
-
-        expected = []
+        expected = '[]'
         result = self.client.get('/daily_population_changes')
         assert result.status_code == 200
-        assert result.data == dumps(expected)
+        assert result.data == expected
 
     def test_post_with_one_entry_should_store_result(self):
-
         expected = [
-        {
-            'Date': '2013-10-30',
-            'Booked': {
-                'Male': {'As': str(randint(0, 101))}
+            {
+                'Date': '2013-10-30',
+                'Booked': {
+                    'Male': {'As': str(randint(0, 101))}
+                }
             }
-        }]
-
-        result = self.client.post('/daily_population_changes', 
-                                    data=self.dpc._format_expected(expected[0]))
+        ]
+        result = self.client.post('/daily_population_changes',
+                                  data=flatten_dpc_dict(expected[0]))
         assert result.status_code == 201
 
         result = self.client.get('/daily_population_changes')
-        assert result.data == dumps(expected)
-
-
-##########
-#
-# modules which this module's dependents are also dependent on
-#
-###############
-
-
-from ccj.app import app
+        assert loads(result.data) == expected
