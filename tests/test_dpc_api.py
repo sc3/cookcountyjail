@@ -17,6 +17,7 @@ class Test_DailyPopulationChanges_API:
 
     def setup_method(self, method):
         self.dpc = DPC()
+        app.testing = True
         self.client = app.test_client()
 
     def teardown_method(self, method):
@@ -33,8 +34,8 @@ class Test_DailyPopulationChanges_API:
         expected = [
             {
                 'Date': '2013-10-30',
-                'Booked': {
-                    'Male': {'AS': str(randint(0, 101))}
+                'Males': {
+                    'Booked': {'AS': str(randint(0, 101))}
                 }
             }
         ]
@@ -44,3 +45,17 @@ class Test_DailyPopulationChanges_API:
 
         result = self.client.get('/daily_population_changes')
         assert loads(result.data, encoding='ASCII') == expected
+
+    def test_external_post_fails(self):
+
+        data = {
+            'Date': '2013-10-30',
+            'Males': {
+                'Booked': {'As': str(randint(0, 101))}
+            }
+        }
+
+        result = self.client.post('/daily_population_changes',
+                                  data=flatten_dpc_dict(data),
+                                  environ_overrides={'REMOTE_ADDR': '127.0.0.2'})
+        assert result.status_code == 401

@@ -3,7 +3,7 @@
 #        processing should be pushed down into model files.
 #
 
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, abort
 from flask.json import dumps
 from flask.ext.sqlalchemy import SQLAlchemy
 from os import getcwd, path
@@ -29,7 +29,8 @@ def read_daily_population_changes():
 
 @app.route('/daily_population_changes', methods=['POST'])
 def create_daily_population_change():
-    # exclude external host/remote_addr here
+    if request.environ.get('REMOTE_ADDR', '127.0.0.1') != '127.0.0.1':
+        abort(401)
     post_data = request.form
     DPC().store(post_data)
     return jsonify(post_data), 201
