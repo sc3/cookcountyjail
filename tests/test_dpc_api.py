@@ -57,7 +57,7 @@ class Test_DailyPopulationChanges_API:
 
         result = self.client.post('/daily_population_changes', 
                         data=self.dpc._format_expected(data), 
-                        environ_overrides={'remote_addr': '127.0.0.2'})
+                        environ_overrides={'REMOTE_ADDR': '127.0.0.2'})
         assert result.status_code == 401
 
 
