@@ -177,6 +177,11 @@ def checkout_latest():
         run('git pull')
 
 
+def clear_website_cache():
+    std_requires()
+    sudo('sudo -u www-data find /var/www/cache -type f -delete')
+
+
 def copy_repo_to_new_website():
     """
     Copy the newest git repo to path of new website build.
