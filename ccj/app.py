@@ -38,7 +38,7 @@ def read_daily_population_changes():
 
 @app.route('/daily_population_changes', methods=['POST'])
 def create_daily_population_change():
-    if request.environ.get('REMOTE_ADDR', '127.0.0.1') != '127.0.0.1':
+    if request.environ.get('REMOTE_ADDR', 'zork') != '127.0.0.1':
         abort(401)
     post_data = request.form
     DPC(app.config['DPC_PATH']).store(post_data)
@@ -65,7 +65,11 @@ def env_info():
     Displays information about the current OS environment.
     Used for development purposes, to be deleted when this is no longer a dev branch.
     """
-    return jsonify(cwd=getcwd(), remote_addr=request.environ.get('REMOTE_ADDR', 'not set'))
+    return jsonify(
+        cwd=getcwd(),
+        remote_addr=request.environ.get('REMOTE_ADDR', 'not set'),
+        headers=request.headers
+        )
 
 
 def build_info(fname):
