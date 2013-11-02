@@ -9,10 +9,9 @@ import csv
 
 class DailyPopulationChanges:
 
-    def __init__(self, path, logger=None):
+    def __init__(self, path):
         self._path = path
         self._column_names = ['date', 'booked_males_as']
-        self._logger = logger
         self._initialize_file()
 
     def clear(self):
@@ -47,7 +46,6 @@ class DailyPopulationChanges:
             }
         }
         """
-
         mydict = {'Males': {'Booked': {'AS': None}}}
         for k, v in entry.iteritems():
             levels = k.split('_')
@@ -69,10 +67,6 @@ class DailyPopulationChanges:
             # put an empty list inside it
             self.clear()
 
-    def _debug_log(self, message):
-        if self._logger:
-            self._logger.debug(message)
-
     def store(self, entry):
         """
         Append an entry to our file. Expects a dict object.
@@ -92,20 +86,15 @@ class DailyPopulationChanges:
         Return the data stored in our file as Python objects.
         """
         #lock here
-        self._debug_log('Entered query')
         with open(self._path) as f:
-            r = csv.DictReader(f)
-            query_results = [self._format_stored(row) for row in r]
-            self._debug_log('Exiting query')
+            rows = csv.DictReader(f)
+            query_results = [self._format_stored(row) for row in rows]
             return query_results
 
     def to_json(self):
         """
         Return the data stored in our file as JSON.
         """
-        self._debug_log('Entered to_json')
         query_results = self.query()
-        self._debug_log('In to_json - converting query results to json')
         json_value = dumps(query_results)
-        self._debug_log('Exiting to_json')
         return json_value
