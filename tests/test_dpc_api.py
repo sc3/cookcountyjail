@@ -3,69 +3,56 @@
 # functionality.
 #
 
-from flask.json import dumps
+from json import loads
 from random import randint
-from ccj.models.daily_population_changes \
-        import DailyPopulationChanges as DPC
-import os
+
+from ccj.app import app
+from helper import flatten_dpc_dict, safe_remove_file
 
 
 class Test_DailyPopulationChanges_API:
 
     def setup_method(self, method):
-        self.dpc = DPC()
         app.testing = True
+        self._tmp_file = app.config['DPC_PATH']
+        safe_remove_file(self._tmp_file)
         self.client = app.test_client()
 
     def teardown_method(self, method):
-        self.dpc.clear()
-        os.remove(self.dpc._path)
+        safe_remove_file(self._tmp_file)
 
     def test_fetch_with_nothing_stored_returns_empty_array(self):
-
-        expected = []
+        expected = '[]'
         result = self.client.get('/daily_population_changes')
         assert result.status_code == 200
-        assert result.data == dumps(expected)
+        assert result.data == expected
 
     def test_post_with_one_entry_should_store_result(self):
-
         expected = [
-        {
-            'Date': '2013-10-30',
-            'Booked': {
-                'Male': {'As': str(randint(0, 101))}
+            {
+                'Date': '2013-10-30',
+                'Males': {
+                    'Booked': {'AS': str(randint(0, 101))}
+                }
             }
-        }]
-
-        result = self.client.post('/daily_population_changes', 
-                                    data=self.dpc._format_expected(expected[0]))
+        ]
+        result = self.client.post('/daily_population_changes',
+                                  data=flatten_dpc_dict(expected[0]))
         assert result.status_code == 201
 
         result = self.client.get('/daily_population_changes')
-        assert result.data == dumps(expected)
-
+        assert loads(result.data, encoding='ASCII') == expected
 
     def test_external_post_fails(self):
 
         data = {
             'Date': '2013-10-30',
-            'Booked': {
-                'Male': {'As': str(randint(0, 101))}
+            'Males': {
+                'Booked': {'As': str(randint(0, 101))}
             }
         }
 
-        result = self.client.post('/daily_population_changes', 
-                        data=self.dpc._format_expected(data), 
-                        environ_overrides={'REMOTE_ADDR': '127.0.0.2'})
+        result = self.client.post('/daily_population_changes',
+                                  data=flatten_dpc_dict(data),
+                                  environ_overrides={'REMOTE_ADDR': '127.0.0.2'})
         assert result.status_code == 401
-
-
-##########
-#
-# modules which this module's dependents are also dependent on
-#
-###############
-
-
-from ccj.app import app
