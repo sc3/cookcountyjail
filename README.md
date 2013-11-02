@@ -8,6 +8,12 @@ and summarizes trends.
 See the [API guide](https://github.com/sc3/cookcountyjail/wiki/API-guide)
 for accessing the production API service and querying the data.
 
+# 2.0 API
+
+The next generation of this API is currently under development. It is located on branch 2.0-dev.
+Documentation on the API supports so far is located on the
+[API 2.0 Guide](https://github.com/sc3/cookcountyjail/wiki/API-2.0-Guide) page.
+
 # Setting up for local development
 =======
 # Installation
