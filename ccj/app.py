@@ -68,7 +68,7 @@ def env_info():
     return jsonify(
         cwd=getcwd(),
         remote_addr=request.environ.get('REMOTE_ADDR', 'not set'),
-        headers=request.headers
+        headers=request.headers()
         )
 
 
