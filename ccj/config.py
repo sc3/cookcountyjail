@@ -72,6 +72,9 @@ def use_postgres():
     return in_production() or env_var_active('USE_POSTGRES')
 
 
+IN_PRODUCTION = in_production()
+IN_TESTING = in_testing()
+
 if not in_production():
     DEBUG = True
 

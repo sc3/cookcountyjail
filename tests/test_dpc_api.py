@@ -5,24 +5,21 @@
 
 from json import loads
 from random import randint
-import os
 
-from ccj.models.daily_population_changes \
-    import DailyPopulationChanges as DPC
 from ccj.app import app
-from helper import flatten_dpc_dict
+from helper import flatten_dpc_dict, safe_remove_file
 
 
 class Test_DailyPopulationChanges_API:
 
     def setup_method(self, method):
-        self.dpc = DPC()
         app.testing = True
+        self._tmp_file = app.config['DPC_PATH']
+        safe_remove_file(self._tmp_file)
         self.client = app.test_client()
 
     def teardown_method(self, method):
-        self.dpc.clear()
-        os.remove(self.dpc._path)
+        safe_remove_file(self._tmp_file)
 
     def test_fetch_with_nothing_stored_returns_empty_array(self):
         expected = '[]'

@@ -10,9 +10,18 @@ from os import getcwd, path
 from os.path import isfile, join
 from datetime import datetime
 
+from ccj.models.daily_population_changes \
+    import DailyPopulationChanges as DPC
+from ccj import config
+
+
 app = Flask(__name__)
+app.config.from_object(config)
+
 db = SQLAlchemy(app)
 
+if app.config['IN_TESTING']:
+    app.debug = True
 
 CURRENT_FILE_PATH = 'build_info/current'
 PREVIOUS_FILE_PATH = 'build_info/previous'
@@ -24,7 +33,7 @@ def read_daily_population_changes():
     """
     returns the set of sumarized daily population changes.
     """
-    return DPC().to_json()
+    return DPC(app.config['DPC_PATH']).to_json()
 
 
 @app.route('/daily_population_changes', methods=['POST'])
@@ -32,7 +41,7 @@ def create_daily_population_change():
     if request.environ.get('REMOTE_ADDR', '127.0.0.1') != '127.0.0.1':
         abort(401)
     post_data = request.form
-    DPC().store(post_data)
+    DPC(app.config['DPC_PATH']).store(post_data)
     return jsonify(post_data), 201
 
 
@@ -88,12 +97,3 @@ def previous_build_info(dir_path, r_val):
     previous_fname = join(dir_path, PREVIOUS_FILE_PATH)
     if isfile(previous_fname):
         previous_build_info(join('..', file_contents(previous_fname, '')), r_val)
-
-##########
-#
-# modules which this module's dependents are also dependent on
-#
-###############
-
-from ccj.models.daily_population_changes \
-        import DailyPopulationChanges as DPC

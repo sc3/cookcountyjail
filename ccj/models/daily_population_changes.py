@@ -6,13 +6,11 @@ from json import dumps
 from os.path import isfile
 import csv
 
-from ccj.app import app
-
 
 class DailyPopulationChanges:
 
-    def __init__(self):
-        self._path = app.config['DPC_PATH']
+    def __init__(self, path):
+        self._path = path
         self._column_names = ['date', 'booked_males_as']
         self.initialize_file()
 
