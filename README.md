@@ -8,7 +8,21 @@ collected is a primary goal and so robustness and reliability of the running
 system are primiary concerns and are reflected in the process used to get the
 system up and running.
 
-At this point this document will only describe the development methodology and choices.
+Another stratgey being used is to leverage the API 1.0 data as much as possible.
+The first API methods will be summary ones, with the data being extracted using the
+1.0 API. The summaries will be updated daily, at 11:00 am, which should be sufficient
+time for the 1.0 API scraper to have run.
+
+The [API 2.0 Guide](https://github.com/sc3/cookcountyjail/wiki/API-2.0-Guide) will
+be updated as each new method is added.
+
+To request new functionlity and to influence the choice of what new API method is
+build next add to the [2.0 API Hackpad](http://is.gd/9tQpPj).
+
+The current API method being worked on is:
+* **Daily Popualation Changes** - summary by day of the number of womem and men, by race, who enter and leave the System
+
+The remainder of this document describes the development methodology and choices.
 As the system gets built up then this document will describe other aspects usually covered by
 README documents.
 
@@ -19,12 +33,11 @@ README documents.
 * Web Framework: Flask
 * Database ORM: SQLAlchemy
 * Data Transfer Format: JSON
-* Unit Test: ???
-* BDD: ???
+* Unit Test: py.test
 * Automated Deployment Tool: Fabric
+* Automation Tool: Invoke
 * [Tracking Board](https://trello.com/b/dGpGzzSW/ccj-v2-0-dev)
-    * If you need access to this board go to ????(need to have a request form on the net) and
-request access.
+    * If you need access to this board go to the [Hackpad](http://is.gd/9tQpPj) and request access.
     * Color Legend of cards on the board:
         * Purple: Feature
         * Green: Data User Story
@@ -57,7 +70,7 @@ at a time. Once sufficient functionality has been developed additional vertical 
 targeting summary functionality can be developed in parallel.
 
 There are three main users who will have stories in a vertical slice, they are:
-* Data User -
+* Data User - this is the end user of the data
 * Data Producer - this covers the scraper, data migration and possibly integration from
 other data sources
 * Operations - this covers making monitoring that the system is running correctly and if
@@ -72,8 +85,9 @@ Also all features and stories will have automated tests to show that they work c
 A vertical slice of funcitonality and stories will not be done until all of the following
 conditions are met:
 * Code must have unit tests
-* Stories and Features must have BDD tests
+* Stories and Features must have tests
 * Running in production
+* API documentation updated
 
 An information data model exists for this project and is located here:
 * Requirements for [Information Model](Google Doc /document/d/1ZoY-R0deM8OUGtsLfyegqE-QMwnZBp3vmbMQ3eQcXcw/edit?usp=sharing)
