@@ -65,7 +65,7 @@ def env_info():
     Displays information about the current OS environment.
     Used for development purposes, to be deleted when this is no longer a dev branch.
     """
-    return jsonify(cwd=getcwd())
+    return jsonify(cwd=getcwd(), remote_addr=request.environ.get('REMOTE_ADDR', 'not set'))
 
 
 def build_info(fname):
