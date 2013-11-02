@@ -16,7 +16,7 @@ export CCJ_PRODUCTION=1
 # bind in virtualev settings
 source ${HOME}/.virtualenvs/cookcountyjail/bin/activate
 
-PATH_TO_2_0_WEBSITE_SCRIPTS=${HOME}/website/2.0/websites/activate/scripts
+PATH_TO_2_0_WEBSITE_SCRIPTS=${HOME}/website/2.0/websites/active/scripts
 
 cd ${PATH_TO_2_0_WEBSITE_SCRIPTS}
 ./scraper.py
