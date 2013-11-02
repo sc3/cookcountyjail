@@ -28,7 +28,7 @@ env.config_dir = '%(active)s/config' % env
 env.nginx_two_repo = '%(config_dir)s/nginx-v2.conf' % env
 env.upstart_repo = '%(config_dir)s/upstart.conf' % env
 env.repo = '%(home)s/repos/%(full_project)s' % env
-env.scripts_path = '%(active)/scripts' % env
+env.scripts_path = '%(active)s/scripts' % env
 
 #
 # Build Info
