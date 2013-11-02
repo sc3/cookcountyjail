@@ -27,37 +27,6 @@ class DailyPopulationChanges:
                             "configured for our file's creation on your system, "
                             "at '{0}'.".format(self._path))
 
-    def _format_stored(self, entry):
-        """
-        Takes a flat dict, and turns it into a nested dict
-        of the form expected by the API, for example:
-
-        {
-            'date': '2013-10-18',
-            'booked_males_as': '5'
-        }
-
-        BECOMES
-
-        {
-            'Date': '2013-10-18',
-            'Males': {
-                'Booked': {'AS': '5'}
-            }
-        }
-        """
-        mydict = {'Males': {'Booked': {'AS': None}}}
-        for k, v in entry.iteritems():
-            levels = k.split('_')
-            if len(levels) == 1:
-                mydict[k.title()] = v
-            else:
-                change = levels[0].capitalize()
-                gender = levels[1].capitalize()
-                race = levels[2].upper()
-                mydict[gender][change][race] = v
-        return mydict
-
     def _initialize_file(self):
         """ Make sure the file exists. If it doesn't, first create it,
             then initialize it with our fieldnames in CSV format. """
@@ -88,7 +57,7 @@ class DailyPopulationChanges:
         #lock here
         with open(self._path) as f:
             rows = csv.DictReader(f)
-            query_results = [self._format_stored(row) for row in rows]
+            query_results = [row for row in rows]
             return query_results
 
     def to_json(self):
