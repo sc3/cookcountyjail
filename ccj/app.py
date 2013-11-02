@@ -58,14 +58,13 @@ def version_info():
         r_val = build_info(CURRENT_FILE_PATH)
     return dumps(r_val)
 
-import pdb
+
 @app.route('/os_env_info')
 def env_info():
     """
     Displays information about the current OS environment.
     Used for development purposes, to be deleted when this is no longer a dev branch.
     """
-    # pdb.set_trace()
     r_val = jsonify(
         cwd=getcwd(),
         remote_addr=request.environ.get('REMOTE_ADDR', 'not set'),
