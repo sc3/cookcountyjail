@@ -28,21 +28,12 @@ PREVIOUS_FILE_PATH = 'build_info/previous'
 VERSION_NUMBER = "2.0-dev"
 
 
-@app.route('/daily_population_changes', methods=['GET'])
-def read_daily_population_changes():
+@app.route('/daily_population', methods=['GET'])
+def read_daily_population():
     """
     returns the set of sumarized daily population changes.
     """
     return DPC(app.config['DPC_PATH']).to_json()
-
-
-@app.route('/daily_population_changes', methods=['POST'])
-def create_daily_population_change():
-    if request.environ.get('REMOTE_ADDR', 'zork') != '127.0.0.1':
-        abort(401)
-    post_data = request.form
-    DPC(app.config['DPC_PATH']).store(post_data)
-    return jsonify(post_data), 201
 
 
 @app.route('/version')
