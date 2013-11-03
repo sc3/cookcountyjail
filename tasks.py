@@ -9,6 +9,11 @@ from contextlib import contextmanager
 
 
 @task
+def clean():
+    run('find . -type f -name "*.pyc" -exec rm -f {} \;')
+
+
+@task
 def deploy():
     run('fab production deploy')
 

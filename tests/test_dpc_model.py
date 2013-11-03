@@ -1,6 +1,5 @@
 from random import randint
-from ccj.models.daily_population_changes \
-    import DailyPopulationChanges as DPC
+from ccj.models.daily_population import DailyPopulation as DPC
 from helper import safe_remove_file
 
 

@@ -3,15 +3,14 @@
 #        processing should be pushed down into model files.
 #
 
-from flask import Flask, jsonify, request, abort
+from flask import Flask, jsonify, request
 from flask.json import dumps
 from flask.ext.sqlalchemy import SQLAlchemy
 from os import getcwd, path
 from os.path import isfile, join
 from datetime import datetime
 
-from ccj.models.daily_population_changes \
-    import DailyPopulationChanges as DPC
+from ccj.models.daily_population import DailyPopulation as DPC
 from ccj import config
 
 

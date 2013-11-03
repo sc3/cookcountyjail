@@ -1,15 +1,14 @@
 import httpretty
 from json import dumps
 from random import randint
-from scripts.summarize_daily_population_changes \
-    import SummarizeDailyPopulationChanges
+from scripts.summarize_daily_population \
+    import SummarizeDailyPopulation
 from ccj.app import app
-from ccj.models.daily_population_changes \
-    import DailyPopulationChanges as DPC
+from ccj.models.daily_population import DailyPopulation as DPC
 from helper import safe_remove_file
 
 
-class Test_SummarizeDailyPopulationChanges:
+class Test_SummarizeDailyPopulation:
 
     def setup_method(self, method):
         self._tmp_file = app.config['DPC_PATH']
@@ -42,7 +41,7 @@ class Test_SummarizeDailyPopulationChanges:
         httpretty.register_uri(httpretty.GET, county_inmate_api,
                                body=get_request)
 
-        SummarizeDailyPopulationChanges().date(date)
+        SummarizeDailyPopulation().date(date)
 
         last_request = httpretty.last_request()
         assert last_request.method == "GET"

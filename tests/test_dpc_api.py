@@ -7,8 +7,7 @@ from json import loads
 from random import randint
 
 from ccj.app import app
-from ccj.models.daily_population_changes \
-    import DailyPopulationChanges as DPC
+from ccj.models.daily_population import DailyPopulation as DPC
 from helper import safe_remove_file
 
 API_METHOD_NAME = '/daily_population'

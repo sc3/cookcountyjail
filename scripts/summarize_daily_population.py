@@ -5,11 +5,11 @@
 
 import requests
 from json import loads
-from ccj.models.daily_population_changes import DailyPopulationChanges
+from ccj.models.daily_population import DailyPopulation
 from ccj.config import get_dpc_path
 
 
-class SummarizeDailyPopulationChanges:
+class SummarizeDailyPopulation:
     def _booked_males_as(self, response):
         return len(loads(response.text)['objects'])
 
@@ -20,7 +20,7 @@ class SummarizeDailyPopulationChanges:
         get_cmd = '%s?format=json&limit=0&race=%s&booking_date__exact=%s' % \
             (county_inmate_api, race, date)
         response = requests.get(get_cmd)
-        dpc = DailyPopulationChanges(get_dpc_path())
+        dpc = DailyPopulation(get_dpc_path())
         with dpc.writer() as f:
             f.store({'date': date,
                      'booked_males_as': self._booked_males_as(response)})

@@ -8,7 +8,7 @@ import csv
 from contextlib import contextmanager
 
 
-class DailyPopulationChanges:
+class DailyPopulation:
 
     def __init__(self, path):
         self._path = path
