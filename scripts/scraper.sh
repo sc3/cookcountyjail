@@ -16,9 +16,9 @@ export CCJ_PRODUCTION=1
 # bind in virtualev settings
 source ${HOME}/.virtualenvs/cookcountyjail/bin/activate
 
-PATH_TO_2_0_WEBSITE_SCRIPTS=${HOME}/website/2.0/websites/active/scripts
+PATH_TO_2_0_WEBSITE=${HOME}/website/2.0/websites/active
 
-cd ${PATH_TO_2_0_WEBSITE_SCRIPTS}
-./scraper.py
+cd ${PATH_TO_2_0_WEBSITE}
+python -m scripts.scraper
 
 echo "Cook County Jail 2.0 API scraper finished at `date`"

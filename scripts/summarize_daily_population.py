@@ -20,6 +20,7 @@ class SummarizeDailyPopulation:
         get_cmd = '%s?format=json&limit=0&race=%s&booking_date__exact=%s' % \
             (county_inmate_api, race, date)
         response = requests.get(get_cmd)
+        assert response.status_code == 200
         dpc = DailyPopulation(get_dpc_path())
         with dpc.writer() as f:
             f.store({'date': date,
