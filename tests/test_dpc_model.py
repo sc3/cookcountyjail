@@ -35,3 +35,40 @@ class Test_DailyPopulationChanges_Model:
             for entry in expected:
                 f.store(entry)
         assert self.dpc.query() == expected
+
+    def test_successive_stores_should_be_return_array_with_data(self):
+        expected1 = [
+            {
+                'date': '2013-10-18',
+                'booked_males_as': str(randint(0, 101))
+            },
+            {
+                'date': '2013-10-19',
+                'booked_males_as': str(randint(0, 101))
+            },
+            {
+                'date': '2013-10-20',
+                'booked_males_as': str(randint(0, 101))
+            }
+        ]
+        expected2 = [
+            {
+                'date': '2013-10-21',
+                'booked_males_as': str(randint(0, 101))
+            },
+            {
+                'date': '2013-10-22',
+                'booked_males_as': str(randint(0, 101))
+            },
+            {
+                'date': '2013-10-23',
+                'booked_males_as': str(randint(0, 101))
+            }
+        ]
+        with self.dpc.writer() as f:
+            for entry in expected1:
+                f.store(entry)
+        with self.dpc.writer() as f:
+            for entry in expected2:
+                f.store(entry)
+        assert self.dpc.query() == (expected1 + expected2)

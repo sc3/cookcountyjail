@@ -1,5 +1,11 @@
-#!/usr/bin/env python
-
+#
+# Warning:
+# ========
+#   The python version available on the cookcountyjail.recoveredfactory.net
+#   machine does not set load paths correctly so for the time being:
+#      1) Do not add #! to this file.
+#      2) invoke this from parent directory like this:
+#             python scripts.scraper
 #
 # This scrapes the Cook County Jail website populating the 2.0 API
 # system with the results of the scrapping.
