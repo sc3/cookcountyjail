@@ -5,9 +5,10 @@
 from json import dumps
 from os.path import isfile
 import csv
+from contextlib import contextmanager
 
 
-class DailyPopulationChanges:
+class DailyPopulation:
 
     def __init__(self, path):
         self._path = path
@@ -36,20 +37,6 @@ class DailyPopulationChanges:
             # put an empty list inside it
             self.clear()
 
-    def store(self, entry):
-        """
-        Append an entry to our file. Expects a dict object.
-
-        If a non-dict-like object is stored using this method,
-        we won't know until we hit the formatting methods,
-        while querying it, which is confusing.
-        """
-        assert isinstance(entry, dict)
-        # lock here
-        with open(self._path, 'a') as f:
-            w = csv.writer(f)
-            w.writerow(entry.values())
-
     def query(self):
         """
         Return the data stored in our file as Python objects.
@@ -67,3 +54,30 @@ class DailyPopulationChanges:
         query_results = self.query()
         json_value = dumps(query_results)
         return json_value
+
+    @contextmanager
+    def writer(self):
+        """
+        Yields a writer object, so Daily Population Dict values can be stored.
+        Intended to be used in a "with" statement like this:
+
+        with dp.writer() as writer:
+            writer.store(dp_values_for_yesterday)
+        """
+        class CSV_Storer:
+            def __init__(self, csv_writer):
+                self._csv_writer = csv_writer
+
+            def store(self, entry):
+                """
+                Append an entry to our file. Expects a dict object.
+                """
+                assert isinstance(entry, dict)
+                self._csv_writer.writerow(entry.values())
+
+        with open(self._path, 'a') as f:
+            csv_writer = CSV_Storer(csv.writer(f))
+            try:
+                yield csv_writer
+            finally:
+                pass

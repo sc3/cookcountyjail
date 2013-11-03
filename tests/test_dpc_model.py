@@ -1,6 +1,5 @@
 from random import randint
-from ccj.models.daily_population_changes \
-    import DailyPopulationChanges as DPC
+from ccj.models.daily_population import DailyPopulation as DPC
 from helper import safe_remove_file
 
 
@@ -17,14 +16,6 @@ class Test_DailyPopulationChanges_Model:
     def test_no_data_should_return_empty_array(self):
         assert self.dpc.query() == []
 
-    def test_one_data_should_return_array_with_data(self):
-        expected = {
-            'date': '2013-10-18',
-            'booked_males_as': str(randint(0, 101))
-        }
-        self.dpc.store(expected)
-        assert self.dpc.query() == [expected]
-
     def test_multiple_data_should_return_array_with_data(self):
         expected = [
             {
@@ -40,6 +31,7 @@ class Test_DailyPopulationChanges_Model:
                 'booked_males_as': str(randint(0, 101))
             }
         ]
-        for entry in expected:
-            self.dpc.store(entry)
+        with self.dpc.writer() as f:
+            for entry in expected:
+                f.store(entry)
         assert self.dpc.query() == expected

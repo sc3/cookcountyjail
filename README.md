@@ -157,7 +157,7 @@ To run an individual test, useful when developing new functionality use the
 following command:
 
 ```
-py.test tests/<test file name>
+invoke test -n tests/<test file name>
 ```
 
 #Commiting code
