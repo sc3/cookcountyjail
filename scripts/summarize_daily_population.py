@@ -15,10 +15,11 @@ class SummarizeDailyPopulation:
 
     def date(self, date):
         race = 'AS'
+        gender = 'M'
         cook_county_url = 'http://cookcountyjail.recoveredfactory.net'
         county_inmate_api = '%s/api/1.0/countyinmate' % cook_county_url
-        get_cmd = '%s?format=json&limit=0&race=%s&booking_date__exact=%s' % \
-            (county_inmate_api, race, date)
+        get_cmd = '%s?format=json&limit=0&race=%s&gender=%s&booking_date=%s' % \
+            (county_inmate_api, race, gender, date)
         response = requests.get(get_cmd)
         assert response.status_code == 200
         dpc = DailyPopulation(get_dpc_path())
