@@ -302,6 +302,16 @@ def sudo_cp(src_fname, trg_fname):
     sudo("cp '%s' '%s'" % (src_fname, trg_fname))
 
 
+def tests(path=env.active):
+    """
+    Runs the test suite, by default the ones for the active website
+    """
+    std_requires()
+    with cd(path):
+        with activate_cmd():
+            run('invoke tests')
+
+
 def try_update_all_config_files():
     """
     Update all installed config files whose repo versions
