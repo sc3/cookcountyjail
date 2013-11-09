@@ -59,7 +59,6 @@ def inmate_record_get_or_create(inmate_details):
     Gets or creates inmate record based on jail_id and stores the url used to fetch the inmate info
     """
     inmate, created = CountyInmate.objects.get_or_create(jail_id=inmate_details.jail_id())
-    inmate.url = inmate_details.url
     return inmate, created
 
 
