@@ -20,15 +20,15 @@ class Test_DailyPopulationChanges_Model:
         expected = [
             {
                 'date': '2013-10-18',
-                'booked_males_as': str(randint(0, 101))
+                'males_booked_as': str(randint(0, 101))
             },
             {
                 'date': '2013-10-19',
-                'booked_males_as': str(randint(0, 101))
+                'males_booked_as': str(randint(0, 101))
             },
             {
                 'date': '2013-10-20',
-                'booked_males_as': str(randint(0, 101))
+                'males_booked_as': str(randint(0, 101))
             }
         ]
         with self.dpc.writer() as f:
@@ -40,29 +40,29 @@ class Test_DailyPopulationChanges_Model:
         expected1 = [
             {
                 'date': '2013-10-18',
-                'booked_males_as': str(randint(0, 101))
+                'males_booked_as': str(randint(0, 101))
             },
             {
                 'date': '2013-10-19',
-                'booked_males_as': str(randint(0, 101))
+                'males_booked_as': str(randint(0, 101))
             },
             {
                 'date': '2013-10-20',
-                'booked_males_as': str(randint(0, 101))
+                'males_booked_as': str(randint(0, 101))
             }
         ]
         expected2 = [
             {
                 'date': '2013-10-21',
-                'booked_males_as': str(randint(0, 101))
+                'males_booked_as': str(randint(0, 101))
             },
             {
                 'date': '2013-10-22',
-                'booked_males_as': str(randint(0, 101))
+                'males_booked_as': str(randint(0, 101))
             },
             {
                 'date': '2013-10-23',
-                'booked_males_as': str(randint(0, 101))
+                'males_booked_as': str(randint(0, 101))
             }
         ]
         with self.dpc.writer() as f:
