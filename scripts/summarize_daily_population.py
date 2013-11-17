@@ -50,7 +50,7 @@ class SummarizeDailyPopulation:
 
     def serialize(self, gender, status, race):
         return (self.qualities[gender] + '_' 
-                + status + '_'
+                + self.qualities[status] + '_'
                 + self.qualities[race])
 
 
