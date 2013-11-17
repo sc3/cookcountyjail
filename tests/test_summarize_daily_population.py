@@ -22,11 +22,12 @@ class Test_SummarizeDailyPopulation:
     def test_summarize_dpc_for_Aian_males_booked(self):
         race = 'AS'
         date = '2013-06-01'
+        gender = 'M'
         cook_county_url = 'http://cookcountyjail.recoveredfactory.net'
         county_inmate_api = '%s/api/1.0/countyinmate' % cook_county_url
         ccj_get_Asian_males_data_url = \
-            '%s?format=json&limit=0&race=%s&booking_date__exact=%s' % \
-            (county_inmate_api, race, date)
+            '%s?format=json&limit=0&race=%s&gender=%s&booking_date__exact=%s' % \
+            (county_inmate_api, race, gender, date)
         number_of_asians_booked = randint(0, 17)
         expected = [{'date': date, 'booked_males_as': '%d' % number_of_asians_booked}]
 
