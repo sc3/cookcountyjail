@@ -23,13 +23,13 @@ class Test_SummarizeDailyPopulation:
 
     @httpretty.activate
     def test_fetch_count(self):
-        race = 'AS'
         gender = 'M'
         status = 'booked'
+        race = 'AS'
         date = '2013-06-01'
         ccj_get_Asian_males_data_url = \
-            '%s&race=%s&gender=%s&booking_date__exact=%s' % \
-            (self.sdp.inmate_api, race, gender, date)
+            '%s&booking_date__exact=%s&gender=%s&race=%s' % \
+            (self.sdp.inmate_api, date, gender, race)
         number_of_asians_booked = randint(0, 17)
 
         def get_request(method, uri, headers):
@@ -45,12 +45,13 @@ class Test_SummarizeDailyPopulation:
 
         self.sdp.fetch_count(date, gender, status, race)
 
+    def test_serialize(self):
+        s = self.sdp.serialize('M', 'booked', 'AS')
+        assert s == 'males_booked_as'
 
-    def test_write_counts(self):
-        number_of_asians_booked = randint(0, 17)
-        data = {
-            'date': '2013-10-10',
-            'males_booked_as' : str(number_of_asians_booked)
-        }
-        self.sdp.write_counts(data)
-        assert [data] == self.dpc.query()
+    # def test_summarize_males_booked_as(self):
+    #     now = datetime.today()
+    #     num_days_ago = timedelta(1 if now.hour >= 11 else 2)
+    #     date_str = str(now.date() - num_days_ago)
+    #     self.sdp.summarize(date_str)
+
