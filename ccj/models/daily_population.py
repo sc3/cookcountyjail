@@ -10,9 +10,6 @@ import os.path
 
 GENDERS = ['F', 'M']
 
-STARTING_DATE = '2013-07-22'
-DAY_BEFORE = '2013-07-21'
-
 
 class DailyPopulation:
 
@@ -84,8 +81,19 @@ class DailyPopulation:
     def starting_population_path(self):
         return os.path.join(self._dir_path, 'dpc_starting_population.csv')
 
-    def store_starting_population(self, population_counts):
-        row = {'date': DAY_BEFORE}
+    def store_starting_population(self, day_before_starting_date, population_counts):
+        """
+        Stores the population counts in starting_population file
+        Format for population counts is:
+        {
+            'population': 0,
+            'population_females': 0,
+            'population_males': 0,
+            'F': {'AS': 0, 'BK': 0, 'IN': 0, 'LT': 0, 'UN': 0, 'WH': 0},
+            'M': {'AS': 0, 'BK': 0, 'IN': 0, 'LT': 0, 'UN': 0, 'WH': 0},
+        }
+        """
+        row = {'date': day_before_starting_date}
         self._add_population_counts(row, population_counts)
         try:
             with open(self.starting_population_path(), 'w') as f:

@@ -5,7 +5,7 @@ import csv
 
 from ccj.models.daily_population import DailyPopulation
 from helpers import starting_inmate_population, count_population, expected_starting_population,\
-    convert_hash_values_to_integers
+    convert_hash_values_to_integers, DAY_BEFORE
 
 EXCLUDE_SET = set(['date'])
 
@@ -105,7 +105,7 @@ class Test_DailyPopulation_Model:
         inmates = starting_inmate_population()
         population_counts = count_population(inmates)
         assert not self.dpc.has_starting_population()
-        self.dpc.store_starting_population(population_counts)
+        self.dpc.store_starting_population(DAY_BEFORE, population_counts)
         expected = expected_starting_population(population_counts)
         starting_population = self.dpc.starting_population()
         convert_hash_values_to_integers(starting_population[0], EXCLUDE_SET)
