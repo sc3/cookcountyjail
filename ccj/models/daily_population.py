@@ -8,6 +8,11 @@ import csv
 from contextlib import contextmanager
 import os.path
 
+GENDERS = ['F', 'M']
+
+STARTING_DATE = '2013-07-22'
+DAY_BEFORE = '2013-07-21'
+
 
 class DailyPopulation:
 
@@ -16,6 +21,16 @@ class DailyPopulation:
         self._path = os.path.join(dir_path, 'dpc.csv')
         self._column_names = ['date', 'males_booked_as']
         self._initialize_file()
+
+    @staticmethod
+    def _add_population_counts(row, population_counts):
+        row['population'] = population_counts['population']
+        for gender in GENDERS:
+            base_field_name = DailyPopulation._population_field_name(gender)
+            row[base_field_name] = population_counts[base_field_name]
+            for race, count in population_counts[gender].iteritems():
+                field_name = '%s_%s' % (base_field_name, race.lower())
+                row[field_name] = count
 
     def clear(self):
         """ Write our fieldnames in CSV format to the file we're wrapping,
@@ -43,6 +58,10 @@ class DailyPopulation:
             # put an empty list inside it
             self.clear()
 
+    @staticmethod
+    def _population_field_name(gender):
+        return 'population_females' if gender == 'F' else 'population_males'
+
     def query(self):
         """
         Return the data stored in our file as Python objects.
@@ -64,6 +83,17 @@ class DailyPopulation:
 
     def starting_population_path(self):
         return os.path.join(self._dir_path, 'dpc_starting_population.csv')
+
+    def store_starting_population(self, population_counts):
+        row = {'date': DAY_BEFORE}
+        self._add_population_counts(row, population_counts)
+        try:
+            with open(self.starting_population_path(), 'w') as f:
+                w = csv.writer(f)
+                w.writerow([column_name for column_name in row.iterkeys()])
+                w.writerow([column_value for column_value in row.itervalues()])
+        except IOError:
+            raise Exception("Error: writing to file %s, " % self.starting_population_path())
 
     def to_json(self):
         """

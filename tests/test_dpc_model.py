@@ -1,18 +1,22 @@
 from random import randint
-from ccj.models.daily_population import DailyPopulation as DPC
 from tempfile import mkdtemp
 from shutil import rmtree
 import csv
+
+from ccj.models.daily_population import DailyPopulation
+from helpers import starting_inmate_population, count_population, expected_starting_population,\
+    convert_hash_values_to_integers
+
+EXCLUDE_SET = set(['date'])
 
 
 class Test_DailyPopulation_Model:
     def setup_method(self, method):
         self._tmp_dir = mkdtemp(dir='/tmp')
-        self.dpc = DPC(self._tmp_dir)
+        self.dpc = DailyPopulation(self._tmp_dir)
 
     def stub_starting_population_file(self):
-        #row = {'a': randint(0, 1001)}
-        row = {'a': '2'}
+        row = {'a': randint(0, 1001)}
         file_name = self.dpc.starting_population_path()
         with open(file_name, 'w') as f:
             w = csv.writer(f)
@@ -93,4 +97,16 @@ class Test_DailyPopulation_Model:
 
     def test_starting_population(self):
         expected = self.stub_starting_population_file()
-        assert self.dpc.starting_population() == [expected]
+        starting_population = self.dpc.starting_population()
+        convert_hash_values_to_integers(starting_population[0], EXCLUDE_SET)
+        assert starting_population == [expected]
+
+    def test_storing_starting_population(self):
+        inmates = starting_inmate_population()
+        population_counts = count_population(inmates)
+        assert not self.dpc.has_starting_population()
+        self.dpc.store_starting_population(population_counts)
+        expected = expected_starting_population(population_counts)
+        starting_population = self.dpc.starting_population()
+        convert_hash_values_to_integers(starting_population[0], EXCLUDE_SET)
+        assert starting_population == expected
