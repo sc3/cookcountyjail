@@ -31,12 +31,12 @@ def start_date():
 
 
 def main():
-    sdpc = SummarizeDailyPopulation()
+    sdp = SummarizeDailyPopulation()
     date_to_fetch = last_date_summarized()
     one_day = timedelta(1)
     yesterday = date.today() - one_day
     while date_to_fetch <= yesterday:
-        sdpc.date(str(date_to_fetch))
+        sdp.summarize(str(date_to_fetch))
         date_to_fetch += one_day
 
 if __name__ == '__main__':
