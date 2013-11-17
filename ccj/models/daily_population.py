@@ -30,6 +30,10 @@ class DailyPopulation:
                             "configured for our file's creation on your system, "
                             "at '{0}'.".format(self._path))
 
+    def has_starting_population(self):
+        starting_population = self.starting_population()
+        return len(starting_population) == 1
+
     def _initialize_file(self):
         """ Make sure the file exists. If it doesn't, first create it,
             then initialize it with our fieldnames in CSV format. """
@@ -48,6 +52,18 @@ class DailyPopulation:
             rows = csv.DictReader(f)
             query_results = [row for row in rows]
             return query_results
+
+    def starting_population(self):
+        file_name = self.starting_population_path()
+        if os.path.isfile(file_name):
+            with open(file_name) as f:
+                rows = csv.DictReader(f)
+                starting_population = [row for row in rows]
+                return starting_population
+        return []
+
+    def starting_population_path(self):
+        return os.path.join(self._dir_path, 'dpc_starting_population.csv')
 
     def to_json(self):
         """

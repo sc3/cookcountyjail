@@ -2,13 +2,23 @@ from random import randint
 from ccj.models.daily_population import DailyPopulation as DPC
 from tempfile import mkdtemp
 from shutil import rmtree
+import csv
 
 
-class Test_DailyPopulationChanges_Model:
-
+class Test_DailyPopulation_Model:
     def setup_method(self, method):
         self._tmp_dir = mkdtemp(dir='/tmp')
         self.dpc = DPC(self._tmp_dir)
+
+    def stub_starting_population_file(self):
+        #row = {'a': randint(0, 1001)}
+        row = {'a': '2'}
+        file_name = self.dpc.starting_population_path()
+        with open(file_name, 'w') as f:
+            w = csv.writer(f)
+            w.writerow([column_name for column_name in row.iterkeys()])
+            w.writerow([value for value in row.itervalues()])
+        return row
 
     def teardown_method(self, method):
         rmtree(self._tmp_dir)
@@ -72,3 +82,15 @@ class Test_DailyPopulationChanges_Model:
             for entry in expected2:
                 f.store(entry)
         assert self.dpc.query() == (expected1 + expected2)
+
+    def test_has_starting_population(self):
+        assert not self.dpc.has_starting_population()
+        self.stub_starting_population_file()
+        assert self.dpc.has_starting_population()
+
+    def test_with_no_starting_population(self):
+        assert self.dpc.starting_population() == []
+
+    def test_starting_population(self):
+        expected = self.stub_starting_population_file()
+        assert self.dpc.starting_population() == [expected]
