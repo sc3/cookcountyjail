@@ -38,8 +38,3 @@ def flatten_dpc_dict(entry):
                 for race, number in population.iteritems():
                     mydict['%s_%s_%s' % (change.lower(), name, race.lower())] = number
     return mydict
-
-
-def safe_remove_file(file_name):
-    if file_name and exists(file_name):
-        remove(file_name)

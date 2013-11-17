@@ -7,7 +7,7 @@ import requests
 from datetime import datetime, timedelta
 from json import loads
 from ccj.models.daily_population import DailyPopulation
-from ccj.config import get_dpc_path
+from ccj.app import app
 from copy import copy
 
 STARTING_DATE = '2013-07-22'
@@ -103,7 +103,7 @@ class SummarizeDailyPopulation:
 
 
     def write_counts(self, data):
-        dpc = DailyPopulation(get_dpc_path())
+        dpc = DailyPopulation(app.config['DPC_DIR_PATH'])
         with dpc.writer() as f:
             f.store(data)
 

@@ -1,17 +1,17 @@
 from random import randint
 from ccj.models.daily_population import DailyPopulation as DPC
-from helper import safe_remove_file
+from tempfile import mkdtemp
+from shutil import rmtree
 
 
 class Test_DailyPopulationChanges_Model:
 
     def setup_method(self, method):
-        self._tmp_file = '/tmp/t_dpc.tmp'
-        safe_remove_file(self._tmp_file)
-        self.dpc = DPC(self._tmp_file)
+        self._tmp_dir = mkdtemp(dir='/tmp')
+        self.dpc = DPC(self._tmp_dir)
 
     def teardown_method(self, method):
-        safe_remove_file(self._tmp_file)
+        rmtree(self._tmp_dir)
 
     def test_no_data_should_return_empty_array(self):
         assert self.dpc.query() == []

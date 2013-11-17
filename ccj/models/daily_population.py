@@ -6,12 +6,14 @@ from json import dumps
 from os.path import isfile
 import csv
 from contextlib import contextmanager
+import os.path
 
 
 class DailyPopulation:
 
-    def __init__(self, path):
-        self._path = path
+    def __init__(self, dir_path):
+        self._dir_path = dir_path
+        self._path = os.path.join(dir_path, 'dpc.csv')
         self._column_names = ['date', 'males_booked_as']
         self._initialize_file()
 

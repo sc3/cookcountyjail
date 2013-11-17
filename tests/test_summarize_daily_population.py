@@ -5,21 +5,22 @@ from scripts.summarize_daily_population \
     import SummarizeDailyPopulation
 from ccj.app import app
 from ccj.models.daily_population import DailyPopulation as DPC
-from ccj.config import get_dpc_path
-from .helper import safe_remove_file
 import datetime
+from tempfile import mkdtemp
+from shutil import rmtree
 
 
 class Test_SummarizeDailyPopulation:
 
     def setup_method(self, method):
-        self._tmp_file = get_dpc_path()
-        safe_remove_file(self._tmp_file)
-        self.dpc = DPC(self._tmp_file)
+        app.testing = True
+        self._tmp_dir = mkdtemp(dir='/tmp')
+        app.config['DPC_DIR_PATH'] = self._tmp_dir
+        self.dpc = DPC(self._tmp_dir)
         self.sdp = SummarizeDailyPopulation()
 
     def teardown_method(self, method):
-        safe_remove_file(self._tmp_file)
+         rmtree(self._tmp_dir)
 
     def test_serialize_to_males_booked_as(self):
         s = self.sdp.serialize('M', 'booked', 'AS')

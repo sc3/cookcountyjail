@@ -8,7 +8,8 @@ from random import randint
 
 from ccj.app import app
 from ccj.models.daily_population import DailyPopulation as DPC
-from helper import safe_remove_file
+from tempfile import mkdtemp
+from shutil import rmtree
 
 API_METHOD_NAME = '/daily_population'
 
@@ -17,13 +18,13 @@ class Test_DailyPopulationChanges_API:
 
     def setup_method(self, method):
         app.testing = True
-        self._tmp_file = app.config['DPC_PATH']
-        safe_remove_file(self._tmp_file)
-        self.dpc = DPC(self._tmp_file)
+        self._tmp_dir = mkdtemp(dir='/tmp')
+        app.config['DPC_DIR_PATH'] = self._tmp_dir
+        self.dpc = DPC(self._tmp_dir)
         self.client = app.test_client()
 
     def teardown_method(self, method):
-        safe_remove_file(self._tmp_file)
+        rmtree(self._tmp_dir)
 
     def test_fetch_with_nothing_stored_returns_empty_array(self):
         expected = '[]'
