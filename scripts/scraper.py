@@ -19,7 +19,7 @@
 from datetime import datetime, timedelta
 from summarize_daily_population import SummarizeDailyPopulation
 
-current_time = datetime.today()
+now = datetime.today()
 sdpc = SummarizeDailyPopulation()
-sdpc.date(str(current_time.date() -
-              timedelta(1 if current_time.hour >= 11 else 2)))
+num_days_ago = timedelta(1 if now.hour >= 11 else 2)
+sdpc.date(str(now.date() - num_days_ago))

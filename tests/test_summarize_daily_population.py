@@ -5,13 +5,15 @@ from scripts.summarize_daily_population \
     import SummarizeDailyPopulation
 from ccj.app import app
 from ccj.models.daily_population import DailyPopulation as DPC
+from ccj.config import get_dpc_path
 from .helper import safe_remove_file
+import datetime
 
 
 class Test_SummarizeDailyPopulation:
 
     def setup_method(self, method):
-        self._tmp_file = app.config['DPC_PATH']
+        self._tmp_file = get_dpc_path()
         safe_remove_file(self._tmp_file)
         self.dpc = DPC(self._tmp_file)
         self.sdp = SummarizeDailyPopulation()
@@ -19,6 +21,11 @@ class Test_SummarizeDailyPopulation:
 
     def teardown_method(self, method):
         safe_remove_file(self._tmp_file)
+
+
+    def test_serialize_to_males_booked_as(self):
+        s = self.sdp.serialize('M', 'booked', 'AS')
+        assert s == 'males_booked_as'
 
 
     @httpretty.activate
@@ -43,15 +50,29 @@ class Test_SummarizeDailyPopulation:
         httpretty.register_uri(httpretty.GET, self.sdp.inmate_api,
                                body=get_request)
 
-        self.sdp.fetch_count(date, gender, status, race)
+        assert self.sdp.fetch_count(date, gender, status, race) == number_of_asians_booked
 
-    def test_serialize(self):
-        s = self.sdp.serialize('M', 'booked', 'AS')
-        assert s == 'males_booked_as'
 
-    # def test_summarize_males_booked_as(self):
-    #     now = datetime.today()
-    #     num_days_ago = timedelta(1 if now.hour >= 11 else 2)
-    #     date_str = str(now.date() - num_days_ago)
-    #     self.sdp.summarize(date_str)
+    @httpretty.activate
+    def test_summarize_males_booked_as(self):
+        """ Integration test """
+
+        number_of_asians_booked = randint(0, 17)
+
+        def get_request(method, uri, headers):
+            response = {
+                'meta': {'total_count': number_of_asians_booked},
+                'objects': []
+            }
+            return (200, headers, dumps(response))
+
+        httpretty.register_uri(httpretty.GET, self.sdp.inmate_api,
+                               body=get_request)
+
+        date = str(datetime.date(2013, 7, 21))
+        self.sdp.summarize(date)
+        data = self.dpc.query() 
+
+        assert data[0]['males_booked_as'] == str(number_of_asians_booked)
+
 

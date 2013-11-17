@@ -31,7 +31,7 @@ class SummarizeDailyPopulation:
 
         # have to use gte and lte to get left, because the discharge
         # date object is never exactly what you want
-        #if status == 'left':
+        # if status == 'left':
         #    get_url += '&discharge_date_earliest__gte=%s' % date
         #    get_url += '&discharge_date_earliest__lte=%s' % date + 1
 
@@ -50,19 +50,19 @@ class SummarizeDailyPopulation:
 
     def serialize(self, gender, status, race):
         return (self.qualities[gender] + '_' 
-                + self.qualities[status] + '_'
+                + status + '_'
                 + self.qualities[race])
 
 
-    # def summarize(self, date):
-    #     counts = {
-    #         'date': date
-    #     }
-    #     status = 'booked'
-    #     gender = 'M'
-    #     race = 'AS'
-    #     c = fetch_count(date, status, gender, race)
-    #     s = serialize(gender, status, race)
-    #     counts[s] = c
-    #     write_counts(counts)
+    def summarize(self, date):
+        data = {
+            'date': date
+        }
+        gender = 'M'
+        status = 'booked'
+        race = 'AS'
+        c = self.fetch_count(date, gender, status, race)
+        s = self.serialize(gender, status, race)
+        data[s] = c
+        self.write_counts(data)
 
