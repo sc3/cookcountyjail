@@ -35,7 +35,7 @@ class Test_DailyPopulationChanges_API:
         expected = [
             {
                 'date': '2013-10-30',
-                'booked_males_as': str(randint(0, 101))
+                'males_booked_as': str(randint(0, 101))
             }
         ]
         with self.dpc.writer() as f:

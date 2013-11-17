@@ -12,7 +12,7 @@ class DailyPopulation:
 
     def __init__(self, path):
         self._path = path
-        self._column_names = ['date', 'booked_males_as']
+        self._column_names = ['date', 'males_booked_as']
         self._initialize_file()
 
     def clear(self):
