@@ -4,6 +4,9 @@
 
 import os
 
+RACE_MAP = {'A': 'AS', 'AS': 'AS', 'B': 'BK', 'BK': 'BK', 'IN': 'IN', 'LB': 'LT', 'LT': 'LT', 'LW': 'LT', 'W': 'WH',
+            'WH': 'WH'}
+
 
 def in_production():
     """

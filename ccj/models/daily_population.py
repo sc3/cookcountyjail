@@ -7,8 +7,13 @@ from os.path import isfile
 import csv
 from contextlib import contextmanager
 import os.path
+from copy import copy
 
+
+ACTIONS = ['booked', 'left']
+GENDER_NAME_MAP = {'F': 'females', 'M': 'males'}
 GENDERS = ['F', 'M']
+RACES = ['AS', 'BK', 'IN', 'LT', 'UN', 'WH']
 
 
 class DailyPopulation:
@@ -16,8 +21,27 @@ class DailyPopulation:
     def __init__(self, dir_path):
         self._dir_path = dir_path
         self._path = os.path.join(dir_path, 'dpc.csv')
-        self._column_names = ['date', 'males_booked_as']
         self._initialize_file()
+
+    def _add_booked(self, new_population, gender, population_changes):
+        population_base_field_name = self._population_field_name(gender)
+        booked_base_field_name = '%s_%s' % (GENDER_NAME_MAP[gender], 'booked')
+        for race, counts in population_changes[gender]['booked'].iteritems():
+            race_lower_case = race.lower()
+            new_population['population'] += counts
+            new_population[population_base_field_name] += counts
+            new_population['%s_%s' % (population_base_field_name, race_lower_case)] += counts
+            new_population['%s_%s' % (booked_base_field_name, race_lower_case)] = counts
+
+    def _add_left(self, new_population, gender, population_changes):
+        population_base_field_name = self._population_field_name(gender)
+        booked_base_field_name = '%s_%s' % (GENDER_NAME_MAP[gender], 'left')
+        for race, counts in population_changes[gender]['left'].iteritems():
+            race_lower_case = race.lower()
+            new_population['population'] -= counts
+            new_population[population_base_field_name] -= counts
+            new_population['%s_%s' % (population_base_field_name, race_lower_case)] -= counts
+            new_population['%s_%s' % (booked_base_field_name, race_lower_case)] = counts
 
     @staticmethod
     def _add_population_counts(row, population_counts):
@@ -36,11 +60,31 @@ class DailyPopulation:
         try:
             with open(self._path, 'w') as f:
                 w = csv.writer(f)
-                w.writerow(self._column_names)
+                w.writerow(self.column_names())
         except IOError:
             raise Exception("There's something wrong with the path "
                             "configured for our file's creation on your system, "
                             "at '{0}'.".format(self._path))
+
+    def column_names(self):
+        column_names = ['date', 'population']
+        for gender in GENDERS:
+            base_field_name = self._population_field_name(gender)
+            column_names.append(base_field_name)
+            for race in RACES:
+                column_names.append('%s_%s' % (base_field_name, race.lower()))
+        for gender in GENDERS:
+            gender_long_name = GENDER_NAME_MAP[gender]
+            for action in ACTIONS:
+                for race in RACES:
+                    column_names.append('%s_%s_%s' % (gender_long_name, action, race.lower()))
+        return column_names
+
+    def _dict_from_column_names(self):
+        result = {}
+        for column_name in self.column_names():
+            result[column_name] = 0
+        return result
 
     def has_starting_population(self):
         starting_population = self.starting_population()
@@ -55,6 +99,22 @@ class DailyPopulation:
             # put an empty list inside it
             self.clear()
 
+    def _last_row(self):
+        row = None
+        with open(self._path) as f:
+            rows = csv.DictReader(f)
+            for cur_row in rows:
+                row = cur_row
+        return row
+
+    def next_entry(self, previous_population, population_changes):
+        new_population = copy(previous_population)
+        new_population['date'] = population_changes['date']
+        for gender in GENDERS:
+            self._add_booked(new_population, gender, population_changes)
+            self._add_left(new_population, gender, population_changes)
+        return new_population
+
     @staticmethod
     def _population_field_name(gender):
         return 'population_females' if gender == 'F' else 'population_males'
@@ -68,6 +128,15 @@ class DailyPopulation:
             rows = csv.DictReader(f)
             query_results = [row for row in rows]
             return query_results
+
+    def _previous_population(self):
+        previous_population = self._last_row()
+        if not previous_population:
+            previous_population = self.starting_population()[0]
+        for key, value in previous_population.iteritems():
+            if key != 'date':
+                previous_population[key] = int(value)
+        return previous_population
 
     def starting_population(self):
         file_name = self.starting_population_path()
@@ -93,13 +162,14 @@ class DailyPopulation:
             'M': {'AS': 0, 'BK': 0, 'IN': 0, 'LT': 0, 'UN': 0, 'WH': 0},
         }
         """
-        row = {'date': day_before_starting_date}
+        row = self._dict_from_column_names()
+        row['date'] = day_before_starting_date
         self._add_population_counts(row, population_counts)
         try:
             with open(self.starting_population_path(), 'w') as f:
                 w = csv.writer(f)
-                w.writerow([column_name for column_name in row.iterkeys()])
-                w.writerow([column_value for column_value in row.itervalues()])
+                w.writerow(self.column_names())
+                w.writerow([row[column_name] for column_name in self.column_names()])
         except IOError:
             raise Exception("Error: writing to file %s, " % self.starting_population_path())
 
@@ -118,21 +188,26 @@ class DailyPopulation:
         Intended to be used in a "with" statement like this:
 
         with dp.writer() as writer:
-            writer.store(dp_values_for_yesterday)
+            writer.store(population_changes)
         """
-        class CSV_Storer:
-            def __init__(self, csv_writer):
-                self._csv_writer = csv_writer
+        class CsvPopulationStore:
 
-            def store(self, entry):
+            def __init__(self, dpc, writer, previous_entry):
+                self._dpc = dpc
+                self._writer = writer
+                self._previous_entry = previous_entry
+
+            def store(self, population_changes):
                 """
                 Append an entry to our file. Expects a dict object.
                 """
-                assert isinstance(entry, dict)
-                self._csv_writer.writerow(entry.values())
+                assert isinstance(population_changes, dict)
+                entry = self._dpc.next_entry(self._previous_entry, population_changes)
+                self._writer.writerow([entry[column_name] for column_name in self._dpc.column_names()])
+                self._previous_entry = entry
 
         with open(self._path, 'a') as f:
-            csv_writer = CSV_Storer(csv.writer(f))
+            csv_writer = CsvPopulationStore(self, csv.writer(f), self._previous_population())
             try:
                 yield csv_writer
             finally:

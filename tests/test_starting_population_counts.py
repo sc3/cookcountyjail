@@ -28,9 +28,9 @@ class TestStartingPopulationCounts:
         discharged_after_start_date_command = \
             '%s?format=json&limit=0&booking_date__lt=%s&discharge_date_earliest__gte=%s' % \
             (county_inmate_api, STARTING_DATE, STARTING_DATE)
-        book_not_null_inmate_records = discharged_null_inmate_records(STARTING_DATE, randint(15, 31))
+        book_not_null_inmate_records = discharged_null_inmate_records(randint(15, 31))
         discharged_on_or_after_start_date_records = \
-            discharged_on_or_after_start_date_inmate_records(STARTING_DATE, randint(21, 37))
+            discharged_on_or_after_start_date_inmate_records(randint(21, 37))
         inmates = book_not_null_inmate_records + discharged_on_or_after_start_date_records
         population_counts = count_population(inmates)
         expected = expected_starting_population(population_counts)

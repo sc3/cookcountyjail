@@ -9,6 +9,8 @@ from json import loads
 from ccj.models.daily_population import DailyPopulation
 from ccj.app import app
 from copy import copy
+from helpers import RACE_MAP
+
 
 STARTING_DATE = '2013-07-22'
 DAY_BEFORE = str(datetime.strptime(STARTING_DATE, '%Y-%m-%d').date() - timedelta(1))
@@ -17,8 +19,6 @@ COOK_COUNTY_URL = 'http://cookcountyjail.recoveredfactory.net'
 COOK_COUNTY_INMATE_API = '%s/api/1.0/countyinmate' % COOK_COUNTY_URL
 
 RACE_COUNTS = {'AS': 0, 'BK': 0, 'IN': 0, 'LT': 0, 'UN': 0, 'WH': 0}
-RACE_MAP = {'A': 'AS', 'AS': 'AS', 'B': 'BK', 'BK': 'BK', 'IN': 'IN', 'LB': 'LT', 'LT': 'LT', 'LW': 'LT', 'W': 'WH',
-            'WH': 'WH'}
 
 
 class SummarizeDailyPopulation:
