@@ -49,27 +49,7 @@ class SummarizeDailyPopulation:
         discharged_response = loads(discharged_response.content)
         inmates = copy(not_discharged_response['objects'])
         inmates.extend(discharged_response['objects'])
-        population_counts = self._population_counts(inmates)
-        return [
-            {
-                'date': DAY_BEFORE,
-                'population': population_counts['population_females'] + population_counts['population_males'],
-                'population_females': population_counts['population_females'],
-                'population_females_as': population_counts['F']['AS'],
-                'population_females_bk': population_counts['F']['BK'],
-                'population_females_in': population_counts['F']['IN'],
-                'population_females_lt': population_counts['F']['LT'],
-                'population_females_un': population_counts['F']['UN'],
-                'population_females_wh': population_counts['F']['WH'],
-                'population_males': population_counts['population_males'],
-                'population_males_as': population_counts['M']['AS'],
-                'population_males_bk': population_counts['M']['BK'],
-                'population_males_in': population_counts['M']['IN'],
-                'population_males_lt': population_counts['M']['LT'],
-                'population_males_un': population_counts['M']['UN'],
-                'population_males_wh': population_counts['M']['WH'],
-            }
-        ]
+        return self._population_counts(inmates)
 
     def count(self, response):
         return loads(response.text)['meta']['total_count']

@@ -44,6 +44,9 @@ MALE_DISTRIBUTION = [
 ]
 
 ACTIONS = ['booked', 'left']
+
+EXCLUDE_SET = set(['date'])
+
 GENDER_NAME_MAP = {'F': 'females', 'M': 'males'}
 GENDERS = ['F', 'M']
 DAY_BEFORE = '2013-07-21'
@@ -123,17 +126,19 @@ def expected_starting_population(population_counts):
         'population': population_counts['population']
     }
     for gender in GENDERS:
-        base_field_name = population_field_name(gender)
-        expected[base_field_name] = population_counts[base_field_name]
-        for race, count in population_counts[gender].iteritems():
-            field_name = NAME_FORMATTER % (base_field_name, race.lower())
-            expected[field_name] = count
-    for gender in GENDERS:
         for action in ACTIONS:
             base_field_name = NAME_FORMATTER % (GENDER_NAME_MAP[gender], action)
             for race in RACE_COUNTS.iterkeys():
                 expected[NAME_FORMATTER % (base_field_name, race.lower())] = 0
-    return [expected]
+    for gender in GENDERS:
+        base_field_name = population_field_name(gender)
+        expected[base_field_name] = population_counts[base_field_name]
+        action_base_field_name = NAME_FORMATTER % (GENDER_NAME_MAP[gender], 'booked')
+        for race, count in population_counts[gender].iteritems():
+            field_name = NAME_FORMATTER % (base_field_name, race.lower())
+            expected[field_name] = count
+            expected[NAME_FORMATTER % (action_base_field_name, race.lower())] = count
+    return expected
 
 
 def flatten_dpc_dict(entry):
@@ -224,8 +229,8 @@ class UpdatePopulationCounts:
 
     def __init__(self, starting_population_counts, population_change_counts):
         self._population_change_counts = population_change_counts
-        self._new_population_counts = {'date': population_change_counts['date']}
-        self._new_population_counts.update(copy(starting_population_counts))
+        self._new_population_counts = copy(starting_population_counts)
+        self._new_population_counts['date'] = population_change_counts['date']
 
     def dpc_format(self):
         self._update_counts()

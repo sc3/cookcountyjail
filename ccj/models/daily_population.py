@@ -43,16 +43,6 @@ class DailyPopulation:
             new_population['%s_%s' % (population_base_field_name, race_lower_case)] -= counts
             new_population['%s_%s' % (booked_base_field_name, race_lower_case)] = counts
 
-    @staticmethod
-    def _add_population_counts(row, population_counts):
-        row['population'] = population_counts['population']
-        for gender in GENDERS:
-            base_field_name = DailyPopulation._population_field_name(gender)
-            row[base_field_name] = population_counts[base_field_name]
-            for race, count in population_counts[gender].iteritems():
-                field_name = '%s_%s' % (base_field_name, race.lower())
-                row[field_name] = count
-
     def clear(self):
         """ Write our fieldnames in CSV format to the file we're wrapping,
             creating the file if it doesn't already exist. """
@@ -150,21 +140,23 @@ class DailyPopulation:
     def starting_population_path(self):
         return os.path.join(self._dir_path, 'dpc_starting_population.csv')
 
-    def store_starting_population(self, day_before_starting_date, population_counts):
+    def store_starting_population(self, population_counts):
         """
         Stores the population counts in starting_population file
         Format for population counts is:
         {
-            'population': 0,
-            'population_females': 0,
-            'population_males': 0,
             'F': {'AS': 0, 'BK': 0, 'IN': 0, 'LT': 0, 'UN': 0, 'WH': 0},
             'M': {'AS': 0, 'BK': 0, 'IN': 0, 'LT': 0, 'UN': 0, 'WH': 0},
         }
         """
-        row = self._dict_from_column_names()
-        row['date'] = day_before_starting_date
-        self._add_population_counts(row, population_counts)
+        population_change_counts = {'date': population_counts['date']}
+        for gender in GENDERS:
+            population_change_counts[gender] = {
+                'booked': population_counts[gender],
+                'left': {'AS': 0, 'BK': 0, 'IN': 0, 'LT': 0, 'UN': 0, 'WH': 0}
+            }
+
+        row = self.next_entry(self._dict_from_column_names(), population_change_counts)
         try:
             with open(self.starting_population_path(), 'w') as f:
                 w = csv.writer(f)

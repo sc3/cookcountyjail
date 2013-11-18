@@ -8,7 +8,7 @@ from random import randint
 from scripts.summarize_daily_population \
     import SummarizeDailyPopulation
 from helpers import discharged_null_inmate_records, discharged_on_or_after_start_date_inmate_records, \
-    count_population, expected_starting_population, STARTING_DATE
+    count_population, STARTING_DATE, GENDERS
 
 # select count(*) from countyapi_countyinmate
 #   where booking_date < '2013-07-22' and
@@ -32,8 +32,7 @@ class TestStartingPopulationCounts:
         discharged_on_or_after_start_date_records = \
             discharged_on_or_after_start_date_inmate_records(randint(21, 37))
         inmates = book_not_null_inmate_records + discharged_on_or_after_start_date_records
-        population_counts = count_population(inmates)
-        expected = expected_starting_population(population_counts)
+        expected = count_population(inmates)
 
         cook_county_get_count = {}
 
@@ -51,7 +50,6 @@ class TestStartingPopulationCounts:
                     'meta': {'total_count': len(discharged_on_or_after_start_date_records)},
                     'objects': discharged_on_or_after_start_date_records
                 }
-
             return 200, headers, dumps(response)
 
         httpretty.register_uri(httpretty.GET, county_inmate_api,
@@ -62,4 +60,5 @@ class TestStartingPopulationCounts:
         last_request = httpretty.last_request()
         assert last_request.method == "GET"
         assert len(cook_county_get_count) == 2
-        assert starting_population == expected
+        for gender in GENDERS:
+            assert starting_population[gender] == expected[gender]
