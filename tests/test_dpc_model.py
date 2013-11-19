@@ -17,8 +17,7 @@ class Test_DailyPopulation_Model:
 
     def _store_starting_population(self):
         inmates = inmate_population()
-        population_counts = count_population(inmates)
-        population_counts['date'] = DAY_BEFORE
+        population_counts = count_population(inmates, DAY_BEFORE)
         self.dpc.store_starting_population(population_counts)
         return population_counts
 

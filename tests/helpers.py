@@ -80,11 +80,12 @@ def count_gender_race(gender, race, inmates):
     return count
 
 
-def count_population(inmates):
-    counts = {
-        'F': copy(RACE_COUNTS),
-        'M': copy(RACE_COUNTS),
-    }
+def count_population(inmates, population_date=None, calculate_totals=True):
+    counts = {}
+    if population_date:
+        counts['date'] = population_date
+    for gender in GENDERS:
+        counts[gender] = copy(RACE_COUNTS)
     for gender in GENDERS:
         counts[gender]['AS'] = count_gender_race(gender, 'A', inmates) +\
                                count_gender_race(gender, 'AS', inmates)
@@ -97,13 +98,14 @@ def count_population(inmates):
         counts[gender]['UN'] = count_gender_race(gender, 'UN', inmates)
         counts[gender]['WH'] = count_gender_race(gender, 'W', inmates) +\
                                count_gender_race(gender, 'WH', inmates)
-    for gender in GENDERS:
-        total = 0
-        for count in counts[gender].itervalues():
-            total += count
-        field_name = population_field_name(gender)
-        counts[field_name] = total
-    counts['population'] = counts['population_females'] + counts['population_males']
+    if calculate_totals:
+        for gender in GENDERS:
+            total = 0
+            for count in counts[gender].itervalues():
+                total += count
+            field_name = population_field_name(gender)
+            counts[field_name] = total
+        counts['population'] = counts['population_females'] + counts['population_males']
     return counts
 
 
