@@ -32,7 +32,7 @@ def read_daily_population():
     """
     returns the set of sumarized daily population changes.
     """
-    return DPC(app.config['DPC_PATH']).to_json()
+    return DPC(app.config['DPC_DIR_PATH']).to_json()
 
 
 @app.route('/version')

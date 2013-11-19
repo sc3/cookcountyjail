@@ -12,14 +12,46 @@
 #
 # This is expected to run after the existing 1.0 API scraper has run,
 # so the target date is 11am. If it runs at that time or later in the
-# day then it fetches the sumarized date from yesterday, otherwise it
+# day then it fetches the summarized date from yesterday, otherwise it
 # fetches the info from the day before yesterday.
 #
+# It also is able to play catchup. It does this by fetching the last
+# population. If there was none, then it builds the starting population.
+# If the last population date is not the day before this ran, then it
+# fetches all of the days up to and including the day before the current
+# run day.
+#
+# If the last population was the day before the day it is run it does not
+# run.
+#
+
 
 from datetime import datetime, timedelta
-from summarize_daily_population import SummarizeDailyPopulation
 
-now = datetime.today()
-sdp = SummarizeDailyPopulation()
-num_days_ago = timedelta(1 if now.hour >= 11 else 2)
-sdp.summarize(str(now.date() - num_days_ago))
+
+class Scraper:
+
+    def __init__(self, ccj_api, dpc, sdp):
+        self._ccj_api = ccj_api
+        self._dpc = dpc
+        self._sdp = sdp
+
+    def _next_day(self, a_date):
+        return str(datetime.strptime(a_date, '%Y-%m-%d').date() + timedelta(1))
+
+    def run(self):
+        if self._dpc.has_no_starting_population():
+            pass
+        previous_population = self._dpc.previous_population()
+        next_day = self._next_day(previous_population['date'])
+        booked_left = self._ccj_api.booked_left(next_day)
+        population_changes = self._sdp.summarize(next_day, booked_left)
+        with self._dpc.writer() as f:
+            f.store(population_changes)
+
+
+if __name__ == '__main__':
+    now = datetime.today()
+    #sdp = SummarizeDailyPopulation()
+    #num_days_ago = timedelta(1 if now.hour >= 11 else 2)
+    #sdp.summarize(str(now.date() - num_days_ago))

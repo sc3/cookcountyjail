@@ -30,16 +30,12 @@ def get_db_uri():
     return (template % db_config)
 
 
-def get_dpc_path():
+def get_dpc_dir():
     if in_production() and not in_testing():
         # production
-        return '/home/ubuntu/website/2.0/db_backups/dpc.csv'
-    elif in_testing():
-        # testing
-        return '/tmp/test.csv'
+        return '/home/ubuntu/website/2.0/data'
     else:
-        # local development
-        return '/tmp/dpc.csv'
+        return '/tmp'
 
 
 def env_var_active(env_var):
@@ -79,4 +75,4 @@ if not in_production():
     DEBUG = True
 
 SQLALCHEMY_DATABASE_URI = get_db_uri()
-DPC_PATH = get_dpc_path()
+DPC_DIR_PATH = get_dpc_dir()

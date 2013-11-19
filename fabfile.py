@@ -156,16 +156,6 @@ def capture_previous_build_id():
     return False
 
 
-def catch_up_summaries():
-    """
-    Updates summaries from the start date or from the latest day they were updated.
-    """
-    std_requires()
-    with cd(env.scripts_path):
-        with activate_cmd():
-            run('./catch_up_summaries.py')
-
-
 def checkout_latest():
     """
     Check out latest copy on a given branch.
@@ -300,6 +290,16 @@ def store_build_info():
 def sudo_cp(src_fname, trg_fname):
     """Copy file(s) to area that require admin level access."""
     sudo("cp '%s' '%s'" % (src_fname, trg_fname))
+
+
+def tests(path=env.active):
+    """
+    Runs the test suite, by default the ones for the active website
+    """
+    std_requires()
+    with cd(path):
+        with activate_cmd():
+            run('invoke tests')
 
 
 def try_update_all_config_files():
