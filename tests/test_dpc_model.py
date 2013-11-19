@@ -1,7 +1,7 @@
-from random import randint
+
 from tempfile import mkdtemp
 from shutil import rmtree
-import csv
+
 
 from ccj.models.daily_population import DailyPopulation
 from helpers import inmate_population, count_population, expected_starting_population,\
@@ -28,13 +28,13 @@ class Test_DailyPopulation_Model:
         assert self.dpc.query() == []
 
     def test_with_no_starting_population(self):
-        assert self.dpc.starting_population() == []
+        assert self.dpc.starting_population() == {}
 
     def test_storing_starting_population(self):
-        assert not self.dpc.has_starting_population()
+        assert self.dpc.has_no_starting_population()
         population_counts = self._store_starting_population()
         expected = expected_starting_population(population_counts)
-        starting_population = self.dpc.starting_population()[0]
+        starting_population = self.dpc.starting_population()
         convert_hash_values_to_integers(starting_population, EXCLUDE_SET)
         assert starting_population == expected
 

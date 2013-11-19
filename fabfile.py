@@ -156,16 +156,6 @@ def capture_previous_build_id():
     return False
 
 
-def catch_up_summaries():
-    """
-    Updates summaries from the start date or from the latest day they were updated.
-    """
-    std_requires()
-    with cd(env.scripts_path):
-        with activate_cmd():
-            run('./catch_up_summaries.py')
-
-
 def checkout_latest():
     """
     Check out latest copy on a given branch.

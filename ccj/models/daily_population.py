@@ -17,6 +17,15 @@ RACES = ['AS', 'BK', 'IN', 'LT', 'UN', 'WH']
 
 
 class DailyPopulation:
+    """
+    Stores and retrieves the summarized Daily Population values.
+
+    Currently does not protect against:
+        1) concurrent updates
+        2) fetching the last population between success stores
+        3) against skipped days
+        4) if there is no starting population count
+    """
 
     def __init__(self, dir_path):
         self._dir_path = dir_path
@@ -76,9 +85,8 @@ class DailyPopulation:
             result[column_name] = 0
         return result
 
-    def has_starting_population(self):
-        starting_population = self.starting_population()
-        return len(starting_population) == 1
+    def has_no_starting_population(self):
+        return self.starting_population() == {}
 
     def _initialize_file(self):
         """ Make sure the file exists. If it doesn't, first create it,
@@ -119,23 +127,23 @@ class DailyPopulation:
             query_results = [row for row in rows]
             return query_results
 
-    def _previous_population(self):
-        previous_population = self._last_row()
-        if not previous_population:
-            previous_population = self.starting_population()[0]
-        for key, value in previous_population.iteritems():
+    def previous_population(self):
+        the_previous_population = self._last_row()
+        if not the_previous_population:
+            the_previous_population = self.starting_population()
+        for key, value in the_previous_population.iteritems():
             if key != 'date':
-                previous_population[key] = int(value)
-        return previous_population
+                the_previous_population[key] = int(value)
+        return the_previous_population
 
     def starting_population(self):
         file_name = self.starting_population_path()
         if os.path.isfile(file_name):
             with open(file_name) as f:
                 rows = csv.DictReader(f)
-                starting_population = [row for row in rows]
-                return starting_population
-        return []
+                for row in rows:
+                    return row
+        return {}
 
     def starting_population_path(self):
         return os.path.join(self._dir_path, 'dpc_starting_population.csv')
@@ -199,7 +207,7 @@ class DailyPopulation:
                 self._previous_entry = entry
 
         with open(self._path, 'a') as f:
-            csv_writer = CsvPopulationStore(self, csv.writer(f), self._previous_population())
+            csv_writer = CsvPopulationStore(self, csv.writer(f), self.previous_population())
             try:
                 yield csv_writer
             finally:
