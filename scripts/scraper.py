@@ -26,7 +26,7 @@
 #
 
 
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 
 
 class Scraper:
@@ -41,13 +41,18 @@ class Scraper:
 
     def run(self):
         if self._dpc.has_no_starting_population():
-            pass
+            raise 'should not be here'
         previous_population = self._dpc.previous_population()
-        next_day = self._next_day(previous_population['date'])
-        booked_left = self._ccj_api.booked_left(next_day)
-        population_changes = self._sdp.summarize(next_day, booked_left)
-        with self._dpc.writer() as f:
-            f.store(population_changes)
+        yesterday = self._yesterday()
+        if yesterday != previous_population['date']:
+            next_day = self._next_day(previous_population['date'])
+            booked_left = self._ccj_api.booked_left(next_day)
+            population_changes = self._sdp.summarize(next_day, booked_left)
+            with self._dpc.writer() as f:
+                f.store(population_changes)
+
+    def _yesterday(self):
+        return str(date.today() - timedelta(1))
 
 
 if __name__ == '__main__':

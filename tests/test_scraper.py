@@ -72,3 +72,20 @@ class Test_Scraper:
         self.sdp.summarize.assert_called_once_with(self._yesterday, booked_left_inmates)
         self.dpc.writer.assert_called_once_with()
         self.dpc_writer.store.assert_called_once_with(population_changes)
+
+    def test_summarizes_does_run_if_summary_already_exists(self):
+        """
+        If yesterday is already summarized then SummarizeDailyPopulation does nothing
+        """
+        # define all of the return values
+        self.dpc.has_no_starting_population.return_value = False
+        self.dpc.previous_population.return_value = {'date': self._yesterday}
+
+        self.scraper.run()
+
+        # now check that the Scraper performed the operations it needed to
+        self.dpc.has_no_starting_population.assert_called_once_with()
+        self.dpc.previous_population.assert_called_once_with()
+        assert self.ccj_api.call_args_list == []
+        assert self.sdp.call_args_list == []
+        assert not self.dpc.writer.called
