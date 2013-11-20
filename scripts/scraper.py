@@ -36,23 +36,27 @@ class Scraper:
         self._dpc = dpc
         self._sdp = sdp
 
+    def _last_population_date(self):
+        return datetime.strptime(self._dpc.previous_population()['date'], '%Y-%m-%d').date()
+
     def _next_day(self, a_date):
-        return str(datetime.strptime(a_date, '%Y-%m-%d').date() + timedelta(1))
+        return a_date + timedelta(1)
 
     def run(self):
         if self._dpc.has_no_starting_population():
             raise 'should not be here'
-        previous_population = self._dpc.previous_population()
+        last_population_date = self._last_population_date()
         yesterday = self._yesterday()
-        if yesterday != previous_population['date']:
-            next_day = self._next_day(previous_population['date'])
+        if yesterday != last_population_date:
+            last_population_date = self._next_day(last_population_date)
+            next_day = str(last_population_date)
             booked_left = self._ccj_api.booked_left(next_day)
             population_changes = self._sdp.summarize(next_day, booked_left)
             with self._dpc.writer() as f:
                 f.store(population_changes)
 
     def _yesterday(self):
-        return str(date.today() - timedelta(1))
+        return date.today() - timedelta(1)
 
 
 if __name__ == '__main__':
