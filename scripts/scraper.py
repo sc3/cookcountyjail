@@ -47,7 +47,7 @@ class Scraper:
             raise 'should not be here'
         last_population_date = self._last_population_date()
         yesterday = self._yesterday()
-        if yesterday != last_population_date:
+        while yesterday != last_population_date:
             last_population_date = self._next_day(last_population_date)
             next_day = str(last_population_date)
             booked_left = self._ccj_api.booked_left(next_day)

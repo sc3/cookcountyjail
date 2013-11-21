@@ -139,7 +139,7 @@ class SummarizeDailyPopulationStateChecker(object):
         return self._csv_writer()
 
     def finished(self):
-        return self._state == STATES.dpc_writer_store
+        return self._state == STATES.dpc_writer_store and self._current_date == self._yesterday
 
     def sdp_summarize(self, current_date, booked_left_inmates):
         assert self._state == STATES.ccj_api_booked_left
