@@ -76,9 +76,10 @@ class Scraper:
 
 
 if __name__ == '__main__':
-    now = datetime.today()
+    start_time = datetime.today()
     ccj_api = CcjApiV1()
     dpc = DailyPopulation(get_dpc_dir())
     sdp = SummarizeDailyPopulation()
     scraper = Scraper(ccj_api, dpc, sdp, STARTING_DATE)
     scraper.run()
+    print 'Scraper ran for %s' % str(date.today() - start_time)
