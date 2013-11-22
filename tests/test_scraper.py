@@ -1,5 +1,5 @@
 
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 from mock import Mock
 from random import randint
 
@@ -7,6 +7,8 @@ from scripts.scraper import Scraper
 
 
 ONE_DAY = timedelta(1)
+DAY_BEFORE_STARTING_DATE = '2012-12-31'
+STARTING_DATE = '2013-01-01'
 
 
 class Test_Scraper:
@@ -24,7 +26,7 @@ class Test_Scraper:
         self.sdp = Mock()
 
         # Create scraper object with mocked objects
-        self.scraper = Scraper(self.ccj_api, self.dpc, self.sdp)
+        self.scraper = Scraper(self.ccj_api, self.dpc, self.sdp, STARTING_DATE)
 
     def test_summarizes_does_run_if_summary_already_exists(self):
         """
@@ -47,10 +49,34 @@ class Test_Scraper:
         """
         If Scraper finds that the date of last population summarized is earlier
         than the day before yesterday, it must fetch and summarize all of the
-        missing days and then do yesterday's.
+        missing days and then does yesterday's.
         """
         self.dpc.has_no_starting_population.return_value = False
         sdpsc = SummarizeDailyPopulationStateChecker(self._today, randint(0, 5))
+        self.dpc.previous_population = Mock(side_effect=sdpsc.dpc_previous_population)
+        self.ccj_api.booked_left = Mock(side_effect=sdpsc.ccj_api_booked_left)
+        self.sdp.summarize = Mock(side_effect=sdpsc.sdp_summarize)
+        self.dpc.writer = Mock(side_effect=sdpsc.dpc_writer)
+
+        self.scraper.run()
+
+        # now check that the Scraper performed the operations it needed to
+        self.dpc.has_no_starting_population.assert_called_once_with()
+        assert sdpsc.finished()
+
+    def test_summarizes_builds_starting_population_and_catches_up(self):
+        """
+        If Scraper finds that there is no starting population then it fetches
+        the data for it, has it calculated and then has it stored and then
+        summarizes all of the missing days between the start and yesterday
+        """
+        self.dpc.has_no_starting_population.return_value = True
+        min_number_days_ago_to_start = 2  # Starting date needs to start before yesterday
+        sdpsc = SummarizeDailyPopulationStateChecker(self._today, randint(min_number_days_ago_to_start,
+                                                                          min_number_days_ago_to_start + 3))
+        self.ccj_api.start_population_data = Mock(side_effect=sdpsc.ccj_api_start_population_data)
+        self.sdp.calculate_starting_population = Mock(side_effect=sdpsc.sdp_calculate_starting_population)
+        self.dpc.store_starting_population = Mock(side_effect=sdpsc.dpc_store_starting_population)
         self.dpc.previous_population = Mock(side_effect=sdpsc.dpc_previous_population)
         self.ccj_api.booked_left = Mock(side_effect=sdpsc.ccj_api_booked_left)
         self.sdp.summarize = Mock(side_effect=sdpsc.sdp_summarize)
@@ -69,11 +95,21 @@ class State(set):
             return name
         raise AttributeError
 
-STATES = State(['starting', 'dpc_previous_population', 'ccj_api_booked_left', 'sdp_summarize', 'dpc_writer',
-                'dpc_writer_store'])
+
+STATES = State([
+    'starting',
+    'ccj_api_start_population_data',
+    'sdp_calculate_starting_population',
+    'dpc_store_starting_population',
+    'dpc_previous_population',
+    'ccj_api_booked_left',
+    'sdp_summarize',
+    'dpc_writer',
+    'dpc_writer_store'
+])
 
 
-class SummarizeDailyPopulationStateChecker(object):
+class SummarizeDailyPopulationStateChecker:
     """
     Uses the generator object model pattern to provide a set of test values and check
     that the order of operations is correct
@@ -128,10 +164,27 @@ class SummarizeDailyPopulationStateChecker(object):
         self._return_values[self._state] = r_val
         return r_val
 
-    def dpc_previous_population(self):
+    def ccj_api_start_population_data(self, starting_date):
         assert self._state == STATES.starting
+        self._state = STATES.ccj_api_start_population_data
+        assert starting_date == STARTING_DATE
+        r_val = [randint(201, 333)]
+        self._return_values[self._state] = r_val
+        return r_val
+
+    def dpc_previous_population(self):
+        assert self._state == STATES.starting or self._state == STATES.dpc_store_starting_population
         self._state = STATES.dpc_previous_population
         return {'date': str(self._starting_date)}
+
+    def dpc_store_starting_population(self, population_counts):
+        previous_state = STATES.sdp_calculate_starting_population
+        assert self._state == previous_state
+        self._state = STATES.dpc_store_starting_population
+        assert population_counts == self._return_values[previous_state]
+        r_val = {'val': randint(1100, 1566)}
+        self._return_values[self._state] = r_val
+        return r_val
 
     def dpc_writer(self):
         assert self._state == STATES.sdp_summarize
@@ -141,11 +194,22 @@ class SummarizeDailyPopulationStateChecker(object):
     def finished(self):
         return self._state == STATES.dpc_writer_store and self._current_date == self._yesterday
 
+    def sdp_calculate_starting_population(self, inmates, population_date):
+        previous_state = STATES.ccj_api_start_population_data
+        assert self._state == previous_state
+        self._state = STATES.sdp_calculate_starting_population
+        assert population_date == DAY_BEFORE_STARTING_DATE
+        assert inmates == self._return_values[previous_state]
+        r_val = {'val': randint(659, 811)}
+        self._return_values[self._state] = r_val
+        return r_val
+
     def sdp_summarize(self, current_date, booked_left_inmates):
-        assert self._state == STATES.ccj_api_booked_left
+        previous_state = STATES.ccj_api_booked_left
+        assert self._state == previous_state
         self._state = STATES.sdp_summarize
         assert current_date == str(self._current_date)
-        assert booked_left_inmates == self._return_values[STATES.ccj_api_booked_left]
+        assert booked_left_inmates == self._return_values[previous_state]
         r_val = {'date': current_date, 'val': randint(44, 79)}
         self._return_values[self._state] = r_val
         return r_val

@@ -27,24 +27,32 @@
 
 
 from datetime import date, datetime, timedelta
+from ccj.models.daily_population import DailyPopulation
+from ccj.config import get_dpc_dir
+from scripts.ccj_api_v1 import CcjApiV1
+from scripts.summarize_daily_population import SummarizeDailyPopulation
+
+ONE_DAY = timedelta(1)
+STARTING_DATE = '2013-07-22'
 
 
 class Scraper:
 
-    def __init__(self, ccj_api, dpc, sdp):
+    def __init__(self, ccj_api, dpc, sdp, population_starting_date):
         self._ccj_api = ccj_api
         self._dpc = dpc
         self._sdp = sdp
+        self._population_starting_date = population_starting_date
 
     def _last_population_date(self):
         return datetime.strptime(self._dpc.previous_population()['date'], '%Y-%m-%d').date()
 
     def _next_day(self, a_date):
-        return a_date + timedelta(1)
+        return a_date + ONE_DAY
 
     def run(self):
         if self._dpc.has_no_starting_population():
-            raise 'should not be here'
+            self._starting_population()
         last_population_date = self._last_population_date()
         yesterday = self._yesterday()
         while yesterday != last_population_date:
@@ -55,12 +63,22 @@ class Scraper:
             with self._dpc.writer() as f:
                 f.store(population_changes)
 
+    def _starting_population(self):
+        day_before_starting_date = str(datetime.strptime(self._population_starting_date, '%Y-%m-%d').date() - ONE_DAY)
+        starting_population_data = self._ccj_api.start_population_data(self._population_starting_date)
+        starting_population_counts = self._sdp.calculate_starting_population(starting_population_data,
+                                                                             day_before_starting_date)
+        self._dpc.store_starting_population(starting_population_counts)
+
     def _yesterday(self):
         return date.today() - timedelta(1)
 
 
+
 if __name__ == '__main__':
     now = datetime.today()
-    #sdp = SummarizeDailyPopulation()
-    #num_days_ago = timedelta(1 if now.hour >= 11 else 2)
-    #sdp.summarize(str(now.date() - num_days_ago))
+    ccj_api = CcjApiV1()
+    dpc = DailyPopulation(get_dpc_dir())
+    sdp = SummarizeDailyPopulation()
+    scraper = Scraper(ccj_api, dpc, sdp, STARTING_DATE)
+    scraper.run()

@@ -1,9 +1,9 @@
 
 import httpretty
 from random import randint
-from helpers import STARTING_DATE, discharged_null_inmate_records, discharged_on_or_after_start_date_inmate_records,\
-     count_population, expected_starting_population
+from helpers import STARTING_DATE, discharged_null_inmate_records, discharged_on_or_after_start_date_inmate_records
 from json import dumps
+from copy import copy
 
 from scripts.ccj_api_v1 import CcjApiV1, BOOKING_DATE_URL_TEMPLATE, LEFT_DATE_URL_TEMPLATE, COOK_COUNTY_INMATE_API, \
     NOT_DISCHARGED_URL_TEMPLATE, DISCHARGED_ON_OR_AFTER_STARTING_DATE_URL_TEMPLATE
@@ -14,21 +14,26 @@ class Test_CcjV1:
     @httpretty.activate
     def test_booked_left(self):
         booked_cmd = BOOKING_DATE_URL_TEMPLATE % STARTING_DATE
-        expected_booked_value = ['booked value is %d' % randint(0, 25)]
+        expected_booked_value = [{'booked_val': 'booked value is %d' % randint(0, 25)}]
         left_cmd = LEFT_DATE_URL_TEMPLATE % STARTING_DATE
-        expected_left_cmd = ['left value is %d' % randint(0, 25)]
+        expected_left_cmd = [{'left_val': 'left value is %d' % randint(0, 25)}]
 
-        expected = expected_booked_value + expected_left_cmd
+        expected = copy(expected_booked_value)
+        expected.extend(expected_left_cmd)
 
         ccj_api_requests = {}
         def fulfill_ccj_api_request(method, uri, headers):
             assert uri == booked_cmd or uri == left_cmd
             if uri == booked_cmd:
                 ccj_api_requests['booked_cmd'] = True
-                response = expected_booked_value
+                response = {
+                    'objects': expected_booked_value
+                }
             else:
                 ccj_api_requests['left_cmd'] = True
-                response = expected_left_cmd
+                response = {
+                    'objects': expected_left_cmd
+                }
             return 200, headers, dumps(response)
 
         httpretty.register_uri(httpretty.GET, COOK_COUNTY_INMATE_API,

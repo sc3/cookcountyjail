@@ -19,6 +19,11 @@ def deploy():
 
 
 @task
+def scraper():
+    run('python scripts/scraper.py')
+
+
+@task
 def test_server():
     """
     Runs the server with testing mode on

@@ -60,9 +60,9 @@ def production():
     env.hosts = ['cookcountyjail.recoveredfactory.net']
 
 
-"""
-Branches
-"""
+#
+# Branches
+#
 
 # the only branch this fabfile serves currently
 env.branch = 'v2.0-dev'
@@ -112,7 +112,7 @@ def add_directories():
     """
     Adds directories if needed
     """
-    dirs = [WEBSITE, WEBSITE + '/2.0/db_backups/', WEBSITE + '/2.0/' + WEBSITES]
+    dirs = [WEBSITE, WEBSITE + '/2.0/db_backups/', WEBSITE + '/2.0/data', WEBSITE + '/2.0/' + WEBSITES]
     for d in dirs:
         if not exists(d):
             run("mkdir -p '%s'" % d)
@@ -250,6 +250,12 @@ def restart_nginx():
 def restart_gunicorn():
     """Restart Gunicorn webserver on which the Flask app runs."""
     service_restart(env.full_project)
+
+
+def run_scraper():
+    std_requires()
+    with cd(env.websites_path):
+        run('scripts/scraper.sh')
 
 
 def service_restart(service_name):

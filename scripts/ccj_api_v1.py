@@ -27,7 +27,11 @@ class CcjApiV1:
         left_inmates_cmd = LEFT_DATE_URL_TEMPLATE % date_to_fetch
         left_inmates_response = requests.get(left_inmates_cmd)
         assert left_inmates_response.status_code == 200
-        return self._parseJSON(loads(booked_inmates_response.text) + loads(left_inmates_response.text))
+        booked_inmates = loads(booked_inmates_response.text)
+        inmates = self._parseJSON(copy(booked_inmates['objects']))
+        left_inmates = loads(left_inmates_response.text)
+        inmates.extend(self._parseJSON(left_inmates['objects']))
+        return inmates
 
     def _parseJSON(self, obj):
         if isinstance(obj, dict):
