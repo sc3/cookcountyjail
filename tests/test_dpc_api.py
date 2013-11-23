@@ -42,7 +42,7 @@ class Test_DailyPopulationChanges_API:
     def test_post_with_one_entry_should_store_result(self):
         starting_population_counts = self._store_starting_population()
         starting_day_inmates = inmate_population()
-        population_change_counts = change_counts(starting_day_inmates, STARTING_DATE)
+        population_change_counts = change_counts(starting_day_inmates)
         with self.dpc.writer() as f:
             f.store(population_change_counts)
         expected = UpdatePopulationCounts(starting_population_counts, population_change_counts).dpc_format()

@@ -41,7 +41,7 @@ class Test_DailyPopulation_Model:
     def test_storing_population_change(self):
         starting_population_counts = self._store_starting_population()
         starting_day_inmates = inmate_population()
-        population_change_counts = change_counts(starting_day_inmates, STARTING_DATE)
+        population_change_counts = change_counts(starting_day_inmates)
         with self.dpc.writer() as f:
             f.store(population_change_counts)
         populate_change = self.dpc.query()[0]

@@ -45,21 +45,26 @@ MALE_DISTRIBUTION = [
 
 ACTIONS = ['booked', 'left']
 
-EXCLUDE_SET = set(['date'])
+EXCLUDE_SET = {'date'}
 
 GENDER_NAME_MAP = {'F': 'females', 'M': 'males'}
 GENDERS = ['F', 'M']
 DAY_BEFORE = '2013-07-21'
 STARTING_DATE = '2013-07-22'
+NEXT_DAY = '2013-07-23'
 NAME_FORMATTER = '%s_%s'
 
 RACE_COUNTS = {'AS': 0, 'BK': 0, 'IN': 0, 'LT': 0, 'UN': 0, 'WH': 0}
 
 
-def change_counts(inmates, cur_date):
-    counts = initialize_change_counts(cur_date)
+def change_counts(inmates):
+    starting_datetime = STARTING_DATE + 'T00:00:00'
+    counts = initialize_change_counts()
     for inmate in inmates:
-        action = 'left' if inmate['discharge_date_earliest'] else 'booked'
+        if inmate['booking_date'] == starting_datetime:
+            action = 'booked'
+        else:
+            action = 'left'
         race = inmate['race']
         race = RACE_MAP[race] if race in RACE_MAP else 'UN'
         counts[inmate['gender']][action][race] += 1
@@ -110,15 +115,18 @@ def count_population(inmates, population_date=None, calculate_totals=True):
 
 
 def discharged_null_inmate_records(number_to_make):
+    starting_datetime = STARTING_DATE + 'T00:00:00'
     how_many_to_make = {'F': number_to_make / 2, 'M': number_to_make}
-    return [{'gender': gender, 'race': pick_race(gender), 'discharge_date_earliest': None}
+    return [{'gender': gender, 'race': pick_race(gender), 'booking_date': starting_datetime,
+             'discharge_date_earliest': None}
             for gender, count in how_many_to_make.iteritems() for i in range(0, count)]
 
 
 def discharged_on_or_after_start_date_inmate_records(number_to_make, discharged_date='Random'):
     how_many_to_make = {'F': number_to_make / 2, 'M': number_to_make}
     discharge_date = RandomDates(discharged_date)
-    return [{'gender': gender, 'race': pick_race(gender), 'discharge_date_earliest': discharge_date.next()}
+    return [{'gender': gender, 'race': pick_race(gender), 'booking_date': DAY_BEFORE,
+             'discharge_date_earliest': discharge_date.next()}
             for gender, count in how_many_to_make.iteritems() for i in range(0, count)]
 
 
@@ -143,41 +151,7 @@ def expected_starting_population(population_counts):
     return expected
 
 
-def flatten_dpc_dict(entry):
-    """
-    Takes a Daily Population Changes returned dict and turns
-    it into a flat dict. For example:
-
-    {
-        'Date': '2013-10-18',
-        'Males': {
-            'Booked': {'AS': '5'}
-        }
-    }
-
-    BECOMES
-
-    {
-        'date': '2013-10-18',
-        'booked_male_as': '5'
-    }
-    """
-
-    # ugly, non-DRY code
-    mydict = {}
-    name = ''
-    for k, v in entry.iteritems():
-        name = k.lower()
-        if name == 'date':
-            mydict['date'] = v
-        else:
-            for change, population in v.iteritems():
-                for race, number in population.iteritems():
-                    mydict['%s_%s_%s' % (change.lower(), name, race.lower())] = number
-    return mydict
-
-
-def initialize_change_counts(cur_date):
+def initialize_change_counts(cur_date=STARTING_DATE):
     counts = {'date': cur_date}
     for gender in GENDERS:
         counts[gender] = {
@@ -209,7 +183,7 @@ class RandomDates:
 
     def __init__(self, starting_date):
         if starting_date.lower() == 'random':
-            self._starting_date = datetime.strptime(STARTING_DATE, '%Y-%m-%d').date()
+            self._starting_date = datetime.strptime(NEXT_DAY, '%Y-%m-%d').date()
             self._number_days = (date.today() - self._starting_date).days - 1
             self._one_day = timedelta(1)
             self._next = self._random_next
@@ -221,7 +195,7 @@ class RandomDates:
         return self._next()
 
     def _random_next(self):
-        return str(self._starting_date + (self._one_day * randint(0, self._number_days)))
+        return str(self._starting_date + (self._one_day * randint(0, self._number_days))) + 'T01:01:01'
 
     def _static_next(self):
         return self._starting_date

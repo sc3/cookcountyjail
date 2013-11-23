@@ -4,6 +4,7 @@
 #
 
 from copy import copy
+from datetime import datetime
 from helpers import GENDERS, RACE_COUNTS, RACE_MAP
 
 
@@ -22,9 +23,9 @@ class SummarizeDailyPopulation:
             counts[inmate['gender']][race] += 1
         return counts
 
-    def _count_changes(self, inmates):
+    def _count_changes(self, inmates, booking_date):
         for inmate in inmates:
-            action = 'left' if inmate['discharge_date_earliest'] else 'booked'
+            action = 'booked' if inmate['booking_date'] == booking_date else 'left'
             race = self._map_race_id(inmate)
             self._change_counts[inmate['gender']][action][race] += 1
 
@@ -48,5 +49,5 @@ class SummarizeDailyPopulation:
         discharged for the date specified in parameter change_date
         """
         self._initialize_change_counts(change_date)
-        self._count_changes(inmates)
+        self._count_changes(inmates, change_date + 'T00:00:00')
         return self._change_counts
