@@ -9,7 +9,7 @@ from ccj.app import app
 from ccj.models.daily_population import DailyPopulation as DPC
 from tempfile import mkdtemp
 from shutil import rmtree
-from helpers import inmate_population, count_population, DAY_BEFORE, change_counts, STARTING_DATE, \
+from helpers import inmate_population, count_population, DAY_BEFORE, change_counts, \
     UpdatePopulationCounts, EXCLUDE_SET, convert_hash_values_to_integers
 
 API_METHOD_NAME = '/daily_population'
@@ -39,7 +39,7 @@ class Test_DailyPopulationChanges_API:
         assert result.status_code == 200
         assert result.data == expected
 
-    def test_post_with_one_entry_should_store_result(self):
+    def test_fetch_when_has_population(self):
         starting_population_counts = self._store_starting_population()
         starting_day_inmates = inmate_population()
         population_change_counts = change_counts(starting_day_inmates)
