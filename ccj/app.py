@@ -13,6 +13,7 @@ from datetime import datetime
 from ccj.models.daily_population import DailyPopulation as DPC
 from ccj import config
 
+STARTUP_TIME = datetime.now()
 
 app = Flask(__name__)
 app.config.from_object(config)
@@ -30,7 +31,7 @@ VERSION_NUMBER = "2.0-dev"
 @app.route('/daily_population', methods=['GET'])
 def read_daily_population():
     """
-    returns the set of sumarized daily population changes.
+    returns the set of summarized daily population changes.
     """
     return DPC(app.config['DPC_DIR_PATH']).to_json()
 
@@ -77,7 +78,7 @@ def deployed_at(fname):
         mtime = path.getmtime(fname)
         r_val = datetime.fromtimestamp(mtime)
     else:
-        r_val = datetime.now()
+        r_val = STARTUP_TIME
     return str(r_val)
 
 
