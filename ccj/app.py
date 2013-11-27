@@ -24,8 +24,9 @@ if app.config['IN_TESTING']:
     app.debug = True
 
 BUILD_INFO_PATH = 'build_info'
-CURRENT_FILE_PATH = join(BUILD_INFO_PATH,'current')
-PREVIOUS_FILE_PATH = join(BUILD_INFO_PATH,'previous')
+CURRENT_FILE_PATH = join(BUILD_INFO_PATH, 'current')
+EMAIL_FILE_PATH = join(BUILD_INFO_PATH, 'email')
+PREVIOUS_FILE_PATH = join(BUILD_INFO_PATH, 'previous')
 VERSION_NUMBER = "2.0-dev"
 
 
@@ -101,7 +102,7 @@ def file_contents(file_name, default_rvalue):
 
 
 def person_id(dir_name):
-    return file_contents(join(dir_name, 'email'), 'Brian or Norbert')
+    return file_contents(join(dir_name, EMAIL_FILE_PATH), 'Brian or Norbert')
 
 
 def previous_build_info(dir_path, r_val):
