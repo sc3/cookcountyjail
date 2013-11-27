@@ -10,12 +10,29 @@ from ccj.models.daily_population import DailyPopulation as DPC
 from tempfile import mkdtemp
 from shutil import rmtree
 from helpers import inmate_population, count_population, DAY_BEFORE, change_counts, \
-    UpdatePopulationCounts, EXCLUDE_SET, convert_hash_values_to_integers
+    UpdatePopulationCounts, EXCLUDE_SET, convert_hash_values_to_integers, expected_starting_population
 
-API_METHOD_NAME = '/daily_population'
+DAILY_POPULATION_API_PATH = '/daily_population'
+STARTING_POPULATION_API_PATH = '/starting_population'
 
 
 class Test_DailyPopulationChanges_API:
+
+    def _parseJSON(self, obj):
+        if isinstance(obj, dict):
+            newobj = {}
+            for key, value in obj.iteritems():
+                key = str(key)
+                newobj[key] = self._parseJSON(value)
+        elif isinstance(obj, list):
+            newobj = []
+            for value in obj:
+                newobj.append(self._parseJSON(value))
+        elif isinstance(obj, unicode):
+            newobj = str(obj)
+        else:
+            newobj = obj
+        return newobj
 
     def setup_method(self, method):
         app.testing = True
@@ -35,7 +52,7 @@ class Test_DailyPopulationChanges_API:
 
     def test_fetch_with_nothing_stored_returns_empty_array(self):
         expected = '[]'
-        result = self.client.get(API_METHOD_NAME)
+        result = self.client.get(DAILY_POPULATION_API_PATH)
         assert result.status_code == 200
         assert result.data == expected
 
@@ -46,28 +63,21 @@ class Test_DailyPopulationChanges_API:
         with self.dpc.writer() as f:
             f.store(population_change_counts)
         expected = UpdatePopulationCounts(starting_population_counts, population_change_counts).dpc_format()
-        result = self.client.get(API_METHOD_NAME)
+        result = self.client.get(DAILY_POPULATION_API_PATH)
         assert result.status_code == 200
         fetched_data = self._parseJSON(loads(result.data)[0])
         convert_hash_values_to_integers(fetched_data, EXCLUDE_SET)
         assert fetched_data == expected
 
     def test_external_post_fails(self):
-        result = self.client.post(API_METHOD_NAME, data={})
+        result = self.client.post(DAILY_POPULATION_API_PATH, data={})
         assert result.status_code == 405
 
-    def _parseJSON(self, obj):
-        if isinstance(obj, dict):
-            newobj = {}
-            for key, value in obj.iteritems():
-                key = str(key)
-                newobj[key] = self._parseJSON(value)
-        elif isinstance(obj, list):
-            newobj = []
-            for value in obj:
-                newobj.append(self._parseJSON(value))
-        elif isinstance(obj, unicode):
-            newobj = str(obj)
-        else:
-            newobj = obj
-        return newobj
+    def test_starting_population_api(self):
+        starting_population_counts = self._store_starting_population()
+        expected = expected_starting_population(starting_population_counts)
+        result = self.client.get(STARTING_POPULATION_API_PATH)
+        assert result.status_code == 200
+        fetched_data = self._parseJSON(loads(result.data))
+        convert_hash_values_to_integers(fetched_data, EXCLUDE_SET)
+        assert fetched_data == expected

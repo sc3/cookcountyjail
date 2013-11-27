@@ -77,7 +77,10 @@ class DailyPopulation:
         for gender in GENDERS:
             for action in ACTIONS:
                 new_population[action] = 0
-                new_population[BASE_NAME_FORMATTER % (GENDER_NAME_MAP[gender], action)] = 0
+                action_gender_field = BASE_NAME_FORMATTER % (GENDER_NAME_MAP[gender], action)
+                new_population[action_gender_field] = 0
+                for race in RACES:
+                    new_population[BASE_NAME_FORMATTER % (action_gender_field, race.lower())] = 0
 
     def column_names(self):
         column_names = [DATE, POPULATION] + ACTIONS
@@ -181,6 +184,7 @@ class DailyPopulation:
             }
 
         row = self.next_entry(self._dict_from_column_names(), population_change_counts)
+        self._clear_booked_left_totals(row)
         try:
             with open(self.starting_population_path(), 'w') as f:
                 w = csv.writer(f)

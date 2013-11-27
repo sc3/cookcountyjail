@@ -29,25 +29,12 @@ VERSION_NUMBER = "2.0-dev"
 
 
 @app.route('/daily_population', methods=['GET'])
-def read_daily_population():
+def daily_population():
     """
     returns the set of summarized daily population changes.
     """
     return Response(DPC(app.config['DPC_DIR_PATH']).to_json(),  mimetype='application/json')
 
-
-@app.route('/version')
-def version_info():
-    """
-    returns the version info
-    """
-    args = request.args
-    if 'all' in args and args['all'] == '1':
-        r_val = []
-        previous_build_info('.', r_val)
-    else:
-        r_val = build_info(CURRENT_FILE_PATH)
-    return Response(dumps(r_val),  mimetype='application/json')
 
 @app.route('/os_env_info')
 def env_info():
@@ -62,6 +49,28 @@ def env_info():
         environ=str(request.environ)
         )
     return r_val
+
+
+@app.route('/starting_population', methods=['GET'])
+def starting_population():
+    """
+    returns the set of starting daily population values used to calculate daily changes.
+    """
+    return Response(dumps(DPC(app.config['DPC_DIR_PATH']).starting_population()),  mimetype='application/json')
+
+
+@app.route('/version')
+def version_info():
+    """
+    returns the version info
+    """
+    args = request.args
+    if 'all' in args and args['all'] == '1':
+        r_val = []
+        previous_build_info('.', r_val)
+    else:
+        r_val = build_info(CURRENT_FILE_PATH)
+    return Response(dumps(r_val),  mimetype='application/json')
 
 
 def build_info(fname):

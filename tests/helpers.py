@@ -157,11 +157,9 @@ def expected_starting_population(population_counts):
         expected[base_field_name] = population_counts[base_field_name]
         action_base_field_name = NAME_FORMATTER % (GENDER_NAME_MAP[gender], BOOKED)
         for race, count in population_counts[gender].iteritems():
-            expected[BOOKED] += count
             field_name = NAME_FORMATTER % (base_field_name, race.lower())
             expected[field_name] = count
-            expected[NAME_FORMATTER % (action_base_field_name, race.lower())] = count
-            expected[action_base_field_name] += count
+            expected[NAME_FORMATTER % (action_base_field_name, race.lower())] = 0
     return expected
 
 
