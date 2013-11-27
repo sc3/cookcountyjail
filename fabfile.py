@@ -259,7 +259,7 @@ def restart_gunicorn():
 
 def run_scraper():
     std_requires()
-    with cd(env.websites_path):
+    with cd(env.active):
         run('scripts/scraper.sh')
 
 
