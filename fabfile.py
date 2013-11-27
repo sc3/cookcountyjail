@@ -35,6 +35,7 @@ env.scripts_path = '%(active)s/scripts' % env
 env.build_info_path = 'build_info'
 env.current_build_id_path = '%(build_info_path)s/current' % env
 env.previous_build_id_path = '%(build_info_path)s/previous' % env
+env.email_build_id_path = '%(build_info_path)s/email' % env
 
 #
 # Installed Config
@@ -210,6 +211,10 @@ def files_are_different(fname_a, fname_b):
         return result.return_code != 0
 
 
+def email_name():
+    env.email = str(local('git config user.email', capture=True))
+
+
 def install_requirements():
     """
     Install the required packages using pip.
@@ -287,10 +292,12 @@ def store_build_info():
         and populate it with two files: 'current' and 'previous', containing
         commit ids pointing to the current website, and the last website,
         respectively. """
+    email_name()
     with cd(env.new_website_path):
         run('mkdir %(build_info_path)s' % env)
         run('echo %(current_build_id)s > %(previous_build_id_path)s' % env)
         run('echo %(latest_commit_id)s > %(current_build_id_path)s' % env)
+        run('echo %(email)s > %(email_build_id_path)s' % env)
 
 
 def sudo_cp(src_fname, trg_fname):

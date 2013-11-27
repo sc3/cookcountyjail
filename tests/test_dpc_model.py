@@ -5,7 +5,7 @@ from shutil import rmtree
 
 from ccj.models.daily_population import DailyPopulation
 from helpers import inmate_population, count_population, expected_starting_population,\
-    convert_hash_values_to_integers, DAY_BEFORE, change_counts, STARTING_DATE, UpdatePopulationCounts,\
+    convert_hash_values_to_integers, DAY_BEFORE, change_counts, UpdatePopulationCounts,\
     EXCLUDE_SET
 
 

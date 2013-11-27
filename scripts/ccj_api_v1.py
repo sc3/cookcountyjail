@@ -20,11 +20,15 @@ COOK_COUNTY_URL = 'http://cookcountyjail.recoveredfactory.net'
 COOK_COUNTY_INMATE_API = '%s/api/1.0/countyinmate' % COOK_COUNTY_URL
 BOOKING_DATE_URL_TEMPLATE = '%s?format=json&limit=0&booking_date__exact=%%s' % COOK_COUNTY_INMATE_API
 LEFT_DATE_URL_TEMPLATE = \
-    '%s?format=json&limit=0&discharge_date_earliest__gt=%%s&discharge_date_earliest__lt=%%s' % COOK_COUNTY_INMATE_API
+    '%s?format=json&limit=0&discharge_date_earliest__gte=%%s&discharge_date_earliest__lte=%%s' % COOK_COUNTY_INMATE_API
 NOT_DISCHARGED_URL_TEMPLATE = '%s?format=json&limit=0&booking_date__lte=%%s&discharge_date_earliest__isnull=True' %\
     COOK_COUNTY_INMATE_API
 DISCHARGED_ON_OR_AFTER_STARTING_DATE_URL_TEMPLATE  = \
-    '%s?format=json&limit=0&booking_date__lt=%%s&discharge_date_earliest__gt=%%s' % COOK_COUNTY_INMATE_API
+    '%s?format=json&limit=0&booking_date__lt=%%s&discharge_date_earliest__gte=%%s' % COOK_COUNTY_INMATE_API
+
+DATE_FORMAT = '%Y-%m-%d'
+OBJECTS = 'objects'
+
 
 class CcjApiV1:
 
@@ -32,12 +36,11 @@ class CcjApiV1:
         pass
 
     def booked_left(self, date_to_fetch):
-        booked_inmates_cmd = BOOKING_DATE_URL_TEMPLATE % date_to_fetch
+        start_of_day = self._convert_to_beginning_of_day(date_to_fetch)
+        booked_inmates_cmd = BOOKING_DATE_URL_TEMPLATE % start_of_day
         booked_inmates_response = requests.get(booked_inmates_cmd)
         assert booked_inmates_response.status_code == 200
-        day_before = str(datetime.strptime(date_to_fetch, '%Y-%m-%d').date() - timedelta(1))
-        day_after = str(datetime.strptime(date_to_fetch, '%Y-%m-%d').date() + timedelta(1))
-        left_inmates_cmd = LEFT_DATE_URL_TEMPLATE % (day_before, day_after)
+        left_inmates_cmd = LEFT_DATE_URL_TEMPLATE % (start_of_day, self._convert_to_end_of_day(date_to_fetch))
         left_inmates_response = requests.get(left_inmates_cmd)
         assert left_inmates_response.status_code == 200
         booked_inmates = loads(booked_inmates_response.text)
@@ -45,6 +48,14 @@ class CcjApiV1:
         left_inmates = loads(left_inmates_response.text)
         inmates.extend(self._parseJSON(left_inmates['objects']))
         return inmates
+
+    def _convert_to_beginning_of_day(self, starting_date):
+        starting_date_time = datetime.strptime(starting_date, DATE_FORMAT)
+        return starting_date_time.replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
+
+    def _convert_to_end_of_day(self, ending_date):
+        end_of_day = datetime.strptime(ending_date, DATE_FORMAT)
+        return end_of_day.replace(hour=23, minute=59, second=59, microsecond=0).isoformat()
 
     def _parseJSON(self, obj):
         if isinstance(obj, dict):
@@ -63,16 +74,15 @@ class CcjApiV1:
         return newobj
 
     def start_population_data(self, starting_date):
-        not_discharged_cmd = NOT_DISCHARGED_URL_TEMPLATE % starting_date
+        starting_date_time = self._convert_to_beginning_of_day(starting_date)
+        not_discharged_cmd = NOT_DISCHARGED_URL_TEMPLATE % starting_date_time
         not_discharged_response = requests.get(not_discharged_cmd)
         assert not_discharged_response.status_code == 200
-        day_before = str(datetime.strptime(starting_date, '%Y-%m-%d').date() - timedelta(1))
         discharged_on_or_after_start_date_command = \
-            DISCHARGED_ON_OR_AFTER_STARTING_DATE_URL_TEMPLATE % (starting_date, day_before)
+            DISCHARGED_ON_OR_AFTER_STARTING_DATE_URL_TEMPLATE % (starting_date_time, starting_date_time)
         discharged_response = requests.get(discharged_on_or_after_start_date_command)
         assert discharged_response.status_code == 200
-        not_discharged_response = loads(not_discharged_response.text)
-        inmates = self._parseJSON(copy(not_discharged_response['objects']))
-        discharged_response = self._parseJSON(loads(discharged_response.content))
-        inmates.extend(discharged_response['objects'])
+        inmates = self._parseJSON(copy(loads(not_discharged_response.text)[OBJECTS]))
+        discharged_data = self._parseJSON(loads(discharged_response.text)[OBJECTS])
+        inmates.extend(discharged_data)
         return inmates

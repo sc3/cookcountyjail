@@ -82,4 +82,4 @@ if __name__ == '__main__':
     sdp = SummarizeDailyPopulation()
     scraper = Scraper(ccj_api, dpc, sdp, STARTING_DATE)
     scraper.run()
-    print 'Scraper ran for %s' % str(date.today() - start_time)
+    print 'Scraper ran for %s' % str(datetime.today() - start_time)

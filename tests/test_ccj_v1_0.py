@@ -14,11 +14,11 @@ class Test_CcjV1:
 
     @httpretty.activate
     def test_booked_left(self):
-        booked_cmd = BOOKING_DATE_URL_TEMPLATE % STARTING_DATE
+        start_of_day = STARTING_DATE + 'T00:00:00'
+        end_of_day = STARTING_DATE + 'T23:59:59'
+        booked_cmd = BOOKING_DATE_URL_TEMPLATE % start_of_day
         expected_booked_value = [{'booked_val': 'booked value is %d' % randint(0, 25)}]
-        day_before = str(datetime.strptime(STARTING_DATE, '%Y-%m-%d').date() - timedelta(1))
-        day_after = str(datetime.strptime(STARTING_DATE, '%Y-%m-%d').date() + timedelta(1))
-        left_cmd = LEFT_DATE_URL_TEMPLATE % (day_before, day_after)
+        left_cmd = LEFT_DATE_URL_TEMPLATE % (start_of_day, end_of_day)
         expected_left_cmd = [{'left_val': 'left value is %d' % randint(0, 25)}]
 
         expected = copy(expected_booked_value)
@@ -49,10 +49,10 @@ class Test_CcjV1:
 
     @httpretty.activate
     def test_build_starting_population_count(self):
-        not_discharged_command = NOT_DISCHARGED_URL_TEMPLATE % STARTING_DATE
-        day_before = str(datetime.strptime(STARTING_DATE, '%Y-%m-%d').date() - timedelta(1))
+        starting_date_time = (STARTING_DATE + 'T00:00:00')
+        not_discharged_command = NOT_DISCHARGED_URL_TEMPLATE % starting_date_time
         discharged_after_start_date_command = \
-            DISCHARGED_ON_OR_AFTER_STARTING_DATE_URL_TEMPLATE % (STARTING_DATE, day_before)
+            DISCHARGED_ON_OR_AFTER_STARTING_DATE_URL_TEMPLATE % (starting_date_time, starting_date_time)
         book_not_null_inmate_records = discharged_null_inmate_records(randint(15, 31))
         discharged_on_or_after_start_date_records = \
             discharged_on_or_after_start_date_inmate_records(randint(21, 37))

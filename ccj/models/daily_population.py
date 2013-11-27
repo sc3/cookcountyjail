@@ -10,7 +10,13 @@ import os.path
 from copy import copy
 
 
-ACTIONS = ['booked', 'left']
+BASE_NAME_FORMATTER = '%s_%s'
+BOOKED = 'booked'
+DATE = 'date'
+LEFT = 'left'
+POPULATION = 'population'
+
+ACTIONS = [BOOKED, LEFT]
 GENDER_NAME_MAP = {'F': 'females', 'M': 'males'}
 GENDERS = ['F', 'M']
 RACES = ['AS', 'BK', 'IN', 'LT', 'UN', 'WH']
@@ -34,23 +40,25 @@ class DailyPopulation:
 
     def _add_booked(self, new_population, gender, population_changes):
         population_base_field_name = self._population_field_name(gender)
-        booked_base_field_name = '%s_%s' % (GENDER_NAME_MAP[gender], 'booked')
-        for race, counts in population_changes[gender]['booked'].iteritems():
+        booked_base_field_name = BASE_NAME_FORMATTER % (GENDER_NAME_MAP[gender], BOOKED)
+        for race, counts in population_changes[gender][BOOKED].iteritems():
             race_lower_case = race.lower()
-            new_population['population'] += counts
-            new_population[population_base_field_name] += counts
-            new_population['%s_%s' % (population_base_field_name, race_lower_case)] += counts
-            new_population['%s_%s' % (booked_base_field_name, race_lower_case)] = counts
+            for field_name in [POPULATION, population_base_field_name, BOOKED, booked_base_field_name,
+                               BASE_NAME_FORMATTER % (population_base_field_name, race_lower_case)]:
+                new_population[field_name] += counts
+            new_population[BASE_NAME_FORMATTER % (booked_base_field_name, race_lower_case)] = counts
 
     def _add_left(self, new_population, gender, population_changes):
         population_base_field_name = self._population_field_name(gender)
-        booked_base_field_name = '%s_%s' % (GENDER_NAME_MAP[gender], 'left')
-        for race, counts in population_changes[gender]['left'].iteritems():
+        left_base_field_name = BASE_NAME_FORMATTER % (GENDER_NAME_MAP[gender], LEFT)
+        for race, counts in population_changes[gender][LEFT].iteritems():
             race_lower_case = race.lower()
-            new_population['population'] -= counts
-            new_population[population_base_field_name] -= counts
-            new_population['%s_%s' % (population_base_field_name, race_lower_case)] -= counts
-            new_population['%s_%s' % (booked_base_field_name, race_lower_case)] = counts
+            for field_name in [POPULATION, population_base_field_name,
+                               BASE_NAME_FORMATTER % (population_base_field_name, race_lower_case)]:
+                new_population[field_name] -= counts
+            for field_name in [LEFT, left_base_field_name]:
+                new_population[field_name] += counts
+            new_population[BASE_NAME_FORMATTER % (left_base_field_name, race_lower_case)] = counts
 
     def clear(self):
         """ Write our fieldnames in CSV format to the file we're wrapping,
@@ -65,16 +73,26 @@ class DailyPopulation:
                             "configured for our file's creation on your system, "
                             "at '{0}'.".format(self._path))
 
+    def _clear_booked_left_totals(self, new_population):
+        for gender in GENDERS:
+            for action in ACTIONS:
+                new_population[action] = 0
+                action_gender_field = BASE_NAME_FORMATTER % (GENDER_NAME_MAP[gender], action)
+                new_population[action_gender_field] = 0
+                for race in RACES:
+                    new_population[BASE_NAME_FORMATTER % (action_gender_field, race.lower())] = 0
+
     def column_names(self):
-        column_names = ['date', 'population']
+        column_names = [DATE, POPULATION] + ACTIONS
         for gender in GENDERS:
             base_field_name = self._population_field_name(gender)
             column_names.append(base_field_name)
             for race in RACES:
-                column_names.append('%s_%s' % (base_field_name, race.lower()))
+                column_names.append(BASE_NAME_FORMATTER % (base_field_name, race.lower()))
         for gender in GENDERS:
             gender_long_name = GENDER_NAME_MAP[gender]
             for action in ACTIONS:
+                column_names.append(BASE_NAME_FORMATTER % (gender_long_name, action))
                 for race in RACES:
                     column_names.append('%s_%s_%s' % (gender_long_name, action, race.lower()))
         return column_names
@@ -107,7 +125,8 @@ class DailyPopulation:
 
     def next_entry(self, previous_population, population_changes):
         new_population = copy(previous_population)
-        new_population['date'] = population_changes['date']
+        self._clear_booked_left_totals(new_population)
+        new_population[DATE] = population_changes[DATE]
         for gender in GENDERS:
             self._add_booked(new_population, gender, population_changes)
             self._add_left(new_population, gender, population_changes)
@@ -115,7 +134,7 @@ class DailyPopulation:
 
     @staticmethod
     def _population_field_name(gender):
-        return 'population_females' if gender == 'F' else 'population_males'
+        return 'females_population' if gender == 'F' else 'males_population'
 
     def query(self):
         """
@@ -132,7 +151,7 @@ class DailyPopulation:
         if not the_previous_population:
             the_previous_population = self.starting_population()
         for key, value in the_previous_population.iteritems():
-            if key != 'date':
+            if key != DATE:
                 the_previous_population[key] = int(value)
         return the_previous_population
 
@@ -157,14 +176,15 @@ class DailyPopulation:
             'M': {'AS': 0, 'BK': 0, 'IN': 0, 'LT': 0, 'UN': 0, 'WH': 0},
         }
         """
-        population_change_counts = {'date': population_counts['date']}
+        population_change_counts = {DATE: population_counts[DATE]}
         for gender in GENDERS:
             population_change_counts[gender] = {
-                'booked': population_counts[gender],
-                'left': {'AS': 0, 'BK': 0, 'IN': 0, 'LT': 0, 'UN': 0, 'WH': 0}
+                BOOKED: population_counts[gender],
+                LEFT: {'AS': 0, 'BK': 0, 'IN': 0, 'LT': 0, 'UN': 0, 'WH': 0}
             }
 
         row = self.next_entry(self._dict_from_column_names(), population_change_counts)
+        self._clear_booked_left_totals(row)
         try:
             with open(self.starting_population_path(), 'w') as f:
                 w = csv.writer(f)
