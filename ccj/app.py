@@ -3,7 +3,7 @@
 #        processing should be pushed down into model files.
 #
 
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, Response
 from flask.json import dumps
 from flask.ext.sqlalchemy import SQLAlchemy
 from os import getcwd, path
@@ -33,7 +33,7 @@ def read_daily_population():
     """
     returns the set of summarized daily population changes.
     """
-    return DPC(app.config['DPC_DIR_PATH']).to_json()
+    return Response(DPC(app.config['DPC_DIR_PATH']).to_json(),  mimetype='application/json')
 
 
 @app.route('/version')
@@ -47,8 +47,7 @@ def version_info():
         previous_build_info('.', r_val)
     else:
         r_val = build_info(CURRENT_FILE_PATH)
-    return dumps(r_val)
-
+    return Response(dumps(r_val),  mimetype='application/json')
 
 @app.route('/os_env_info')
 def env_info():
