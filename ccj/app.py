@@ -23,8 +23,9 @@ db = SQLAlchemy(app)
 if app.config['IN_TESTING']:
     app.debug = True
 
-CURRENT_FILE_PATH = 'build_info/current'
-PREVIOUS_FILE_PATH = 'build_info/previous'
+BUILD_INFO_PATH = 'build_info'
+CURRENT_FILE_PATH = join(BUILD_INFO_PATH,'current')
+PREVIOUS_FILE_PATH = join(BUILD_INFO_PATH,'previous')
 VERSION_NUMBER = "2.0-dev"
 
 
@@ -69,36 +70,42 @@ def version_info():
         r_val = []
         previous_build_info('.', r_val)
     else:
-        r_val = build_info(CURRENT_FILE_PATH)
+        r_val = build_info('.')
     return Response(dumps(r_val),  mimetype='application/json')
 
 
-def build_info(fname):
-    return {'Version': VERSION_NUMBER, 'Build': current_build_info(fname), 'Deployed': deployed_at(fname)}
+def build_info(dir_name):
+    file_name = join(dir_name, CURRENT_FILE_PATH)
+    return {'Version': VERSION_NUMBER, 'Build': current_build_info(file_name), 'Deployed': deployed_at(file_name),
+            'Person': person_id(dir_name)}
 
 
-def current_build_info(fname):
-    return file_contents(fname, 'running-on-dev-box')
+def current_build_info(file_name):
+    return file_contents(file_name, 'running-on-dev-box')
 
 
-def deployed_at(fname):
-    if isfile(fname):
-        mtime = path.getmtime(fname)
+def deployed_at(file_name):
+    if isfile(file_name):
+        mtime = path.getmtime(file_name)
         r_val = datetime.fromtimestamp(mtime)
     else:
         r_val = STARTUP_TIME
     return str(r_val)
 
 
-def file_contents(fname, default_rvalue):
-    if isfile(fname):
-        with open(fname, 'r') as f:
+def file_contents(file_name, default_rvalue):
+    if isfile(file_name):
+        with open(file_name, 'r') as f:
             return f.read().strip()
     return default_rvalue
 
 
+def person_id(dir_name):
+    return file_contents(join(dir_name, 'email'), 'Brian or Norbert')
+
+
 def previous_build_info(dir_path, r_val):
-    r_val.append(build_info(join(dir_path, CURRENT_FILE_PATH)))
-    previous_fname = join(dir_path, PREVIOUS_FILE_PATH)
-    if isfile(previous_fname):
-        previous_build_info(join('..', file_contents(previous_fname, '')), r_val)
+    r_val.append(build_info(join(dir_path, BUILD_INFO_PATH)))
+    previous_file_name = join(dir_path, PREVIOUS_FILE_PATH)
+    if isfile(previous_file_name):
+        previous_build_info(join('..', file_contents(previous_file_name, '')), r_val)
