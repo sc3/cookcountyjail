@@ -131,7 +131,7 @@ class DailyPopulation:
 
     @staticmethod
     def _population_field_name(gender):
-        return 'population_females' if gender == 'F' else 'population_males'
+        return 'females_population' if gender == 'F' else 'males_population'
 
     def query(self):
         """

@@ -190,7 +190,7 @@ def pick_race(gender):
 
 
 def population_field_name(gender):
-    return 'population_females' if gender == 'F' else 'population_males'
+    return 'females_population' if gender == 'F' else 'males_population'
 
 
 class RandomDates:
