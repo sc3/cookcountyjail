@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #
-# This runs the scaper job for the 2.0 API.
+# This runs the scraper job for the 2.0 API.
 # This is intended to be called as a cron job.
 #
 
