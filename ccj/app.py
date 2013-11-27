@@ -106,7 +106,7 @@ def person_id(dir_name):
 
 
 def previous_build_info(dir_path, r_val):
-    r_val.append(build_info(join(dir_path, BUILD_INFO_PATH)))
+    r_val.append(build_info(dir_path))
     previous_file_name = join(dir_path, PREVIOUS_FILE_PATH)
     if isfile(previous_file_name):
         previous_build_info(join('..', file_contents(previous_file_name, '')), r_val)
