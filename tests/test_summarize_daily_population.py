@@ -17,5 +17,5 @@ class Test_SummarizeDailyPopulation:
     def test_summarize_population_changes(self):
         inmates = inmate_population()
         expected = change_counts(inmates)
-
         assert self.sdp.summarize(STARTING_DATE, inmates) == expected
+
