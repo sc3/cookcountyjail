@@ -1,5 +1,5 @@
 #
-# Common Tasks associated with Cook Count Jail 2.0 API project.
+# Common Tasks associated with Cook County Jail 2.0 API project.
 #
 
 from invoke import task, run
@@ -20,7 +20,8 @@ def deploy():
 
 @task
 def scraper():
-    run('python scripts/scraper.py')
+    with _TestModeOn():
+        run('python -3 scripts/scraper.py')
 
 
 @task
@@ -29,7 +30,7 @@ def test_server():
     Runs the server with testing mode on
     """
     with _TestModeOn():
-        run('./manage.py')
+        run('python -3 manage.py')
 
 
 @task
@@ -42,7 +43,7 @@ def test(name=''):
 @task
 def tests():
     with _TestModeOn():
-        pytest.main()
+        run('python -3 -m py.test')
 
 
 @task
