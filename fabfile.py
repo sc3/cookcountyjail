@@ -324,11 +324,7 @@ def tests_pass():
     Returns true if the tests run correctly, otherwise false
     """
     std_requires()
-    #return tests(env.new_website_path) == 0
-    with activate_cmd():
-        with cd(env.new_website_path):
-            result = run('false', warn_only=True)
-            return result.return_code == 0
+    return tests(env.new_website_path) == 0
 
 
 def try_update_all_config_files():
