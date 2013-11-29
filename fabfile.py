@@ -87,20 +87,6 @@ def deploy():
     restart_gunicorn()
 
 
-def rollback():
-    """
-    Revert to the previous build of the website, re-set config files,
-    and delete the version of the website from which we have backed off.
-    """
-    std_requires()
-    if capture_previous_build_id():
-        capture_current_build_id()
-        link_to_new_website(env.previous_build_id)
-        try_update_all_config_files()
-        restart_gunicorn()
-        remove_website(env.current_build_id)
-
-
 def activate_cmd():
     """
     Wrapper command to activate virtualenv with a context manager construct,
@@ -192,7 +178,10 @@ def create_latest_website():
         copy_repo_to_new_website()
         store_build_info()
         install_requirements()
-        link_to_new_website(env.latest_commit_id)
+        if tests_pass():
+            link_to_new_website(env.latest_commit_id)
+        else:
+            remove_website(env.latest_commit_id)
 
 
 def create_new_website_directory():
@@ -202,17 +191,17 @@ def create_new_website_directory():
     run('mkdir -p %(new_website_path)s' % env)
 
 
-def files_are_different(fname_a, fname_b):
+def email_name():
+    env.email = str(local('git config user.email', capture=True))
+
+
+def files_are_different(file_name_a, file_name_b):
     """
     Returns True if the two named files are different, False otherwise.
     """
     with settings(hide('warnings', 'stdout', 'stderr'), warn_only=True):
-        result = run("diff -q '%s' '%s'" % (fname_a, fname_b))
+        result = run("diff -q '%s' '%s'" % (file_name_a, file_name_b))
         return result.return_code != 0
-
-
-def email_name():
-    env.email = str(local('git config user.email', capture=True))
 
 
 def install_requirements():
@@ -255,6 +244,20 @@ def restart_nginx():
 def restart_gunicorn():
     """Restart Gunicorn webserver on which the Flask app runs."""
     service_restart(env.full_project)
+
+
+def rollback():
+    """
+    Revert to the previous build of the website, re-set config files,
+    and delete the version of the website from which we have backed off.
+    """
+    std_requires()
+    if capture_previous_build_id():
+        capture_current_build_id()
+        link_to_new_website(env.previous_build_id)
+        try_update_all_config_files()
+        restart_gunicorn()
+        remove_website(env.current_build_id)
 
 
 def run_scraper():
@@ -312,7 +315,20 @@ def tests(path=env.active):
     std_requires()
     with cd(path):
         with activate_cmd():
-            run('invoke tests')
+            result = run('invoke tests', warn_only=True)
+            return result.return_code
+
+
+def tests_pass():
+    """
+    Returns true if the tests run correctly, otherwise false
+    """
+    std_requires()
+    #return tests(env.new_website_path) == 0
+    with activate_cmd():
+        with cd(env.new_website_path):
+            result = run('false', warn_only=True)
+            return result.return_code == 0
 
 
 def try_update_all_config_files():
