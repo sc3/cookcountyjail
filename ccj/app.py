@@ -54,7 +54,7 @@ def starting_population():
     """
     returns the set of starting daily population values used to calculate daily changes.
     """
-    return Response(dumps(DPC(app.config['DPC_DIR_PATH']).starting_population()),  mimetype='application/json')
+    return Response(dumps(DPC(app.config['DPC_DIR_PATH']).starting_population()), headers={'Access-Control-Allow-Origin': '*'}, mimetype='application/json')
 
 
 @app.route('/version')
