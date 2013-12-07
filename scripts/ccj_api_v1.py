@@ -44,34 +44,36 @@ class CcjApiV1:
         left_inmates_response = requests.get(left_inmates_cmd)
         assert left_inmates_response.status_code == 200
         booked_inmates = loads(booked_inmates_response.text)
-        inmates = self._parseJSON(copy(booked_inmates['objects']))
+        inmates = self._parse_json(copy(booked_inmates['objects']))
         left_inmates = loads(left_inmates_response.text)
-        inmates.extend(self._parseJSON(left_inmates['objects']))
+        inmates.extend(self._parse_json(left_inmates['objects']))
         return inmates
 
-    def _convert_to_beginning_of_day(self, starting_date):
+    @staticmethod
+    def _convert_to_beginning_of_day(starting_date):
         starting_date_time = datetime.strptime(starting_date, DATE_FORMAT)
         return starting_date_time.replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
 
-    def _convert_to_end_of_day(self, ending_date):
+    @staticmethod
+    def _convert_to_end_of_day(ending_date):
         end_of_day = datetime.strptime(ending_date, DATE_FORMAT)
         return end_of_day.replace(hour=23, minute=59, second=59, microsecond=0).isoformat()
 
-    def _parseJSON(self, obj):
+    def _parse_json(self, obj):
         if isinstance(obj, dict):
-            newobj = {}
+            new_obj = {}
             for key, value in obj.iteritems():
                 key = str(key)
-                newobj[key] = self._parseJSON(value)
+                new_obj[key] = self._parse_json(value)
         elif isinstance(obj, list):
-            newobj = []
+            new_obj = []
             for value in obj:
-                newobj.append(self._parseJSON(value))
+                new_obj.append(self._parse_json(value))
         elif isinstance(obj, unicode):
-            newobj = str(obj)
+            new_obj = str(obj)
         else:
-            newobj = obj
-        return newobj
+            new_obj = obj
+        return new_obj
 
     def start_population_data(self, starting_date):
         starting_date_time = self._convert_to_beginning_of_day(starting_date)
@@ -82,7 +84,7 @@ class CcjApiV1:
             DISCHARGED_ON_OR_AFTER_STARTING_DATE_URL_TEMPLATE % (starting_date_time, starting_date_time)
         discharged_response = requests.get(discharged_on_or_after_start_date_command)
         assert discharged_response.status_code == 200
-        inmates = self._parseJSON(copy(loads(not_discharged_response.text)[OBJECTS]))
-        discharged_data = self._parseJSON(loads(discharged_response.text)[OBJECTS])
+        inmates = self._parse_json(copy(loads(not_discharged_response.text)[OBJECTS]))
+        discharged_data = self._parse_json(loads(discharged_response.text)[OBJECTS])
         inmates.extend(discharged_data)
         return inmates

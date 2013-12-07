@@ -47,7 +47,8 @@ class Scraper:
     def _last_population_date(self):
         return datetime.strptime(self._dpc.previous_population()['date'], '%Y-%m-%d').date()
 
-    def _next_day(self, a_date):
+    @staticmethod
+    def _next_day(a_date):
         return a_date + ONE_DAY
 
     def run(self):
@@ -70,9 +71,9 @@ class Scraper:
                                                                              day_before_starting_date)
         self._dpc.store_starting_population(starting_population_counts)
 
-    def _yesterday(self):
+    @staticmethod
+    def _yesterday():
         return date.today() - timedelta(1)
-
 
 
 if __name__ == '__main__':
