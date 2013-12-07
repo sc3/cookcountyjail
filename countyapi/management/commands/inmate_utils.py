@@ -1,4 +1,4 @@
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 import logging
 from inmate_details import InmateDetails
 from utils import convert_to_int, join_with_space_and_convert_spaces, just_empty_lines, strip_the_lines
@@ -18,6 +18,8 @@ from countyapi.models import CountyInmate, CourtLocation, HousingLocation
 
 
 log = logging.getLogger('main')
+
+ONE_DAY = timedelta(1)
 
 
 def clear_discharged(inmate):
@@ -166,7 +168,8 @@ def process_housing_location(location_object):
     elif location_start == 4:
         set_location_04_values(location_object, location_segments)
 
-    set_sub_division(location_object, join_with_space_and_convert_spaces(location_segments[1:3], ""), location_segments[3:])
+    set_sub_division(location_object, join_with_space_and_convert_spaces(location_segments[1:3], ""),
+                     location_segments[3:])
     return
 
 
@@ -176,11 +179,11 @@ def set_day_release(location_object, location_segments):
             location_object.in_program = "Day Release"
             location_object.in_jail = False
         elif element == "DRAW":
-            location_object.in_program == "Day Release, AWOL"
+            location_object.in_program = "Day Release, AWOL"
             location_object.in_jail = False
 
 
-def set_location_04_values(location_object, location_segments):
+def set_location_04_values(location_object, _):
     if "M1" in location_object.housing_location:
         location_object.in_program = "Protective Custody"
     elif "N1" in location_object.housing_location:
@@ -259,7 +262,8 @@ def store_charges(inmate, inmate_details):
     if len(inmate.charges_history.all()) != 0:
         inmate_latest_charge = inmate.charges_history.latest('date_seen')  # last known charge
         # if the last known charge is different than the current info then create a new charge
-        if inmate_latest_charge.charges == parsed_charges and inmate_latest_charge.charges_citation == parsed_charges_citation:
+        if inmate_latest_charge.charges == parsed_charges and \
+           inmate_latest_charge.charges_citation == parsed_charges_citation:
             create_new_charge = False
     if create_new_charge:
         try:
@@ -275,16 +279,23 @@ def store_charges(inmate, inmate_details):
 def store_housing_location(inmate, inmate_details):
     housing_location = inmate_details.housing_location()
     if housing_location != '':
-        inmate_housing_location, created_location = HousingLocation.objects.get_or_create(housing_location=housing_location)
-        process_housing_location(inmate_housing_location)
         try:
-            housing_history, new_history = inmate.housing_history.get_or_create(housing_location=inmate_housing_location)
-            if new_history:
-                housing_history.housing_date_discovered = date.today()
-            housing_history.save()
-            inmate_housing_location.save()
+            inmate_housing_location, created_location = \
+                HousingLocation.objects.get_or_create(housing_location=housing_location)
+            if created_location:
+                process_housing_location(inmate_housing_location)
+                inmate_housing_location.save()
         except DatabaseError as e:
             log.debug("Could not save housing location '%s'\nException is %s" % (inmate.housing_location, str(e)))
+        try:
+            housing_history, new_history = \
+                inmate.housing_history.get_or_create(housing_location=inmate_housing_location)
+            if new_history:
+                housing_history.housing_date_discovered = date.today() - ONE_DAY
+                housing_history.save()
+        except DatabaseError as e:
+            log.debug("Could not save housing history '%s'\nException is %s" % (housing_history.housing_location_id,
+                                                                                str(e)))
 
 
 def store_inmates_details(base_url, inmate_urls, limit=None, records=0):
@@ -312,11 +323,10 @@ def store_next_court_info(inmate, inmate_details):
     if next_court_date is not None:
         # Get location record by parsing next Court location string
         next_court_location, parsed_location = parse_court_location(inmate_details.court_house_location())
-        location, new_location = CourtLocation.objects.get_or_create(location=next_court_location, **parsed_location)
+        location, _ = CourtLocation.objects.get_or_create(location=next_court_location, **parsed_location)
 
         # Get or create a court date for this inmate
-        court_date, new_court_date = inmate.court_dates.get_or_create(date=next_court_date.strftime('%Y-%m-%d'),
-                                                                      location=location)
+        inmate.court_dates.get_or_create(date=next_court_date.strftime('%Y-%m-%d'), location=location)
 
 
 def store_physical_characteristics(inmate, inmate_details):
