@@ -2,6 +2,9 @@ from fabric.api import settings, abort, local, lcd, env, prefix, cd, require, \
     run, sudo, hide
 from fabric.contrib.console import confirm
 from fabric.contrib.files import exists
+from datetime import date
+from os.path import join as file_join
+
 
 # Some global variables. Need some tweaking to make them more modular
 HOME = '~'
@@ -11,7 +14,6 @@ COOKCOUNTY_ENV_PATH = '%s/%s' % (VIRTUALENVS_DIRECTORY, VIRTUALENV_NAME)  # wher
 PROJECT_PATH = '~/cookcountyjail'  # change to where the project is located
 SOURCE_CODE_SITE = 'https://github.com/sc3/cookcountyjail'
 WEBSITE = 'website'
-
 
 """
 Base environment
@@ -25,6 +27,7 @@ env.apps = '%(home)s/apps' % env
 env.path = '%(apps)s/%(project)s' % env
 env.static_files_dir = '%(path)s/templates' % env
 env.config_dir = '%(path)s/config' % env
+env.backup_dirs = 'website/1.0/db_backups'
 
 ######## Gunicorn Upstart Config #########
 
@@ -53,7 +56,6 @@ filesets = {
 
 env.use_ssh_config = True
 
-
 """
 Environments
 """
@@ -74,10 +76,9 @@ def staging():
     env.settings = 'staging'
     env.hosts = ['cookcountyjail.beta.recoveredfactory.net']
 
-
-"""
-Branches
-"""
+#
+# Branches
+#
 
 
 def stable():
@@ -101,9 +102,9 @@ def branch(branch_name):
     env.branch = branch_name
 
 
-"""
-Deployment
-"""
+#
+# Deployment
+#
 
 
 def deploy():
@@ -154,7 +155,7 @@ def try_update_all_config_files():
     """
     Conditionally update all config files, and handle results.
     """
-    result1 = try_update_config_file('upstart')
+    _ = try_update_config_file('upstart')
     result2 = try_update_config_file('nginx_1')
     result3 = try_update_config_file('nginx_m')
 
@@ -217,9 +218,9 @@ def v1_static():
         run("ln -sf '%(static_files_dir)s' static" % env)
 
 
-"""
-Install (@TODO refactor into server setup + local bootstrap)
-"""
+#
+# Install (@TODO refactor into server setup + local bootstrap)
+#
 
 
 def pre_requirements():
@@ -232,11 +233,11 @@ def pre_requirements():
     local('sudo apt-get install ' + " ".join(unfulfilled_reqs + pre_reqs))
 
 
-def install_project_requirements(file='requirements.txt'):
-    local('%s pip install -r %s' % (start_env(), file))
+def install_project_requirements(requirements_file='requirements.txt'):
+    local('%s pip install -r %s' % (start_env(), requirements_file))
 
 
-def create_env(env_name=VIRTUALENV_NAME, envs_path=VIRTUALENVS_DIRECTORY, home=HOME):
+def create_env(env_name=VIRTUALENV_NAME, envs_path=VIRTUALENVS_DIRECTORY, home=env.home):
     """Make a vitualenv at the envs_path named env_name"""
     with lcd(home):
         local('mkdir %s' % envs_path)
@@ -249,11 +250,22 @@ def start_env(env_path=COOKCOUNTY_ENV_PATH):
     Function to activate the virtualenv warning only returns a string to be used and not
     actually locals the env
     """
-    return ('source %s/bin/activate && ' % env_path)
+    return 'source %s/bin/activate && ' % env_path
 
 
 def clone_repo(repo_path=SOURCE_CODE_SITE):
     local('git clone %s' % repo_path)
+
+
+def dump_db():
+    dump_db_file_name = 'cookcountyjail-%s.json' % str(date.today())
+    target_file_path = file_join(env.home, file_join(env.backup_dirs, dump_db_file_name))
+    with cd(env.path):
+        with activate_cmd():
+            run('python ./manage.py dumpdata countyapi > %s' % target_file_path)
+    with cd(env.backup_dirs):
+        run('gzip -f %s' % dump_db_file_name)
+        run('rm -f latest.json.gz; ln -s %s.gz latest.json.gz' % dump_db_file_name)
 
 
 def syncdb():
@@ -263,7 +275,7 @@ def syncdb():
 def migrate(app):
     if not app:
         abort('Provide the app to be migrated')
-    local(start_env()+'./manage.py migrate %s' % app)
+    local(start_env() + './manage.py migrate %s' % app)
 
 
 def complete_setup():

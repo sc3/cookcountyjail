@@ -512,7 +512,7 @@ class CountyInmateResource(JailResource):
         list_allowed_methods = ['get', 'post', 'put', 'delete']
         detail_allowed_methods = ['get', 'post', 'put', 'delete']
         authorization = JailAuthorization()
-        excludes = ['last_seen_date', 'url']
+        excludes = ['last_seen_date']
         filtering = {
             'jail_id': ALL,
             'booking_date': ALL,

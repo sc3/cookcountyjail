@@ -18,6 +18,7 @@ class CountyInmate(models.Model):
     age_at_booking = models.IntegerField(null=True, blank=True)
     bail_status = models.CharField(max_length=50, null=True)
     bail_amount = models.IntegerField(null=True, blank=True)
+    #incarcerated = models.BooleanField(default=True)
 
     def __unicode__(self):
         return self.jail_id
@@ -36,6 +37,7 @@ class CourtDate(models.Model):
 
     class Meta:
         ordering = ['date']
+        get_latest_by = 'date'
 
 
 class CourtLocation(models.Model):
@@ -59,6 +61,10 @@ class HousingHistory(models.Model):
     inmate = models.ForeignKey('CountyInmate', related_name='housing_history')
     housing_location = models.ForeignKey('HousingLocation', related_name='housing_history')
     housing_date_discovered = models.DateField(null=True)
+
+    class Meta:
+        ordering = ['housing_date_discovered']
+        get_latest_by = 'housing_date_discovered'
 
 
 class HousingLocation(models.Model):
