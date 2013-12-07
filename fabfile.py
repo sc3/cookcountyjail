@@ -144,6 +144,13 @@ def checkout_latest():
         run('git pull origin %(branch)s' % env)
 
 
+def clear_cache():
+    """
+    Clears the Nginx cache
+    """
+    sudo('find /var/www/cache -type f -delete')
+
+
 def files_are_different(fname_a, fname_b):
     """Returns True if the two named files are different, False otherwise."""
     with settings(hide('warnings', 'stdout', 'stderr'), warn_only=True):

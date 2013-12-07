@@ -14,4 +14,6 @@ server {
         default_type text/html;
         try_files $uri $uri/index.html =404;
     }
+
+    log_format combined
 }
