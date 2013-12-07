@@ -1,21 +1,24 @@
 proxy_temp_path /var/www/cache/tmp;
 proxy_cache_path  /var/www/cache levels=1:2 keys_zone=cookcountyjail:8m max_size=1000m inactive=600m;
 
-server {
-
-    listen   80;
-    server_name ec2-54-234-175-21.compute-1.amazonaws.com;
-
-    include conf.d/nginx-v1.conf;
-    include conf.d/nginx-v2.conf;
-
-    location / {
-        root /home/ubuntu/website/static;
-        default_type text/html;
-        try_files $uri $uri/index.html =404;
-    }
+http {
 
     log_format main '$remote_addr - $remote_user [$time_local]  $status '
                     '"$request" $body_bytes_sent "$http_referer" '
                     '"$http_user_agent" "$http_x_forwarded_for"';
+
+    server {
+
+        listen   80;
+        server_name ec2-54-234-175-21.compute-1.amazonaws.com;
+
+        include conf.d/nginx-v1.conf;
+        include conf.d/nginx-v2.conf;
+
+        location / {
+            root /home/ubuntu/website/static;
+            default_type text/html;
+            try_files $uri $uri/index.html =404;
+        }
+    }
 }
