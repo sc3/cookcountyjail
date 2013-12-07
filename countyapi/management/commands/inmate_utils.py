@@ -291,7 +291,7 @@ def store_housing_location(inmate, inmate_details):
             housing_history, new_history = \
                 inmate.housing_history.get_or_create(housing_location=inmate_housing_location)
             if new_history:
-                housing_history.housing_date_discovered = date.today() - ONE_DAY
+                housing_history.housing_date_discovered = yesterday()
                 housing_history.save()
         except DatabaseError as e:
             log.debug("Could not save housing history '%s'\nException is %s" % (housing_history.housing_location_id,
@@ -335,3 +335,7 @@ def store_physical_characteristics(inmate, inmate_details):
     inmate.height = inmate_details.height()
     inmate.weight = inmate_details.weight()
     inmate.age_at_booking = inmate_details.age_at_booking()
+
+
+def yesterday():
+    return date.today() - ONE_DAY
