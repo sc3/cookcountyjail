@@ -15,5 +15,7 @@ server {
         try_files $uri $uri/index.html =404;
     }
 
-    log_format combined
+    log_format main '$remote_addr - $remote_user [$time_local]  $status '
+                    '"$request" $body_bytes_sent "$http_referer" '
+                    '"$http_user_agent" "$http_x_forwarded_for"';
 }
