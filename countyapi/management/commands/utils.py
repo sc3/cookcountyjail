@@ -18,6 +18,7 @@ STD_SLEEP_PERIODS = [1.61, 7, 13, 23, 41]
 
 log = logging.getLogger('main')
 
+
 def discharge_inmates(last_date_scraped):
     """
     Discharges all the inmates who weren't seen last in the 'last date scraped'.
@@ -81,31 +82,21 @@ def obj_to_datetime(obj_to_parse):
     else:
         raise TypeError("Unable to parse obj_to_parse type's")
 
-def parse_str_to_date(date_to_parse):
-    """
-    Converts strings of the format YYYY-MM-DD to list object splitted at '-'
-    """
-    today = date.today()
-    
-    date_elements = date_to_parse.split('-')
-    
-    if len(date_elements) != 3:
-        return None
-    else:
-        return date_elements
 
 def convert_to_date(date_to_convert):
     """
     Parses a string into datetime object. If string isn't in the right format, returns date.today().
     date_to_convert = A string object in the format of YYYY-MM-DD
     """
+    today = date.today()
     date_elements = parse_str_to_date(date_to_convert)
     if date_elements:
         return date(convert_to_int(date_elements[0], today.year),
-                convert_to_int(date_elements[1], today.month),
-                convert_to_int(date_elements[2], today.day))
-    else:
-        return date.today()
+                    convert_to_int(date_elements[1], today.month),
+                    convert_to_int(date_elements[2], today.day))
+    return today
+
+
 def convert_to_datetime(date_to_convert):
     """
     Parses a string into datetime object. If string isn't in the right format, unlike convert_to_date, returns None.
@@ -201,6 +192,16 @@ def just_empty_lines(lines):
         if len(line) > 0:
             return False
     return True
+
+
+def parse_str_to_date(date_to_parse):
+    """
+    Converts strings of the format YYYY-MM-DD to list object splitted at '-'
+    """
+    date_elements = date_to_parse.split('-')
+    if len(date_elements) == 3:
+        return date_elements
+    return None
 
 
 def strip_line(line):
