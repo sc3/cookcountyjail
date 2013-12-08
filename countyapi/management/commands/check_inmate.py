@@ -15,11 +15,11 @@ log = logging.getLogger('main')
 
 class Command(BaseCommand):
     """
-    Checks to see if inmate specifed by a jail_id exists in the Cook County Jail System.
-    If they do then if they are not in the datebase an entry is created for them, if
-    they are in the dtaabase then the entry is updated. If the inmate is not in CCJ System
+    Checks to see if inmate specified by a jail_id exists in the Cook County Jail System.
+    If they do then if they are not in the database an entry is created for them, if
+    they are in the database then the entry is updated. If the inmate is not in CCJ System
     then if they have an entry in the database and the entry is not marked as discharged
-    then the inmate is marked as discharged in the databaae.
+    then the inmate is marked as discharged in the database.
     """
     help = "Checks if inmate is listed on Cook County Sheriff's website and updates database accordingly."
     option_list = BaseCommand.option_list + (
@@ -27,15 +27,15 @@ class Command(BaseCommand):
                     help='Specify inmate, with a jail_id to check on.'),
     )
 
-    __COOK_COUNTY_INMATE_DETAILS_URL = \
+    _COOK_COUNTY_INMATE_DETAILS_URL = \
         'http://www2.cookcountysheriff.org/search2/details.asp?jailnumber='
-    __NUMBER_OF_ATTEMPTS = 5
+    _NUMBER_OF_ATTEMPTS = 5
 
     # does not take use the args and options parameters
     def handle(self, *args, **options):
         if options['jail_id']:
-            inmate_details = InmateDetails(self.__COOK_COUNTY_INMATE_DETAILS_URL + options['jail_id'],
-                                           attempts=self.__NUMBER_OF_ATTEMPTS, quiet=True)
+            inmate_details = InmateDetails(self._COOK_COUNTY_INMATE_DETAILS_URL + options['jail_id'],
+                                           attempts=self._NUMBER_OF_ATTEMPTS, quiet=True)
             if inmate_details.found():
                 create_update_inmate(inmate_details)
             else:
