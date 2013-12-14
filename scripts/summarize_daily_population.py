@@ -4,7 +4,6 @@
 #
 
 from copy import copy
-from datetime import datetime
 from helpers import GENDERS, RACE_COUNTS, RACE_MAP
 
 
