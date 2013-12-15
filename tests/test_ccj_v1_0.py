@@ -9,11 +9,10 @@ from scripts.ccj_api_v1 import CcjApiV1, BOOKING_DATE_URL_TEMPLATE, LEFT_DATE_UR
     NOT_DISCHARGED_URL_TEMPLATE, DISCHARGED_ON_OR_AFTER_STARTING_DATE_URL_TEMPLATE
 
 
-class Test_CcjV1:
+class TestCcjV1:
 
-    @staticmethod
     @httpretty.activate
-    def test_booked_left():
+    def test_booked_left(self):
         start_of_day = STARTING_DATE + 'T00:00:00'
         end_of_day = STARTING_DATE + 'T23:59:59'
         booked_cmd = BOOKING_DATE_URL_TEMPLATE % start_of_day
@@ -48,9 +47,8 @@ class Test_CcjV1:
         assert ccj_api_requests['booked_cmd'] and ccj_api_requests['left_cmd']
         assert booked_left == expected
 
-    @staticmethod
     @httpretty.activate
-    def test_build_starting_population_count():
+    def test_build_starting_population_count(self):
         starting_date_time = (STARTING_DATE + 'T00:00:00')
         not_discharged_command = NOT_DISCHARGED_URL_TEMPLATE % starting_date_time
         discharged_after_start_date_command = \

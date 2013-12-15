@@ -16,7 +16,7 @@ DAILY_POPULATION_API_PATH = '/daily_population'
 STARTING_POPULATION_API_PATH = '/starting_population'
 
 
-class Test_DailyPopulationChanges_API:
+class TestDailyPopulationChangesApi:
 
     def _parseJSON(self, obj):
         if isinstance(obj, dict):

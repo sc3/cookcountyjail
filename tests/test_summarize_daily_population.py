@@ -3,7 +3,7 @@ from scripts.summarize_daily_population import SummarizeDailyPopulation
 from helpers import change_counts, count_population, inmate_population, STARTING_DATE
 
 
-class Test_SummarizeDailyPopulation:
+class TestSummarizeDailyPopulation:
 
     def setup_method(self, method):
         self.sdp = SummarizeDailyPopulation()

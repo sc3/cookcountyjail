@@ -2,11 +2,11 @@
 # Contains helper functions for testing
 #
 
-from random import randint
+from random import randint, choice
 from datetime import datetime, date, timedelta
 from copy import copy
 from scripts.helpers import RACE_MAP
-
+import string
 
 #
 # The following distribution are based on analysis of inmates collected from
@@ -65,6 +65,27 @@ NEXT_DAY = '2013-07-23'
 NAME_FORMATTER = '%s_%s'
 
 RACE_COUNTS = {'AS': 0, 'BK': 0, 'IN': 0, 'LT': 0, 'UN': 0, 'WH': 0}
+
+JAIL_ID = 'jail_id'
+
+RACE_IDS_MAP = {
+    'A': 'AS',
+    'AS': 'AS',
+    'B': 'BK',
+    'BK': 'BK',
+    'IN': 'IN',
+    'LB': 'LT',
+    'LT': 'LT',
+    'LW': 'LT',
+    'W': 'WH',
+    'WH': 'WH'
+}
+
+
+def add_jail_id(inmates):
+    for inmate in inmates:
+        inmate[JAIL_ID] = str(id(inmate))
+    return inmates
 
 
 def change_counts(inmates):
@@ -127,17 +148,17 @@ def count_population(inmates, population_date=None, calculate_totals=True):
 def discharged_null_inmate_records(number_to_make):
     starting_datetime = STARTING_DATE + 'T00:00:00'
     how_many_to_make = {'F': number_to_make / 2, 'M': number_to_make}
-    return [{GENDER: gender, RACE: pick_race(gender), BOOKING_DATE: starting_datetime,
-             DISCHARGE_DATE_EARLIEST: None}
-            for gender, count in how_many_to_make.iteritems() for i in range(0, count)]
+    return add_jail_id([{GENDER: gender, RACE: pick_race(gender), BOOKING_DATE: starting_datetime,
+                         DISCHARGE_DATE_EARLIEST: None}
+                        for gender, count in how_many_to_make.iteritems() for i in range(0, count)])
 
 
 def discharged_on_or_after_start_date_inmate_records(number_to_make, discharged_date='Random'):
     how_many_to_make = {'F': number_to_make / 2, 'M': number_to_make}
     discharge_date = RandomDates(discharged_date)
-    return [{GENDER: gender, RACE: pick_race(gender), BOOKING_DATE: DAY_BEFORE,
-             DISCHARGE_DATE_EARLIEST: discharge_date.next()}
-            for gender, count in how_many_to_make.iteritems() for i in range(0, count)]
+    return add_jail_id([{GENDER: gender, RACE: pick_race(gender), BOOKING_DATE: DAY_BEFORE,
+                         DISCHARGE_DATE_EARLIEST: discharge_date.next()}
+                        for gender, count in how_many_to_make.iteritems() for i in range(0, count)])
 
 
 def expected_starting_population(population_counts):
@@ -179,6 +200,12 @@ def inmate_population():
         discharged_on_or_after_start_date_inmate_records(randint(low, high))
 
 
+def map_race_id(source_race_id):
+    if source_race_id in RACE_IDS_MAP:
+        return RACE_IDS_MAP[source_race_id]
+    return 'UN'
+
+
 def pick_race(gender):
     distribution = FEMALE_DISTRIBUTION if gender == 'F' else MALE_DISTRIBUTION
     point = randint(1, 1000)
@@ -189,6 +216,10 @@ def pick_race(gender):
 
 def population_field_name(gender):
     return 'females_population' if gender == 'F' else 'males_population'
+
+
+def random_string(str_length=10):
+    return ''.join([choice(string.ascii_letters + string.digits) for _ in xrange(str_length)])
 
 
 class RandomDates:

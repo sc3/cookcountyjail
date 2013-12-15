@@ -5,7 +5,12 @@
 import os
 
 
+GENDER = 'gender'
 GENDERS = ['F', 'M']
+IN_JAIL = 'in_jail'
+JAIL_ID = 'jail_id'
+
+RACE = 'race'
 
 RACE_ASIAN = 'AS'
 RACE_ASIAN_ABBR = 'A'
@@ -41,3 +46,9 @@ def in_production():
     """
     ccj_production = 'CCJ_PRODUCTION'
     return ccj_production in os.environ and os.environ[ccj_production] == '1'
+
+
+def map_race_id(race_id):
+    if race_id in RACE_MAP:
+        return RACE_MAP[race_id]
+    return RACE_UNKNOWN
