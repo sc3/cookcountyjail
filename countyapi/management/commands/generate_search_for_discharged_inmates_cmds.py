@@ -15,7 +15,8 @@ class Command(BaseCommand):
     inmates and find all of the ones that have not been seen today and have not been
     discharged.
     """
-    help = "Generate list of commands of inmates to check to see have been discharge from the Cook County Sheriff's Jail."
+    help = \
+        'Generate list of commands of inmates to check to see have been discharge from the Cook County Sheriff\'s Jail.'
     option_list = BaseCommand.option_list + ()
 
     __COOK_COUNTY_INMATE_DETAILS_URL = \

@@ -2,8 +2,6 @@ from datetime import datetime, date, timedelta
 import logging
 from django.core.management.base import BaseCommand
 from countyapi.models import CountyInmate
-from countyapi.management.commands.inmate_details import InmateDetails
-from countyapi.management.commands.inmate_utils import create_update_inmate
 from countyapi.management.commands.utils import convert_to_date
 from optparse import make_option
 
@@ -33,7 +31,8 @@ class Command(BaseCommand):
     help = "Audits the collected inmates and scans Cook Count Sherif's website looking for uknown inmates."
     option_list = BaseCommand.option_list + (
         make_option('-d', '--day', type='string', action='store', dest='day', default=None,
-                    help='Specify day to search for missing inmates, format is YYYY-MM-DD. Not specified then searches all'),
+                    help='%s %s' % ('Specify day to search for missing inmates, format is YYYY-MM-DD.',
+                                    'Not specified then searches all')),
         make_option('-y', '--yesterday', action='store_true', dest='yesterday',
                     help='Specify day to search for missing inmates is yesterday.'),
     )
@@ -62,16 +61,10 @@ class Command(BaseCommand):
                   (str(datetime.now()), start_date.strftime('%Y-%m-%d')))
         found_inmates = 0
         for day in self.booking_dates(start_date, end_date):
-            seen_inmates = set([inmate.jail_id for inmate in self.inmates_for_date(day)])
+            seen_inmates = set([inmate.jail_id for inmate in inmates_for_date(day)])
             for inmate_jail_id in self.jail_ids(day):
                 if inmate_jail_id not in seen_inmates:
-                    log.debug("Checking if inmate %s exists." % inmate_jail_id)
-                    inmate_details = InmateDetails(self.COOK_COUNTY_JAIL_INMATE_DETAILS_URL + inmate_jail_id, quiet=True,
-                                                   attempts=3)
-                    if inmate_details.found():
-                        found_inmates += 1
-                        log.debug("Found inmate %s." % inmate_jail_id)
-                        create_update_inmate(inmate_details)
+                    print('python /home/ubuntu/apps/cookcountyjail/manage.py check_inmate -j %s' % inmate_jail_id)
         log.debug("%s - Ended search for missing inmates on %s, found %d." %
                   (str(datetime.now()), end_date.strftime('%Y-%m-%d'), found_inmates))
 
@@ -87,12 +80,6 @@ class Command(BaseCommand):
                 return e_date
         return today - self.ONE_DAY
 
-    def inmates_for_date(self, date):
-        """
-        Returns all inmates for a given date.
-        """
-        return CountyInmate.objects.filter(booking_date=date)
-
     def jail_ids(self, booking_date, wanted_range=MAX_INMATE_NUMBER):
         """
         Returns an object that generates jail ids from the given booking date eg: 2013-0101000, 2013-0101001.
@@ -105,3 +92,12 @@ class Command(BaseCommand):
         if day is None:
             day = self.START_DATE
         return convert_to_date(day)
+
+
+def inmates_for_date(booking_date):
+    """
+    Returns all inmates for a given date.
+    @param booking_date: booking date to search for
+    @rtype : list of inmates booked on specified day
+    """
+    return CountyInmate.objects.filter(booking_date=booking_date)
