@@ -3,6 +3,7 @@ import logging
 from optparse import make_option
 
 from django.core.management.base import BaseCommand
+from django.db.utils import DatabaseError
 
 from countyapi.models import CountyInmate
 
@@ -39,10 +40,13 @@ class Command(BaseCommand):
             if inmate_details.found():
                 create_update_inmate(inmate_details)
             else:
-                inmate = CountyInmate.objects.get(jail_id=options['jail_id'])
-                if inmate:
-                    now = datetime.now()
-                    inmate.discharge_date_earliest = inmate.last_seen_date
-                    inmate.discharge_date_latest = now
-                    inmate.save()
-                    log.debug("%s - Discharged inmate %s." % (str(now), options['jail_id']))
+                try:
+                    inmate = CountyInmate.objects.get(jail_id=options['jail_id'])
+                    if inmate:
+                        now = datetime.now()
+                        inmate.discharge_date_earliest = inmate.last_seen_date
+                        inmate.discharge_date_latest = now
+                        inmate.save()
+                        log.debug("%s - Discharged inmate %s." % (str(now), options['jail_id']))
+                except DatabaseError as e:
+                    log.debug("Could not fetch inmate '%s'\nException is %s" % (options['jail_id'], str(e)))
