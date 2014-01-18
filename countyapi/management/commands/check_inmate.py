@@ -1,9 +1,9 @@
 from datetime import datetime
 import logging
 from optparse import make_option
+import sys
 
 from django.core.management.base import BaseCommand
-from django.db.utils import DatabaseError
 
 from countyapi.models import CountyInmate
 
@@ -48,5 +48,6 @@ class Command(BaseCommand):
                         inmate.discharge_date_latest = now
                         inmate.save()
                         log.debug("%s - Discharged inmate %s." % (str(now), options['jail_id']))
-                except DatabaseError as e:
+                except:
+                    e = sys.exc_info()[0]
                     log.debug("Could not fetch inmate '%s'\nException is %s" % (options['jail_id'], str(e)))
