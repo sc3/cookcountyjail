@@ -49,4 +49,4 @@ class Command(BaseCommand):
                         inmate.save()
                         log.debug("%s - Discharged inmate %s." % (str(now), options['jail_id']))
                 except DatabaseError as e:
-                    log.debug("Could not fetch inmate '%s'\nException is %s" % (options['jail_id'], str(e)))
+                    log.debug("Could not save inmate '%s'\nException is %s" % (inmate.jail_id, str(e)))

@@ -37,7 +37,11 @@ def create_update_inmate(inmate_details, inmate=None):
     otherwise returns as inmate's details were not found
     """
     if inmate is None:
-        inmate, created = inmate_record_get_or_create(inmate_details)
+        try:
+            inmate, created = inmate_record_get_or_create(inmate_details)
+        except DatabaseError as e:
+            log.debug("Fetch failed for inmate '%s'\nException is %s" % (inmate.jail_id, str(e)))
+            return None
     else:
         created = False
     clear_discharged(inmate)
@@ -309,7 +313,7 @@ def store_inmates_details(base_url, inmate_urls, limit=None, records=0):
         inmate_details = InmateDetails(url)
         if inmate_details.found():
             inmate = create_update_inmate(inmate_details)
-            if inmate.jail_id not in processed_jail_ids:
+            if inmate and inmate.jail_id not in processed_jail_ids:
                 processed_jail_ids.append(inmate.jail_id)
         if limit and (records + len(processed_jail_ids)) >= limit:
             break
