@@ -1,5 +1,7 @@
 #!/bin/bash
 
+echo "Cook County Jail scraper started at `date`"
+
 # set path to include /usr/local/bin so need programs are available
 export PATH=$PATH:/usr/local/bin
 
@@ -14,8 +16,6 @@ INMATE_API='http://cookcountyjail.recoveredfactory.net/api/1.0/countyinmate/'
 DB_BACKUPS_DIR=${HOME}/website/1.0/db_backups
 DB_BACKUP_FILE=cookcountyjail-$(date +%Y-%m-%d).json
 
-echo "Cook County Jail scraper started at `date`"
-
 #
 # Parallel execution is limited by the number of database connections.
 # For Postgres the default number is 20, however a number of these are
@@ -28,11 +28,11 @@ echo "Cook County Jail scraper started at `date`"
 # is the maximum that can effectively
 NUMBER_PARALLEL_PROCESSES=10
 
-# Check for any inmates entered into system yesterday
-${MANAGE} generate_searches_for_missing_inmates -y | parallel -j $NUMBER_PARALLEL_PROCESSES
-
 # now find inmates no longer in system and mark them as being discharged
 ${MANAGE} generate_search_for_discharged_inmates_cmds | parallel -j $NUMBER_PARALLEL_PROCESSES
+
+# Check for any inmates entered into system yesterday
+${MANAGE} generate_searches_for_missing_inmates -y | parallel -j $NUMBER_PARALLEL_PROCESSES
 
 echo "Cook County Jail scraper finished scrapping at `date`"
 
