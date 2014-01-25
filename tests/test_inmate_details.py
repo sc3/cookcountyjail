@@ -1,5 +1,9 @@
+# coding=utf-8
 
 from datetime import datetime
+
+from countyapi.management.scraper.inmate_details import InmateDetails
+
 INMATE_1 = '2014-0117015'
 inmates_html = {}
 MARKHAM_COURT_HOUSE_LOCATION = \
