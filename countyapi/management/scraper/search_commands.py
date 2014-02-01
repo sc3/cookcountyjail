@@ -27,7 +27,7 @@ class SearchCommands:
         excluded_inmates = set(args['excluded_inmates'])
         for inmate_id in self._jail_ids(args['number_to_fetch']):
             if inmate_id not in excluded_inmates:
-                self._inmate_scraper.create_if(inmate_id)
+                self._inmate_scraper.create_if_exists(inmate_id)
 
     def _jail_ids(self, number_to_fetch):
         booking_date = date.today() - ONE_DAY
