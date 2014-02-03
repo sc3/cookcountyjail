@@ -1,6 +1,8 @@
 
 import gevent
-from gevent.queue import Queue
+from gevent.queue import JoinableQueue
+
+from throwable_commands_queue import ThrowawayCommandsQueue
 
 WORKERS_TO_START = 70
 
@@ -15,10 +17,11 @@ class InmatesScraper:
         self._inmate_details = inmate_details
         self._workers_to_start = workers_to_start
         self._workers = []
-        self._commands = self._setup_command_system()
+        self._read_commands_q = self._setup_command_system()
+        self._write_commands_q = self._read_commands_q
 
     def create_if_exists(self, arg):
-        self._commands.put((self._create_if_exists, arg))
+        self._write_commands_q.put((self._create_if_exists, arg))
         gevent.sleep(0)
 
     def _create_if_exists(self, arg):
@@ -26,12 +29,27 @@ class InmatesScraper:
         if worked:
             self._inmates.add(self._inmate_details(arg))
 
+    def finish(self):
+        self._prevent_new_requests_from_being_processed()
+        gevent.spawn(self._wait_for_scrapping_to_finish)
+        gevent.sleep(0)
+
+    def _prevent_new_requests_from_being_processed(self):
+        self._write_commands_q = ThrowawayCommandsQueue()
+
     def _process_commands(self):
         while True:
-            func, args = self._commands.get()
-            func(args)
+            try:
+                func, args = self._read_commands_q.get()
+                func(args)
+            finally:
+                self._read_commands_q.task_done()
 
     def _setup_command_system(self):
-        commands = Queue(0)
+        commands = JoinableQueue(0)
         self._workers = [gevent.spawn(self._process_commands) for x in range(self._workers_to_start)]
         return commands
+
+    def _wait_for_scrapping_to_finish(self):
+        self._read_commands_q.join()
+        self._inmates.finish()

@@ -1,4 +1,4 @@
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 import logging
 import requests
 from time import sleep
@@ -11,6 +11,7 @@ from countyapi.models import CountyInmate
 #
 ############################################################################################################
 
+ONE_DAY = timedelta(1)
 
 STD_INITIAL_SLEEP_PERIOD = 0.1
 STD_NUMBER_ATTEMPTS = 3
@@ -213,3 +214,6 @@ def strip_line(line):
 
 def strip_the_lines(lines):
     return map(strip_line, lines)
+
+def yesterday():
+    return date.today() - ONE_DAY

@@ -3,7 +3,7 @@ import os
 SITE_STATIC_ROOT = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'static')
 SITE_DIR = os.path.dirname(os.path.dirname(__file__))
 
-NEGATIVE_VALUES = set(['0', 'false'])
+NEGATIVE_VALUES = {'0', 'false'}
 
 
 def env_var_active(env_var):
