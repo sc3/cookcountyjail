@@ -1,7 +1,8 @@
 
 from countyapi.management.scraper.monitor import Monitor
 
-from mock import Mock
+from mock import Mock, patch
+from datetime import datetime
 
 
 class Test_MonitorDebugLogging:
@@ -19,3 +20,15 @@ class Test_MonitorDebugLogging:
         monitor = Monitor(log, no_debug_msgs=True)
         monitor.debug(expected)
         assert not log.debug.called, 'log.debug should not have been called'
+
+    def test_notify(self):
+        timestamp = datetime.now()
+        with patch("countyapi.management.scraper.monitor.datetime") as mock_datetime:
+            mock_datetime.now.return_value = timestamp
+            mock_datetime.side_effect = lambda *args, **kw: datetime(*args, **kw)
+
+            notifier = Mock(spec=Test_MonitorDebugLogging)
+            expected = (timestamp, notifier, '')
+            monitor = Monitor(None)
+            monitor.notify(notifier)
+            assert monitor.get_notification() == expected
