@@ -5,7 +5,7 @@ from mock import Mock, patch
 from datetime import datetime
 
 
-class Test_MonitorDebugLogging:
+class Test_Monitor:
 
     def test_debug_msg(self):
         expected = 'hi'
@@ -27,8 +27,8 @@ class Test_MonitorDebugLogging:
             mock_datetime.now.return_value = timestamp
             mock_datetime.side_effect = lambda *args, **kw: datetime(*args, **kw)
 
-            notifier = Mock(spec=Test_MonitorDebugLogging)
+            notifier = Mock(spec=Test_Monitor)
             expected = (timestamp, notifier, '')
             monitor = Monitor(None)
             monitor.notify(notifier)
-            assert monitor.get_notification() == expected
+            assert monitor.notification() == expected
