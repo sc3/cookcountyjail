@@ -12,8 +12,11 @@ ONE_DAY = timedelta(1)
 
 class SearchCommands:
 
-    def __init__(self, inmate_scraper):
+    FINISHED_FIND_INMATES = 'Finished sending find inmates commands'
+
+    def __init__(self, inmate_scraper, monitor):
         self._inmate_scraper = inmate_scraper
+        self._monitor = monitor
         self._commands = self._setup_command_system()
 
     def find_inmates(self, exclude_list=None, number_to_fetch=MAX_INMATE_NUMBER):
@@ -28,6 +31,7 @@ class SearchCommands:
         for inmate_id in self._jail_ids(args['number_to_fetch']):
             if inmate_id not in excluded_inmates:
                 self._inmate_scraper.create_if_exists(inmate_id)
+        self._monitor.notify(self.__class__, self.FINISHED_FIND_INMATES)
 
     def _jail_ids(self, number_to_fetch):
         booking_date = date.today() - ONE_DAY

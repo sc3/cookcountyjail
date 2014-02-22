@@ -16,7 +16,8 @@ class Test_InmatesScraper:
     def test_create_if_exists_calls_http(self):
         http = Http_TestDouble(get_succeeds_always=True)
         inmates = Mock()
-        inmate_scraper = InmatesScraper(http, inmates, InmateDetails_TestDouble)
+        monitor = Mock()
+        inmate_scraper = InmatesScraper(http, inmates, InmateDetails_TestDouble, monitor)
         jail_ids = ['jail_id_%d' % id for id in range(1, 5)]
         expected_http_calls_args = []
         for jail_id in jail_ids:
@@ -27,7 +28,8 @@ class Test_InmatesScraper:
     def test_create_if_exists_adds_inmates(self):
         http = Http_TestDouble()
         inmates = Mock()
-        inmate_scraper = InmatesScraper(http, inmates, InmateDetails_TestDouble)
+        monitor = Mock()
+        inmate_scraper = InmatesScraper(http, inmates, InmateDetails_TestDouble, monitor)
         jail_ids = ['jail_id_%d' % id for id in range(1, 5)]
         expected_inmate_details_calls_args = []
         for jail_id in jail_ids:
@@ -39,7 +41,8 @@ class Test_InmatesScraper:
     def test_create_if_exists_runs_in_parallel(self):
         http = Http_TestDouble(use_sleep=True)
         inmates = Inmates_TestDouble()
-        inmate_scraper = InmatesScraper(http, inmates, InmateDetails_TestDouble)
+        monitor = Mock()
+        inmate_scraper = InmatesScraper(http, inmates, InmateDetails_TestDouble, monitor)
         jail_ids = ['jail_id_%d' % j_id for j_id in range(1, 6)]
         expected_http_calls_args = []
         expected_inmate_details_calls_args = []
@@ -61,6 +64,14 @@ class Test_InmatesScraper:
         assert inmates.msg_q_size() == 0  # make sure did not receive more messages than expected.
         assert http.get_args_list() == expected_http_calls_args
         assert inmate_create_if_msgs == expected_inmate_details_calls_args
+
+    def test_finish(self):
+        http = Http_TestDouble(use_sleep=True)
+        inmates = Inmates_TestDouble()
+        monitor = Mock()
+        inmate_scraper = InmatesScraper(http, inmates, InmateDetails_TestDouble, monitor)
+        inmate_scraper.finish()
+        assert monitor.notify.call_args_list == [call(inmate_scraper.__class__, inmate_scraper.FINISHED_PROCESSING)]
 
 
 class InmateDetails_TestDouble:

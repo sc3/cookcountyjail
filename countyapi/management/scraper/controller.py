@@ -6,8 +6,10 @@ class Controller:
 
     STOP_COMMAND = '*_Halt_*'
 
-    def __init__(self, log, monitor):
+    def __init__(self, log, monitor, search_commands, inmate_scraper):
         self._log = log
+        self._search_commands = search_commands
+        self._inmate_scraper = inmate_scraper
         self.heartbeat_count = 0
         self.is_running = False
         self._keep_running = True
@@ -19,6 +21,7 @@ class Controller:
         self._heartbeat = Heartbeat(self._monitor)
         self._heartbeat_class = self._heartbeat.__class__
         self.is_running = True
+        self._search_commands.find_inmates()
         keep_running = True
         while keep_running:
             timestamp, notifier, msg = self._monitor.notification()
@@ -26,6 +29,8 @@ class Controller:
                 self.heartbeat_count += 1
             elif msg == self.STOP_COMMAND:
                 keep_running = False
+            elif notifier == self._inmate_scraper.__class__:
+                self._inmate_scraper.finish()
         self.is_running = False
 
     def stop_command(self):
