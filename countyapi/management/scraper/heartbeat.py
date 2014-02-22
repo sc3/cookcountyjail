@@ -1,7 +1,7 @@
 
 import gevent
 
-ONE_SECOND = 1
+HEARTBEAT_INTERVAL = 1
 
 
 class Heartbeat:
@@ -15,5 +15,5 @@ class Heartbeat:
 
     def _heartbeat(self):
         while True:
-            gevent.sleep(ONE_SECOND)
+            gevent.sleep(HEARTBEAT_INTERVAL)
             self._monitor.notify(self.__class__)

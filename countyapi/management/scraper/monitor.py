@@ -17,7 +17,8 @@ class Monitor:
             gevent.sleep(0)
 
     def notification(self):
-        return self._notifications.get()
+        notification = self._notifications.get()
+        return notification
 
     def notify(self, notifier, msg=''):
         self._notifications.put((datetime.now(), notifier, msg))

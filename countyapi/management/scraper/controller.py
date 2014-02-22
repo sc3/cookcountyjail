@@ -1,32 +1,32 @@
 
-import gevent
-from countyapi.management.scraper.monitor import Monitor
-from countyapi.management.scraper.heartbeat import Heartbeat
+from heartbeat import Heartbeat
 
 
 class Controller:
 
-    def __init__(self, log):
+    STOP_COMMAND = '*_Halt_*'
+
+    def __init__(self, log, monitor):
+        self._log = log
         self.heartbeat_count = 0
         self.is_running = False
         self._keep_running = True
-        self._log = log
+        self._monitor = monitor
+        self._heartbeat = None
+        self._heartbeat_class = None
 
     def run(self):
-        monitor = None
-        heartbeat = None
-
-        def _run():
-            self.is_running = True
-            while self._keep_running:
-                monitor.notification()
+        self._heartbeat = Heartbeat(self._monitor)
+        self._heartbeat_class = self._heartbeat.__class__
+        self.is_running = True
+        keep_running = True
+        while keep_running:
+            timestamp, notifier, msg = self._monitor.notification()
+            if notifier == self._heartbeat_class:
                 self.heartbeat_count += 1
-            self.is_running = False
-        monitor = Monitor(self._log)
-        heartbeat = Heartbeat(monitor)
-        gevent.spawn(_run)
-        gevent.sleep(0)
+            elif msg == self.STOP_COMMAND:
+                keep_running = False
+        self.is_running = False
 
-    def stop(self):
-        self._keep_running = False
-        gevent.sleep(1.1)
+    def stop_command(self):
+        return self.STOP_COMMAND
