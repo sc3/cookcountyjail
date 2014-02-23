@@ -1,9 +1,8 @@
 
-import logging
 from datetime import datetime
 from django.db.utils import DatabaseError
 
-from countyapi.management.commands.utils import convert_to_int, just_empty_lines, strip_the_lines
+from countyapi.management.commands.utils import convert_to_int
 
 from countyapi.models import CountyInmate
 
@@ -11,16 +10,15 @@ from charges import Charges
 from court_date_info import CourtDateInfo
 from housing_location_info import HousingLocationInfo
 
-log = logging.getLogger('main')
-
 
 class Inmate:
     """
     Inmate handling code lifted whole sale from inmate_utils file in countypai/management/commands
     """
 
-    def __init__(self, inmate_details):
+    def __init__(self, inmate_details, monitor):
         self._inmate_details = inmate_details
+        self._monitor = monitor
         self._inmate = None
 
     def _clear_discharged(self):
@@ -30,6 +28,9 @@ class Inmate:
         """
         self._inmate.discharge_date_earliest = None
         self._inmate.discharge_date_latest = None
+
+    def _debug(self, msg):
+        self._monitor.debug('Inmate: %s' % msg)
 
     def _inmate_record_get_or_create(self):
         """
@@ -55,12 +56,12 @@ class Inmate:
             self._store_next_court_info()
             try:
                 self._inmate.save()
-                log.debug("%s - %s inmate %s" % (str(datetime.now()), "Created" if created else "Updated",
-                                                 self._inmate))
+                self._debug("%s - %s inmate %s" % (str(datetime.now()), "Created" if created else "Updated",
+                                                   self._inmate))
             except DatabaseError as e:
-                log.debug("Could not save inmate '%s'\nException is %s" % (self._inmate.jail_id, str(e)))
+                self._debug("Could not save inmate '%s'\nException is %s" % (self._inmate.jail_id, str(e)))
         except DatabaseError as e:
-            log.debug("Fetch failed for inmate '%s'\nException is %s" % (self._inmate_details.jail_id(), str(e)))
+            self._debug("Fetch failed for inmate '%s'\nException is %s" % (self._inmate_details.jail_id(), str(e)))
 
     def _store_bail_info(self):
         # Bond: If the value is an integer, it's a dollar
@@ -75,7 +76,7 @@ class Inmate:
         self._inmate.booking_date = self._inmate_details.booking_date()
 
     def _store_charges(self):
-        charges_info = Charges(self._inmate, self._inmate_details)
+        charges_info = Charges(self._inmate, self._inmate_details, self._monitor)
         charges_info.save()
 
     def _store_housing_location(self):

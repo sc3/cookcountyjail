@@ -21,8 +21,13 @@ class Inmates:
         gevent.sleep(0)
 
     def _create_update_inmate(self, inmate_details):
-        inmate = self.inmate_class(inmate_details)
+        self._debug('started create_update_inmate')
+        inmate = self.inmate_class(inmate_details, self._monitor)
         inmate.save()
+        self._debug('finished create_update_inmate')
+
+    def _debug(self, msg):
+        self._monitor.debug('Inmates: %s' % msg)
 
     def finish(self):
         self._prevent_new_requests_from_being_processed()
@@ -44,5 +49,7 @@ class Inmates:
         return JoinableQueue(0), [gevent.spawn(self._process_commands)]
 
     def _wait_for_processing_to_finish(self):
+        self._debug('started waiting for inmates processing to finish')
         self._read_commands_q.join()
         self._monitor.notify(self.__class__, self.FINISHED_PROCESSING)
+        self._debug('finished waiting for inmates processing to finish')

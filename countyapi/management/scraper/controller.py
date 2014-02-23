@@ -16,6 +16,9 @@ class Controller:
         self.is_running = False
         self._worker = []
 
+    def _debug(self, msg):
+        self._monitor.debug('Controller: %s' % msg)
+
     def run(self):
         if not self.is_running:
             self._worker = [gevent.spawn(self._run)]
@@ -23,6 +26,7 @@ class Controller:
 
     def _run(self):
         self.is_running = True
+        self._debug('started')
         self.heartbeat_count = 0
         heartbeat = Heartbeat(self._monitor)
         heartbeat_class = heartbeat.__class__
@@ -30,6 +34,7 @@ class Controller:
         keep_running = True
         while keep_running:
             notifier, msg = self._monitor.notification()
+            self._debug('from %s, received - %s' % (notifier, msg))
             if notifier == heartbeat_class:
                 self.heartbeat_count += 1
             elif msg == self.STOP_COMMAND:
@@ -41,6 +46,7 @@ class Controller:
             elif notifier == self._inmates.__class__:
                 keep_running = False
         self.is_running = False
+        self._debug('stopped')
 
     def stop_command(self):
         return self.STOP_COMMAND

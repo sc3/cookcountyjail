@@ -1,18 +1,18 @@
 
-import logging
-
 from countyapi.management.commands.utils import convert_to_int, strip_the_lines
 
 from countyapi.models import CourtLocation
 
-log = logging.getLogger('main')
-
 
 class CourtDateInfo:
 
-    def __init__(self, inmate, inmate_details):
+    def __init__(self, inmate, inmate_details, monitor):
         self._inmate = inmate
         self._inmate_details = inmate_details
+        self._monitor = monitor
+
+    def _debug(self, msg):
+        self._monitor.debug('CourtDateInfo: %s' % msg)
 
     def _parse_court_location(self):
         """
@@ -71,11 +71,11 @@ class CourtDateInfo:
                 return "\n".join(lines), d
 
             except IndexError:
-                log.debug("Following Court location has unknown format: %s" % location_string)
+                self._debug("Following Court location has unknown format: %s" % location_string)
                 return "\n".join(lines), {}
 
         else:
-            log.debug("Following Court location doesn't have right number of lines: %s" % location_string)
+            self._debug("Following Court location doesn't have right number of lines: %s" % location_string)
             return location_string, {}
 
     def save(self):

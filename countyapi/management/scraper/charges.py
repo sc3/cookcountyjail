@@ -1,17 +1,18 @@
 
-import logging
 from django.db.utils import DatabaseError
 
 from countyapi.management.commands.utils import just_empty_lines, strip_the_lines, yesterday
 
-log = logging.getLogger('main')
-
 
 class Charges:
 
-    def __init__(self, inmate, inmate_details):
+    def __init__(self, inmate, inmate_details, monitor):
         self._inmate = inmate
         self._inmate_details = inmate_details
+        self._monitor = monitor
+
+    def _debug(self, msg):
+        self._monitor.debug('Charges: %s' % msg)
 
     def save(self):
         """
@@ -40,6 +41,6 @@ class Charges:
                 new_charge.date_seen = yesterday()
                 new_charge.save()
             except DatabaseError as e:
-                log.debug("Could not save charges '%s' and citation '%s'\nException is %s" % (parsed_charges,
-                                                                                              parsed_charges_citation,
-                                                                                              str(e)))
+                self._debug("Could not save charges '%s' and citation '%s'\nException is %s" % (parsed_charges,
+                                                                                                parsed_charges_citation,
+                                                                                                str(e)))

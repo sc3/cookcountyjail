@@ -1,21 +1,22 @@
 
-import logging
 from django.db.utils import DatabaseError
 
 from countyapi.management.commands.utils import convert_to_int, join_with_space_and_convert_spaces, yesterday
 
 from countyapi.models import HousingLocation
 
-log = logging.getLogger('main')
-
 
 class HousingLocationInfo:
 
-    def __init__(self, inmate, inmate_details):
+    def __init__(self, inmate, inmate_details, monitor):
         self._inmate = inmate
         self._inmate_details = inmate_details
+        self._monitor = monitor
         self._housing_location = None
         self._location_segments = None
+
+    def _debug(self, msg):
+        self._monitor.debug('HousingLocationInfo: %s' % msg)
 
     def _process_housing_location(self):
         """
@@ -71,7 +72,7 @@ class HousingLocationInfo:
                     self._process_housing_location()
                     self._housing_location.save()
             except DatabaseError as e:
-                log.debug("Could not save housing location '%s'\nException is %s" % (inmate_housing_location, str(e)))
+                self._debug("Could not save housing location '%s'\nException is %s" % (inmate_housing_location, str(e)))
             try:
                 housing_history, new_history = \
                     self._inmate.housing_history.get_or_create(housing_location=self._housing_location)
@@ -79,8 +80,8 @@ class HousingLocationInfo:
                     housing_history.housing_date_discovered = yesterday()
                     housing_history.save()
             except DatabaseError as e:
-                log.debug("For inmate %d, could not save housing history '%s'.\nException is %s" %
-                          (self._inmate.jail_id, inmate_housing_location, str(e)))
+                self._debug("For inmate %d, could not save housing history '%s'.\nException is %s" %
+                            (self._inmate.jail_id, inmate_housing_location, str(e)))
 
     def _set_day_release(self):
         for element in self._location_segments:
