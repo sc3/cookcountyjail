@@ -1,6 +1,9 @@
 
 import gevent
 from gevent.queue import JoinableQueue
+from datetime import date
+
+from countyapi.models import CountyInmate
 
 from throwable_commands_queue import ThrowawayCommandsQueue
 
@@ -15,6 +18,17 @@ class Inmates:
         self._read_commands_q, self._workers = self._setup_command_system()
         self._write_commands_q = self._read_commands_q
         gevent.sleep(0)
+
+    def active_inmates_ids(self, response_queue):
+        self._write_commands_q.put((self._active_inmates_ids, response_queue))
+        gevent.sleep(0)
+
+    def _active_inmates_ids(self, response_queue):
+        self._debug('started fetching active inmates ids')
+        inmates_ids = [inmate.jail_id for inmate in CountyInmate.objects.filter(discharge_date_earliest__exact=None,
+                                                                                last_seen_date__lt=date.today())]
+        response_queue.put(inmates_ids)
+        self._debug('finished fetching active inmates ids')
 
     def add(self, inmate_details):
         self._write_commands_q.put((self._create_update_inmate, inmate_details))
