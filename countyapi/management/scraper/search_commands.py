@@ -45,7 +45,7 @@ class SearchCommands:
             func(args)
 
     def _setup_command_system(self):
-        commands = Queue(0)
+        commands = Queue(None)
         gevent.spawn(self._process_commands)
         return commands
 

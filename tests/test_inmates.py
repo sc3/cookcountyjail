@@ -9,7 +9,7 @@ class TestInmates:
 
     def test_add_inmate(self):
         Inmate_TestDouble.clear_class_vars()
-        inmates = Inmates(Inmate_TestDouble, None)
+        inmates = Inmates(Inmate_TestDouble, Mock())
         inmates.add(self)
         gevent.sleep(0)
         assert Inmate_TestDouble.instantiated_called(1)
@@ -30,9 +30,10 @@ class Inmate_TestDouble:
 
     instantiated = []
 
-    def __init__(self, inmate_details):
+    def __init__(self, inmate_details, monitor):
         Inmate_TestDouble.instantiated.append(self)
         self.inmate_details = inmate_details
+        self._monitor = monitor
         self.saved_count = 0
 
     @staticmethod

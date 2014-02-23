@@ -40,9 +40,9 @@ class Monitor:
             self._log.debug('%s - %s' % msg)
 
     def _setup_msg_system(self):
-        messages = Queue(0)
+        messages = Queue(None)
         gevent.spawn(self._process_msgs)
         return messages
 
     def _setup_notification_queue(self):
-        return Queue(0)
+        return Queue(None)

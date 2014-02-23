@@ -20,6 +20,7 @@ class Inmate:
         self._inmate_details = inmate_details
         self._monitor = monitor
         self._inmate = None
+        self._jail_id = inmate_details.jail_id()
 
     def _clear_discharged(self):
         """
@@ -36,7 +37,7 @@ class Inmate:
         """
         Gets or creates inmate record based on jail_id and stores the url used to fetch the inmate info
         """
-        inmate, created = CountyInmate.objects.get_or_create(jail_id=self._inmate_details.jail_id())
+        inmate, created = CountyInmate.objects.get_or_create(jail_id=self._jail_id)
         return inmate, created
 
     def save(self):
@@ -44,6 +45,8 @@ class Inmate:
         Fetches inmates detail page and creates or updates inmates record based on it,
         otherwise returns as inmate's details were not found
         """
+        msg_template = '%%s save inmate: %s' % self._jail_id
+        self._debug(msg_template % 'started')
         try:
             self._inmate, created = self._inmate_record_get_or_create()
             self._clear_discharged()
@@ -59,9 +62,11 @@ class Inmate:
                 self._debug("%s - %s inmate %s" % (str(datetime.now()), "Created" if created else "Updated",
                                                    self._inmate))
             except DatabaseError as e:
-                self._debug("Could not save inmate '%s'\nException is %s" % (self._inmate.jail_id, str(e)))
+                self._debug("Could not save inmate '%s'\nException is %s" % (self._jail_id, str(e)))
         except DatabaseError as e:
-            self._debug("Fetch failed for inmate '%s'\nException is %s" % (self._inmate_details.jail_id(), str(e)))
+            self._debug("Fetch failed for inmate '%s'\nException is %s" % (self._jail_id, str(e)))
+        finally:
+            self._debug(msg_template % 'finished')
 
     def _store_bail_info(self):
         # Bond: If the value is an integer, it's a dollar
@@ -80,11 +85,11 @@ class Inmate:
         charges_info.save()
 
     def _store_housing_location(self):
-        housing_location_info = HousingLocationInfo(self._inmate, self._inmate_details)
+        housing_location_info = HousingLocationInfo(self._inmate, self._inmate_details, self._monitor)
         housing_location_info.save()
 
     def _store_next_court_info(self):
-        next_court_date_info = CourtDateInfo(self._inmate, self._inmate_details)
+        next_court_date_info = CourtDateInfo(self._inmate, self._inmate_details, self._monitor)
         next_court_date_info.save()
 
     def _store_person_id(self):

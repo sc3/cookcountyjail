@@ -34,19 +34,23 @@ class Controller:
         keep_running = True
         while keep_running:
             notifier, msg = self._monitor.notification()
-            self._debug('from %s, received - %s' % (notifier, msg))
             if notifier == heartbeat_class:
                 self.heartbeat_count += 1
-            elif msg == self.STOP_COMMAND:
-                keep_running = False
-            elif notifier == self._search_commands.__class__:
-                self._inmate_scraper.finish()
-            elif notifier == self._inmate_scraper.__class__:
-                self._inmates.finish()
-            elif notifier == self._inmates.__class__:
-                keep_running = False
+            else:
+                self._debug('hb count %d, from %s, received - %s' % (self.heartbeat_count, notifier, msg))
+                if msg == self.STOP_COMMAND:
+                    keep_running = False
+                elif notifier == self._search_commands.__class__:
+                    self._inmate_scraper.finish()
+                elif notifier == self._inmate_scraper.__class__:
+                    self._inmates.finish()
+                elif notifier == self._inmates.__class__:
+                    keep_running = False
         self.is_running = False
         self._debug('stopped')
 
     def stop_command(self):
         return self.STOP_COMMAND
+
+    def wait_for_finish(self):
+        gevent.joinall(self._worker)
