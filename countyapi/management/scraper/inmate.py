@@ -1,5 +1,5 @@
 
-from datetime import datetime
+from datetime import datetime, date
 from django.db.utils import DatabaseError
 
 from countyapi.management.commands.utils import convert_to_int
@@ -22,6 +22,10 @@ class Inmate:
         self._inmate = None
         self._jail_id = inmate_details.jail_id()
 
+    @staticmethod
+    def active_inmates():
+        return CountyInmate.objects.filter(discharge_date_earliest__exact=None, last_seen_date__lt=date.today())
+
     def _clear_discharged(self):
         """
         Because the Cook County Jail website has issues, we can have misclassified inmates as discharged. This
@@ -32,6 +36,17 @@ class Inmate:
 
     def _debug(self, msg):
         self._monitor.debug('Inmate: %s' % msg)
+
+    def discharge(self, inmate_id, monitor):
+        try:
+            inmate = CountyInmate.objects.get(jail_id=inmate_id)
+            if inmate:
+                now = datetime.now()
+                inmate.discharge_date_earliest = inmate.last_seen_date
+                inmate.discharge_date_latest = now
+                inmate.save()
+        except DatabaseError as e:
+            monitor.debug("Could not save inmate '%s'\nException is %s" % (inmate.jail_id, str(e)))
 
     def _inmate_record_get_or_create(self):
         """
