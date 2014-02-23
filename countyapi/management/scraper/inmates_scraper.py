@@ -23,8 +23,7 @@ class InmatesScraper:
         self._write_commands_q = self._read_commands_q
 
     def create_if_exists(self, arg):
-        self._write_commands_q.put((self._create_if_exists, arg))
-        gevent.sleep(0)
+        self._put(self._create_if_exists, arg)
 
     def _create_if_exists(self, jail_id):
         outcome = 'did not find'
@@ -54,8 +53,27 @@ class InmatesScraper:
             finally:
                 self._read_commands_q.task_done()
 
+    def _put(self, method, args):
+        self._write_commands_q.put((method, args))
+        gevent.sleep(0)
+
     def _setup_command_system(self):
         return JoinableQueue(None), [gevent.spawn(self._process_commands) for x in range(self._workers_to_start)]
+
+    def update_inmate_status(self, inmate_id):
+        self._put(self._update_inmate_status, inmate_id)
+
+    def _update_inmate_status(self, inmate_id):
+        status_msg_template = '%%s inmate %s' % inmate_id
+        self._debug(status_msg_template % 'starting update')
+        worked, inmate_details_in_html = self._http.get(CCJ_INMATE_DETAILS_URL + inmate_id)
+        if worked:
+            self._inmates.update(self._inmate_details_class(inmate_details_in_html))
+            status = 'updated'
+        else:
+            self._inmates.discharge(inmate_id)
+            status = 'discharged'
+        self._debug(status_msg_template % status)
 
     def _wait_for_scrapping_to_finish(self):
         self._debug('started waiting for scraping inmates to finish')

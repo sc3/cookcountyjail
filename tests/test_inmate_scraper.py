@@ -5,7 +5,6 @@ from datetime import datetime
 import gevent
 from gevent.queue import Queue
 
-
 from countyapi.management.scraper.inmates_scraper import InmatesScraper, CCJ_INMATE_DETAILS_URL
 
 ONE_SECOND = 1
@@ -30,7 +29,7 @@ class Test_InmatesScraper:
         inmates = Mock()
         monitor = Mock()
         inmate_scraper = InmatesScraper(http, inmates, InmateDetails_TestDouble, monitor)
-        jail_ids = ['jail_id_%d' % id for id in range(1, 5)]
+        jail_ids = ['jail_id_%d' % j_id for j_id in range(1, 5)]
         expected_inmate_details_calls_args = []
         for jail_id in jail_ids:
             if not http.bad_response_desired(jail_id):
@@ -63,7 +62,25 @@ class Test_InmatesScraper:
         assert (end_time - start_time).seconds == ONE_SECOND # All processing should happen with a second
         assert inmates.msg_q_size() == 0  # make sure did not receive more messages than expected.
         assert http.get_args_list() == expected_http_calls_args
-        assert inmate_create_if_msgs == expected_inmate_details_calls_args
+        assert expected_inmate_details_calls_args == inmate_create_if_msgs
+
+    def test_update_inmate_status(self):
+        http = Http_TestDouble()
+        inmates = Mock()
+        monitor = Mock()
+        inmate_scraper = InmatesScraper(http, inmates, InmateDetails_TestDouble, monitor)
+        jail_ids = ['jail_id_%d' % id for id in range(1, 5)]
+        expected_update_calls_args = []
+        expected_discharge_calls_args = []
+        for jail_id in jail_ids:
+            if http.bad_response_desired(jail_id):
+                expected_discharge_calls_args.append(call(jail_id))
+            else:
+                expected_update_calls_args.append(call(InmateDetails_TestDouble(jail_id)))
+        for jail_id in jail_ids:
+            inmate_scraper.update_inmate_status(jail_id)
+        assert inmates.update.call_args_list == expected_update_calls_args
+        assert inmates.discharge.call_args_list == expected_discharge_calls_args
 
     def test_finish(self):
         http = Http_TestDouble(use_sleep=True)
@@ -80,7 +97,7 @@ class InmateDetails_TestDouble:
         self._details = details
 
     def __eq__(self, other):
-        return self.__class__ == other.__class__ and self.__dict__ == other.__dict__
+        return self.__class__ == other.__class__ and (CCJ_INMATE_DETAILS_URL + self._details) == other._details
 
 
 class Http_TestDouble:
@@ -91,6 +108,8 @@ class Http_TestDouble:
         self._get_args_list = []
 
     def bad_response_desired(self, arg):
+        if self._get_succeeds_always:
+            return False
         arg_vals = arg.split('_')
         return (int(arg_vals[2]) % 2) == 0
 
@@ -99,9 +118,9 @@ class Http_TestDouble:
         if self._use_sleep:
             sleep_interval = ONE_SECOND if self._first_jail_id(arg) else 0.5
             gevent.sleep(sleep_interval)
-        if not self._get_succeeds_always and self.bad_response_desired(arg):
+        if self.bad_response_desired(arg):
             return False, ''
-        return 200, arg
+        return True, arg
 
     def get_args_list(self):
         return self._get_args_list
