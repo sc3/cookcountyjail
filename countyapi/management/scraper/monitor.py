@@ -5,6 +5,13 @@ from datetime import datetime
 
 
 class Monitor:
+    """
+    Provides capabilities for monitoring operations:
+        logging:
+            debug
+        notifications
+    """
+
     def __init__(self, log, no_debug_msgs=False):
         self._log = log
         self._debug_msgs = not no_debug_msgs
@@ -13,21 +20,24 @@ class Monitor:
 
     def debug(self, msg):
         if self._debug_msgs:
-            self._messages.put(msg)
-            gevent.sleep(0)
+            self._debug(datetime.now(), msg)
+
+    def _debug(self, timestamp, msg):
+        self._messages.put((timestamp, msg))
+        gevent.sleep(0)
 
     def notification(self):
         notification = self._notifications.get()
         return notification
 
     def notify(self, notifier, msg=''):
-        self._notifications.put((datetime.now(), notifier, msg))
+        self._notifications.put((notifier, msg))
         gevent.sleep(0)
 
     def _process_msgs(self):
         while True:
             msg = self._messages.get()
-            self._log.debug(msg)
+            self._log.debug('%s - %s' % msg)
 
     def _setup_msg_system(self):
         messages = Queue(0)

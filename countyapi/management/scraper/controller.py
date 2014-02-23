@@ -1,32 +1,36 @@
 
+import gevent
 from heartbeat import Heartbeat
 
 
 class Controller:
 
-    STOP_COMMAND = '*_Halt_*'
+    STOP_COMMAND = 'Controller_Halt'
 
-    def __init__(self, log, monitor, search_commands, inmate_scraper, inmates):
-        self._log = log
+    def __init__(self, monitor, search_commands, inmate_scraper, inmates):
+        self._monitor = monitor
         self._search_commands = search_commands
         self._inmate_scraper = inmate_scraper
         self._inmates = inmates
         self.heartbeat_count = 0
         self.is_running = False
-        self._keep_running = True
-        self._monitor = monitor
-        self._heartbeat = None
-        self._heartbeat_class = None
+        self._worker = []
 
     def run(self):
-        self._heartbeat = Heartbeat(self._monitor)
-        self._heartbeat_class = self._heartbeat.__class__
+        if not self.is_running:
+            self._worker = [gevent.spawn(self._run)]
+            gevent.sleep(0)
+
+    def _run(self):
         self.is_running = True
+        self.heartbeat_count = 0
+        heartbeat = Heartbeat(self._monitor)
+        heartbeat_class = heartbeat.__class__
         self._search_commands.find_inmates()
         keep_running = True
         while keep_running:
-            timestamp, notifier, msg = self._monitor.notification()
-            if notifier == self._heartbeat_class:
+            notifier, msg = self._monitor.notification()
+            if notifier == heartbeat_class:
                 self.heartbeat_count += 1
             elif msg == self.STOP_COMMAND:
                 keep_running = False

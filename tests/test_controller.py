@@ -14,9 +14,8 @@ TIME_PADDING = 0.1
 
 class TestController:
 
-
     def setup_method(self, method):
-        self._monitor = Monitor(None)
+        self._monitor = Monitor(Mock())
         self._search = Mock()
         self._inmate_scraper = Mock()
 
@@ -30,7 +29,7 @@ class TestController:
         assert not controller.is_running
 
     def test_controller_can_be_stopped(self):
-        controller = Controller(None, self._monitor, self._search, self._inmate_scraper, None)
+        controller = Controller(self._monitor, self._search, self._inmate_scraper, None)
         assert not controller.is_running
         assert controller.heartbeat_count == 0
         run_controller(controller)
@@ -42,7 +41,7 @@ class TestController:
 
     def test_searches_for_inmates_only_new_ones(self):
         inmates = Mock()
-        controller = Controller(None, self._monitor, self._search, self._inmate_scraper, inmates)
+        controller = Controller(self._monitor, self._search, self._inmate_scraper, inmates)
         run_controller(controller)
         gevent.sleep(TIME_PADDING)
         assert self._search.find_inmates.call_args_list == [call()]
@@ -60,7 +59,5 @@ def run_controller(controller):
     @type controller: Controller
     @return: void
     """
-    def _run():
-        controller.run()
-    gevent.spawn(_run)
+    controller.run()
     gevent.sleep(0.001)
