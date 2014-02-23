@@ -6,6 +6,8 @@ from countyapi.management.scraper.controller import Controller
 from countyapi.management.scraper.monitor import Monitor
 from countyapi.management.scraper.heartbeat import HEARTBEAT_INTERVAL
 from countyapi.management.scraper.search_commands import SearchCommands
+from countyapi.management.scraper.inmates_scraper import InmatesScraper
+from countyapi.management.scraper.inmates import Inmates
 
 TIME_PADDING = 0.1
 
@@ -15,9 +17,12 @@ class TestController:
 
     def setup_method(self, method):
         self._monitor = Monitor(None)
-        self._mock_manager = Mock()
-        self._search = self._mock_manager.search
-        self._inmate_scraper = self._mock_manager.inmate_scraper
+        self._search = Mock()
+        self._inmate_scraper = Mock()
+
+    def send_notification(self, obj_instance, msg):
+        self._monitor.notify(obj_instance.__class__, msg)
+        gevent.sleep(0)
 
     def stop_controller(self, controller):
         self._monitor.notify(self.__class__, controller.stop_command())
@@ -25,7 +30,7 @@ class TestController:
         assert not controller.is_running
 
     def test_controller_can_be_stopped(self):
-        controller = Controller(None, self._monitor, self._search, self._inmate_scraper)
+        controller = Controller(None, self._monitor, self._search, self._inmate_scraper, None)
         assert not controller.is_running
         assert controller.heartbeat_count == 0
         run_controller(controller)
@@ -35,15 +40,18 @@ class TestController:
         self.stop_controller(controller)
         assert controller.heartbeat_count == expected_num_heartbeats
 
-    def test_starts_search_for_new_inmates(self):
-        controller = Controller(None, self._monitor, self._search, self._inmate_scraper)
+    def test_searches_for_inmates_only_new_ones(self):
+        inmates = Mock()
+        controller = Controller(None, self._monitor, self._search, self._inmate_scraper, inmates)
         run_controller(controller)
         gevent.sleep(TIME_PADDING)
-        self._monitor.notify(self._inmate_scraper.__class__, SearchCommands.FINISHED_FIND_INMATES)
-        self.stop_controller(controller)
         assert self._search.find_inmates.call_args_list == [call()]
+        self.send_notification(self._search, SearchCommands.FINISHED_FIND_INMATES)
         assert self._inmate_scraper.finish.call_args_list == [call()]
-        assert self._mock_manager.mock_calls == [call.search.find_inmates(), call.inmate_scraper.finish()]
+        self.send_notification(self._inmate_scraper, InmatesScraper.FINISHED_PROCESSING)
+        assert inmates.finish.call_args_list == [call()]
+        self.send_notification(inmates, Inmates.FINISHED_PROCESSING)
+        assert not controller.is_running
 
 
 def run_controller(controller):

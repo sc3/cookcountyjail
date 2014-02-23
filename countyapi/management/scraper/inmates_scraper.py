@@ -11,7 +11,7 @@ CCJ_INMATE_DETAILS_URL = 'http://www2.cookcountysheriff.org/search2/details.asp?
 
 class InmatesScraper:
 
-    FINISHED_PROCESSING = 'Finished Processing'
+    FINISHED_PROCESSING = 'InmatesScraper finished processing'
 
     def __init__(self, http, inmates, inmate_details, monitor, workers_to_start=WORKERS_TO_START):
         self._http = http

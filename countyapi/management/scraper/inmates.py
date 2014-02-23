@@ -2,20 +2,27 @@
 import gevent
 from gevent.queue import JoinableQueue
 
-from inmate import Inmate
-
 from throwable_commands_queue import ThrowawayCommandsQueue
 
 
 class Inmates:
 
-    def __init__(self):
-        self._read_commands_q = self._setup_command_system()
+    FINISHED_PROCESSING = 'Inmates_finished_processing'
+
+    def __init__(self, inmate_class, monitor):
+        self.inmate_class = inmate_class
+        self._monitor = monitor
+        self._read_commands_q, self._workers = self._setup_command_system()
         self._write_commands_q = self._read_commands_q
+        gevent.sleep(0)
 
     def add(self, inmate_details):
-        self._write_commands_q.put((_create_update_inmate, inmate_details))
+        self._write_commands_q.put((self._create_update_inmate, inmate_details))
         gevent.sleep(0)
+
+    def _create_update_inmate(self, inmate_details):
+        inmate = self.inmate_class(inmate_details)
+        inmate.save()
 
     def finish(self):
         self._prevent_new_requests_from_being_processed()
@@ -34,14 +41,8 @@ class Inmates:
                 self._read_commands_q.task_done()
 
     def _setup_command_system(self):
-        commands = JoinableQueue(0)
-        gevent.spawn(self._process_commands)
-        return commands
+        return JoinableQueue(0), [gevent.spawn(self._process_commands)]
 
     def _wait_for_processing_to_finish(self):
         self._read_commands_q.join()
-
-
-def _create_update_inmate(inmate_details):
-    inmate = Inmate(inmate_details)
-    inmate.save()
+        self._monitor.notify(self.__class__, self.FINISHED_PROCESSING)
