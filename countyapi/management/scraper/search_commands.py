@@ -30,14 +30,11 @@ class SearchCommands:
         self._put(self._find_inmates, {'excluded_inmates': exclude_list, 'number_to_fetch': number_to_fetch})
 
     def _find_inmates(self, args):
-        base_debug_msg = '%s new inmates search'
-        self._debug(base_debug_msg % 'started')
         excluded_inmates = set(args['excluded_inmates'])
         for inmate_id in _jail_ids(args['number_to_fetch']):
             if inmate_id not in excluded_inmates:
                 self._inmate_scraper.create_if_exists(inmate_id)
         self._monitor.notify(self.__class__, self.FINISHED_FIND_INMATES)
-        self._debug(base_debug_msg % 'finished')
 
     def _process_commands(self):
         while True:
@@ -57,12 +54,9 @@ class SearchCommands:
         self._put(self._update_inmates_status, active_inmates_ids)
 
     def _update_inmates_status(self, active_inmates_ids):
-        base_debug_msg = '%s generating update inmates commands'
-        self._debug(base_debug_msg % 'started')
         for inmate_id in active_inmates_ids:
             self._inmate_scraper.update_inmate_status(inmate_id)
         self._monitor.notify(self.__class__, self.FINISHED_UPDATE_INMATES_STATUS)
-        self._debug(base_debug_msg % 'finished')
 
 def _jail_ids(number_to_fetch):
     booking_date = date.today() - ONE_DAY

@@ -56,7 +56,9 @@ class Controller:
             if notifier == heartbeat_class:
                 self.heartbeat_count += 1
             else:
-                self._debug('hb count %d, from %s, received - %s' % (self.heartbeat_count, notifier, msg))
+                self._debug('hb count %d, from %s, received - %s' % (self.heartbeat_count,
+                                                                     str(notifier).split('.')[-1],
+                                                                     msg))
                 if msg == self.STOP_COMMAND:
                     keep_running = False
                 elif notifier == self._search_commands.__class__:

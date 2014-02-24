@@ -80,7 +80,10 @@ class HousingLocationInfo:
                     housing_history.housing_date_discovered = yesterday()
                     housing_history.save()
             except DatabaseError as e:
-                self._debug("For inmate %d, could not save housing history '%s'.\nException is %s" %
+                self._debug("For inmate %s, could not save housing history '%s'.\nException is %s" %
+                            (self._inmate.jail_id, inmate_housing_location, str(e)))
+            except Exception, e:
+                self._debug("For inmate %s, could not save housing history '%s'.\nException is %s" %
                             (self._inmate.jail_id, inmate_housing_location, str(e)))
 
     def _set_day_release(self):

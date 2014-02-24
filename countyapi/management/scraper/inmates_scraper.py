@@ -4,14 +4,14 @@ from gevent.queue import JoinableQueue
 
 from throwable_commands_queue import ThrowawayCommandsQueue
 
-WORKERS_TO_START = 70
+WORKERS_TO_START = 42 #70
 
 CCJ_INMATE_DETAILS_URL = 'http://www2.cookcountysheriff.org/search2/details.asp?jailnumber='
 
 
 class InmatesScraper:
 
-    FINISHED_PROCESSING = 'InmatesScraper finished processing'
+    FINISHED_PROCESSING = 'InmatesScraper: finished processing'
 
     def __init__(self, http, inmates, inmate_details_class, monitor, workers_to_start=WORKERS_TO_START):
         self._http = http
@@ -26,13 +26,9 @@ class InmatesScraper:
         self._put(self._create_if_exists, arg)
 
     def _create_if_exists(self, jail_id):
-        outcome = 'did not find'
-        self._debug('check for new inmate %s' % jail_id)
         worked, inmate_details_in_html = self._http.get(CCJ_INMATE_DETAILS_URL + jail_id)
         if worked:
             self._inmates.add(self._inmate_details_class(inmate_details_in_html))
-            outcome = 'found'
-        self._debug('%s new inmate %s' % (outcome, jail_id))
 
     def _debug(self, msg):
         self._monitor.debug('InmatesScraper: %s' % msg)
@@ -64,19 +60,12 @@ class InmatesScraper:
         self._put(self._update_inmate_status, inmate_id)
 
     def _update_inmate_status(self, inmate_id):
-        status_msg_template = '%%s inmate %s' % inmate_id
-        self._debug(status_msg_template % 'starting update')
         worked, inmate_details_in_html = self._http.get(CCJ_INMATE_DETAILS_URL + inmate_id)
         if worked:
             self._inmates.update(self._inmate_details_class(inmate_details_in_html))
-            status = 'updated'
         else:
             self._inmates.discharge(inmate_id)
-            status = 'discharged'
-        self._debug(status_msg_template % status)
 
     def _wait_for_scrapping_to_finish(self):
-        self._debug('started waiting for scraping inmates to finish')
         self._read_commands_q.join()
         self._monitor.notify(self.__class__, self.FINISHED_PROCESSING)
-        self._debug('finished waiting for scraping inmates to finish')
