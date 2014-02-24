@@ -29,7 +29,8 @@ class TestController:
         assert not controller.is_running
 
     def test_controller_can_be_stopped(self):
-        controller = Controller(self._monitor, self._search, self._inmate_scraper, None)
+        inmates = Mock()
+        controller = Controller(self._monitor, self._search, self._inmate_scraper, inmates)
         assert not controller.is_running
         assert controller.heartbeat_count == 0
         run_controller(controller)
@@ -39,11 +40,16 @@ class TestController:
         self.stop_controller(controller)
         assert controller.heartbeat_count == expected_num_heartbeats
 
-    def test_searches_for_inmates_only_new_ones(self):
+    def test_updates_and_searches_new_inmates(self):
         inmates = Mock()
         controller = Controller(self._monitor, self._search, self._inmate_scraper, inmates)
         run_controller(controller)
+        assert inmates.active_inmates_ids.call_args_list == [call(controller.active_ids_response_q)]
+        active_jail_ids = [2, 78]
+        controller.active_ids_response_q.put(active_jail_ids)
         gevent.sleep(TIME_PADDING)
+        assert self._search.update_inmates_status.call_args_list == [call(active_jail_ids)]
+        self.send_notification(self._search, SearchCommands.FINISHED_UPDATE_INMATES_STATUS)
         assert self._search.find_inmates.call_args_list == [call()]
         self.send_notification(self._search, SearchCommands.FINISHED_FIND_INMATES)
         assert self._inmate_scraper.finish.call_args_list == [call()]
