@@ -1,8 +1,5 @@
 Django==1.5.4
 Fabric==1.8.0
-Flask==0.10.1
-Flask-SQLAlchemy==1.0
-Jinja2==2.7.1
 MarkupSafe==0.18
 SQLAlchemy==0.8.2
 South==0.8.2
@@ -11,8 +8,6 @@ argparse==1.2.1
 cssselect==0.8
 django-tastypie==0.10.0
 ecdsa==0.9
-eventlet==0.14.0
-greenlet==0.4.1
 gunicorn==18.0
 itsdangerous==0.23
 lxml==3.2.3
@@ -25,3 +20,6 @@ python-dateutil==2.1
 requests==2.0.0
 six==1.4.1
 wsgiref==0.1.2
+gevent>=1.0
+greenlet>=0.4.2
+grequests>=0.2.0

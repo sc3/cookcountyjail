@@ -20,7 +20,7 @@ class Command(BaseCommand):
         * look_for_missing_inmates which is this one and it checks to see if
           there are any missing inmate records and adds them to the database
     While these commands can be called on their own they are meant to be used
-    in script and a command, generate_datebase_audit_script, has been added
+    in script and a command, generate_database_audit_script, has been added
     for that purpose.
 
     Note that this operation can take a very long time which is why the
@@ -28,7 +28,7 @@ class Command(BaseCommand):
     the running time of the script.
     """
 
-    help = "Audits the collected inmates and scans Cook Count Sherif's website looking for uknown inmates."
+    help = "Audits the collected inmates and scans Cook Count Sheriff's website looking for unknown inmates."
     option_list = BaseCommand.option_list + (
         make_option('-d', '--day', type='string', action='store', dest='day', default=None,
                     help='%s %s' % ('Specify day to search for missing inmates, format is YYYY-MM-DD.',
