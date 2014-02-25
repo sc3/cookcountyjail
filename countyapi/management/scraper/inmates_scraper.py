@@ -4,7 +4,7 @@ from gevent.queue import JoinableQueue
 
 from throwable_commands_queue import ThrowawayCommandsQueue
 
-WORKERS_TO_START = 32
+WORKERS_TO_START = 25
 
 CCJ_INMATE_DETAILS_URL = 'http://www2.cookcountysheriff.org/search2/details.asp?jailnumber='
 

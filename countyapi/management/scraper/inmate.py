@@ -49,6 +49,8 @@ class Inmate:
                 monitor.debug("Inmate: Discharged inmate %s" % inmate_id)
         except DatabaseError as e:
             monitor.debug("Could not save inmate '%s'\nException is %s" % (inmate_id, str(e)))
+        except Exception, e:
+            monitor.debug("Unknown exception for inmate '%s'\nException is %s" % (inmate_id, str(e)))
 
     def _inmate_record_get_or_create(self):
         """
@@ -74,7 +76,7 @@ class Inmate:
             self._store_next_court_info()
             try:
                 self._inmate.save()
-                self._debug("Inmate: %s inmate %s" % ("Created" if created else "Updated", self._inmate))
+                self._debug("%s inmate %s" % ("Created" if created else "Updated", self._inmate_id))
             except DatabaseError as e:
                 self._debug("Could not save inmate '%s'\nException is %s" % (self._inmate_id, str(e)))
         except DatabaseError as e:
