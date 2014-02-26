@@ -13,20 +13,23 @@ class InmatesScraper:
 
     FINISHED_PROCESSING = 'InmatesScraper: finished processing'
 
-    def __init__(self, http, inmates, inmate_details_class, monitor, workers_to_start=WORKERS_TO_START):
+    def __init__(self, http, inmates, inmate_details_class, monitor, workers_to_start=WORKERS_TO_START, verbose=False):
         self._http = http
         self._inmates = inmates
         self._inmate_details_class = inmate_details_class
         self._monitor = monitor
         self._workers_to_start = workers_to_start
+        self._verbose = verbose
         self._read_commands_q, self._workers = self._setup_command_system()
         self._write_commands_q = self._read_commands_q
 
     def create_if_exists(self, arg):
         self._put(self._create_if_exists, arg)
 
-    def _create_if_exists(self, jail_id):
-        worked, inmate_details_in_html = self._http.get(CCJ_INMATE_DETAILS_URL + jail_id)
+    def _create_if_exists(self, inmate_id):
+        if self._verbose:
+            self._debug('check for inmate - %s' % inmate_id)
+        worked, inmate_details_in_html = self._http.get(CCJ_INMATE_DETAILS_URL + inmate_id)
         if worked:
             self._inmates.add(self._inmate_details_class(inmate_details_in_html))
 

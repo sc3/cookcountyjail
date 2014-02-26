@@ -59,6 +59,15 @@ class Inmate:
         inmate, created = CountyInmate.objects.get_or_create(jail_id=self._inmate_id)
         return inmate, created
 
+    @staticmethod
+    def known_inmates_for_date(booking_date):
+        """
+        Returns all inmates for a given date.
+        @param booking_date: booking date to search for
+        @rtype : list of inmates booked on specified day
+        """
+        return CountyInmate.objects.filter(booking_date=booking_date)
+
     def save(self):
         """
         Fetches inmates detail page and creates or updates inmates record based on it,
