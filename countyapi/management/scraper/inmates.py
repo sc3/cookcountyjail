@@ -1,6 +1,9 @@
 
 import gevent
 from gevent.queue import JoinableQueue
+from datetime import date, timedelta
+
+ONE_DAY = timedelta(1)
 
 from throwable_commands_queue import ThrowawayCommandsQueue
 
@@ -44,6 +47,17 @@ class Inmates:
         gevent.spawn(self._wait_for_processing_to_finish)
         gevent.sleep(0)
 
+    def known_inmates_ids_starting_with(self, response_queue, start_date):
+        self._put(self._known_inmates_ids_starting_with, {'response_queue': response_queue, 'start_date': start_date})
+
+    def _known_inmates_ids_starting_with(self, args):
+        known_inmates_ids = []
+        cur_date = args['start_date']
+        while cur_date <= yesterday():
+            known_inmates_ids.extend([inmate.jail_id for inmate in self._inmate_class.known_inmates_for_date(cur_date)])
+            cur_date += ONE_DAY
+        args['response_queue'].put(known_inmates_ids)
+
     def _prevent_new_requests_from_being_processed(self):
         self._write_commands_q = ThrowawayCommandsQueue()
 
@@ -68,3 +82,7 @@ class Inmates:
     def _wait_for_processing_to_finish(self):
         self._read_commands_q.join()
         self._monitor.notify(self.__class__, self.FINISHED_PROCESSING)
+
+
+def yesterday():
+    return date.today() - ONE_DAY
