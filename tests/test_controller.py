@@ -3,7 +3,7 @@ import gevent
 from mock import Mock, call
 from datetime import date, timedelta
 
-from countyapi.management.scraper.controller import Controller
+from countyapi.management.scraper.controller import Controller, NEW_INMATE_SEARCH_WINDOW_SIZE
 from countyapi.management.scraper.monitor import Monitor
 from countyapi.management.scraper.heartbeat import HEARTBEAT_INTERVAL
 from countyapi.management.scraper.search_commands import SearchCommands
@@ -14,6 +14,7 @@ from countyapi.management.scraper.inmates import Inmates
 NUM_DAYS_MISSING_INMATES = 3
 TIMEDELTA_MISSING_INMATES = timedelta(NUM_DAYS_MISSING_INMATES)
 TIME_PADDING = 0.1
+ONE_DAY = timedelta(1)
 
 
 class TestController:
@@ -61,11 +62,12 @@ class TestController:
         controller = Controller(self._monitor, self._search, self._inmate_scraper, inmates)
         run_controller(controller)
         assert inmates.active_inmates_ids.call_args_list == [call(controller.inmates_response_q)]
-        active_jail_ids = [2, 78]
+        active_jail_ids, missing_inmate_exclude_list = gen_active_ids_previous_10_days_before_yesterday()
         send_response(controller, active_jail_ids)
         assert self._search.update_inmates_status.call_args_list == [call(active_jail_ids)]
         self.send_notification(self._search, SearchCommands.FINISHED_UPDATE_INMATES_STATUS)
-        assert self._search.find_inmates.call_args_list == [call()]
+        assert self._search.find_inmates.call_args_list == [call(missing_inmate_exclude_list,
+                                                                 start_date=date.today() - ONE_DAY * 6)]
         self.send_notification(self._search, SearchCommands.FINISHED_FIND_INMATES)
         assert inmates.recently_discharged_inmates_ids.call_args_list == [call(controller.inmates_response_q)]
         send_response(controller, active_jail_ids)
@@ -103,6 +105,18 @@ def controller_missing_inmates(controller, start_date):
     """
     controller.find_missing_inmates(start_date)
     gevent.sleep(0.001)
+
+
+def gen_active_ids_previous_10_days_before_yesterday():
+    cur_date = date.today() - ONE_DAY * 2
+    end_date = cur_date - ONE_DAY * 9
+    inmate_counts = ['001', '004', '006', '011']
+    inmate_ids = []
+    while cur_date >= end_date:
+        for count in inmate_counts:
+            inmate_ids.append(cur_date.strftime('%Y-%m%d' + count))
+        cur_date -= ONE_DAY
+    return inmate_ids, inmate_ids[0 : len(inmate_counts) * NEW_INMATE_SEARCH_WINDOW_SIZE]
 
 
 def run_controller(controller):
