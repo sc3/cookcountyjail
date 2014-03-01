@@ -13,8 +13,9 @@ ONE_DAY = timedelta(1)
 class SearchCommands:
 
     _NOTIFICATION_MSG_TEMPLATE = 'SearchCommands: finished generating %s'
-    FINISHED_CHECK_DISCHARGED_INMATES = _NOTIFICATION_MSG_TEMPLATE % 'check for if inmate really is discharged'
     FINISHED_FIND_INMATES = _NOTIFICATION_MSG_TEMPLATE % 'find inmates commands'
+    FINISHED_CHECK_OF_RECENTLY_DISCHARGED_INMATES = \
+        _NOTIFICATION_MSG_TEMPLATE % 'finished generate check of recently discharged inmates commands'
     FINISHED_UPDATE_INMATES_STATUS = _NOTIFICATION_MSG_TEMPLATE % 'update inmates status'
 
     def __init__(self, inmate_scraper, monitor):
@@ -28,7 +29,7 @@ class SearchCommands:
     def _check_if_really_discharged(self, discharged_inmates_ids):
         for discharged_inmate_id in discharged_inmates_ids:
             self._inmate_scraper.resurrect_if_found(discharged_inmate_id)
-        self._monitor.notify(self.__class__, self.FINISHED_CHECK_DISCHARGED_INMATES)
+        self._monitor.notify(self.__class__, self.FINISHED_CHECK_OF_RECENTLY_DISCHARGED_INMATES)
 
     def _debug(self, msg):
         self._monitor.debug('SearchCommands: %s' % msg)

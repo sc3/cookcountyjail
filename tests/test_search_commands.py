@@ -67,7 +67,7 @@ class Test_SearchCommands:
         search_commands.check_if_really_discharged(gen_inmate_ids(yesterday(), number_to_fetch))
         assert inmate_scraper.resurrect_if_found.call_args_list == expected
         assert monitor.notify.call_args_list == [call(search_commands.__class__,
-                                                      search_commands.FINISHED_CHECK_DISCHARGED_INMATES)]
+                                                      search_commands.FINISHED_CHECK_OF_RECENTLY_DISCHARGED_INMATES)]
 
 
 def expect_jail_id_calls(number_to_fetch):
