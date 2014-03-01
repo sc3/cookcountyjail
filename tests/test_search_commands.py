@@ -58,6 +58,17 @@ class Test_SearchCommands:
         assert inmate_scraper.create_if_exists.call_args_list == expected
         assert monitor.notify.call_args_list == [call(search_commands.__class__, search_commands.FINISHED_FIND_INMATES)]
 
+    def test_check_if_really_discharged(self):
+        number_to_fetch = 3
+        expected = expect_jail_id_calls(number_to_fetch)
+        inmate_scraper = Mock()
+        monitor = Mock()
+        search_commands = SearchCommands(inmate_scraper, monitor)
+        search_commands.check_if_really_discharged(gen_inmate_ids(yesterday(), number_to_fetch))
+        assert inmate_scraper.resurrect_if_found.call_args_list == expected
+        assert monitor.notify.call_args_list == [call(search_commands.__class__,
+                                                      search_commands.FINISHED_CHECK_DISCHARGED_INMATES)]
+
 
 def expect_jail_id_calls(number_to_fetch):
     expected = []

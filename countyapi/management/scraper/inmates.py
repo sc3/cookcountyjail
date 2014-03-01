@@ -23,8 +23,7 @@ class Inmates:
         self._put(self._active_inmates_ids, response_queue)
 
     def _active_inmates_ids(self, response_queue):
-        inmates_ids = [inmate.jail_id for inmate in self._inmate_class.active_inmates()]
-        response_queue.put(inmates_ids)
+        _send_inmate_ids(response_queue, self._inmate_class.active_inmates())
 
     def add(self, inmate_details):
         self._put(self._create_update_inmate, inmate_details)
@@ -53,7 +52,8 @@ class Inmates:
     def _known_inmates_ids_starting_with(self, args):
         known_inmates_ids = []
         cur_date = args['start_date']
-        while cur_date <= yesterday():
+        yesterday = _yesterday()
+        while cur_date <= yesterday:
             known_inmates_ids.extend([inmate.jail_id for inmate in self._inmate_class.known_inmates_for_date(cur_date)])
             cur_date += ONE_DAY
         args['response_queue'].put(known_inmates_ids)
@@ -73,6 +73,12 @@ class Inmates:
         self._write_commands_q.put((method, args))
         gevent.sleep(0)
 
+    def recently_discharged_inmates_ids(self, response_queue):
+        self._put(self._recently_discharged_inmates_ids, response_queue)
+
+    def _recently_discharged_inmates_ids(self, response_queue):
+        _send_inmate_ids(response_queue, self._inmate_class.recently_discharged_inmates())
+
     def _setup_command_system(self):
         return JoinableQueue(None), [gevent.spawn(self._process_commands)]
 
@@ -84,5 +90,10 @@ class Inmates:
         self._monitor.notify(self.__class__, self.FINISHED_PROCESSING)
 
 
-def yesterday():
+def _send_inmate_ids(response_queue, inmates):
+    inmates_ids = [inmate.jail_id for inmate in inmates]
+    response_queue.put(inmates_ids)
+
+
+def _yesterday():
     return date.today() - ONE_DAY

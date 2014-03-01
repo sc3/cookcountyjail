@@ -90,6 +90,20 @@ class Test_InmatesScraper:
         inmate_scraper.finish()
         assert monitor.notify.call_args_list == [call(inmate_scraper.__class__, inmate_scraper.FINISHED_PROCESSING)]
 
+    def test_resurrect_if_found(self):
+        http = Http_TestDouble()
+        inmates = Mock()
+        monitor = Mock()
+        inmate_scraper = InmatesScraper(http, inmates, InmateDetails_TestDouble, monitor)
+        jail_ids = ['jail_id_%d' % id for id in range(1, 5)]
+        expected_update_calls_args = []
+        for jail_id in jail_ids:
+            if not http.bad_response_desired(jail_id):
+                expected_update_calls_args.append(call(InmateDetails_TestDouble(jail_id)))
+        for jail_id in jail_ids:
+            inmate_scraper.resurrect_if_found(jail_id)
+        assert inmates.update.call_args_list == expected_update_calls_args
+
 
 class InmateDetails_TestDouble:
 

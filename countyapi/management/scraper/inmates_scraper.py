@@ -56,6 +56,17 @@ class InmatesScraper:
         self._write_commands_q.put((method, args))
         gevent.sleep(0)
 
+    def resurrect_if_found(self, inmate_id):
+        self._put(self._resurrect_if_found, inmate_id)
+
+    def resurrect_if_found(self, inmate_id):
+        if self._verbose:
+            self._debug('check if really discharged inmate %s' % inmate_id)
+        worked, inmate_details_in_html = self._http.get(CCJ_INMATE_DETAILS_URL + inmate_id)
+        if worked:
+            self._debug('Resurrected inmate %s' % inmate_id)
+            self._inmates.update(self._inmate_details_class(inmate_details_in_html))
+
     def _setup_command_system(self):
         return JoinableQueue(None), [gevent.spawn(self._process_commands) for x in range(self._workers_to_start)]
 

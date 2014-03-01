@@ -1,5 +1,5 @@
 
-import gevent
+from gevent.queue import Queue
 from mock import Mock, call
 
 from countyapi.management.scraper.inmates import Inmates
@@ -7,23 +7,23 @@ from countyapi.management.scraper.inmates import Inmates
 
 class TestInmates:
 
+    def test_active_inmates_ids(self):
+        inmate_class = Mock()
+        j_ids = [j_id for j_id in range(1, 4)]
+        input_values = [make_county_inmate(j_id) for j_id in j_ids]
+        inmate_class.active_inmates.return_value = input_values
+        inmates = Inmates(inmate_class, Mock())
+        response_q = Queue(1)
+        inmates.active_inmates_ids(response_q)
+        active_inmates_ids = response_q.get()
+        assert active_inmates_ids == j_ids
+
     def test_add_inmate(self):
         Inmate_TestDouble.clear_class_vars()
         inmates = Inmates(Inmate_TestDouble, Mock())
         inmate_details = Mock()
         inmate_details.jail_id.return_value = 23
         inmates.add(inmate_details)
-        assert Inmate_TestDouble.instantiated_called(1)
-        inmate = Inmate_TestDouble.instantiated[0]
-        assert inmate.inmate_details == inmate_details
-        assert inmate.saved_count == 1
-
-    def test_update_inmate(self):
-        Inmate_TestDouble.clear_class_vars()
-        inmates = Inmates(Inmate_TestDouble, Mock())
-        inmate_details = Mock()
-        inmate_details.jail_id.return_value = 23
-        inmates.update(inmate_details)
         assert Inmate_TestDouble.instantiated_called(1)
         inmate = Inmate_TestDouble.instantiated[0]
         assert inmate.inmate_details == inmate_details
@@ -43,6 +43,28 @@ class TestInmates:
         inmates = Inmates(Inmate_TestDouble, monitor)
         inmates.finish()
         assert monitor.notify.call_args_list == [call(inmates.__class__, Inmates.FINISHED_PROCESSING)]
+
+    def test_recently_discharged_inmates_ids(self):
+        inmate_class = Mock()
+        j_ids = [j_id for j_id in range(1, 4)]
+        input_values = [make_county_inmate(j_id) for j_id in j_ids]
+        inmate_class.recently_discharged_inmates.return_value = input_values
+        inmates = Inmates(inmate_class, Mock())
+        response_q = Queue(1)
+        inmates.recently_discharged_inmates_ids(response_q)
+        recently_discharged_inmates_ids = response_q.get()
+        assert recently_discharged_inmates_ids == j_ids
+
+    def test_update_inmate(self):
+        Inmate_TestDouble.clear_class_vars()
+        inmates = Inmates(Inmate_TestDouble, Mock())
+        inmate_details = Mock()
+        inmate_details.jail_id.return_value = 23
+        inmates.update(inmate_details)
+        assert Inmate_TestDouble.instantiated_called(1)
+        inmate = Inmate_TestDouble.instantiated[0]
+        assert inmate.inmate_details == inmate_details
+        assert inmate.saved_count == 1
 
 
 class Inmate_TestDouble:
@@ -66,3 +88,9 @@ class Inmate_TestDouble:
 
     def save(self):
         self.saved_count += 1
+
+
+def make_county_inmate(inmate_id):
+    county_inmate = Mock()
+    county_inmate.jail_id = inmate_id
+    return county_inmate
