@@ -11,6 +11,8 @@ class Controller:
     _CONTROLLER_NOTIFY_MSG_TEMPLATE = 'Controller: %s'
     _RECEIVED_ACTIVE_IDS_COMMAND = _CONTROLLER_NOTIFY_MSG_TEMPLATE % 'Received active ids'
     _RECEIVED_KNOWN_INMATES_COMMAND = _CONTROLLER_NOTIFY_MSG_TEMPLATE % 'Received known inmates ids'
+    _RECEIVED_RECENTLY_DISCHARGED_INMATES_IDS_COMMAND = \
+        _CONTROLLER_NOTIFY_MSG_TEMPLATE % 'Received recently discharged inmates ids'
     _START_COMMAND = _CONTROLLER_NOTIFY_MSG_TEMPLATE % 'Start'
     STOP_COMMAND = _CONTROLLER_NOTIFY_MSG_TEMPLATE % 'Halt'
 
@@ -88,6 +90,10 @@ class Controller:
         self._inmates.known_inmates_ids_starting_with(self.inmates_response_q, self._start_date_missing_inmates)
         self._retrieve_inmates_response(self._RECEIVED_KNOWN_INMATES_COMMAND)
 
+    def _recently_discharged_inmates_ids(self):
+        self._inmates.recently_discharged_inmates_ids(self.inmates_response_q)
+        self._retrieve_inmates_response(self._RECEIVED_RECENTLY_DISCHARGED_INMATES_IDS_COMMAND)
+
     def _retrieve_inmates_response(self, received_notification_msg):
         self._inmates_response_received_notification_msg = received_notification_msg
         self._inmates_worker = [gevent.spawn(self._retrieve_inmates_response_1)]
@@ -126,7 +132,10 @@ class Controller:
                         self._debug('find inmates')
                         self._search_commands.find_inmates()
                     elif msg == SearchCommands.FINISHED_FIND_INMATES:
-                        self._debug('inmates scraper finish')
+                        self._debug('fetch recently discharged inmate ids')
+                        self._recently_discharged_inmates_ids()
+                    elif msg == SearchCommands.FINISHED_CHECK_OF_RECENTLY_DISCHARGED_INMATES:
+                        self._debug('initiate inmates scraper finish')
                         self._inmate_scraper.finish()
                     else:
                         self._debug('Unknown notification from %s, received - %s' % (notifier, msg))
@@ -142,6 +151,9 @@ class Controller:
                     elif msg == self._RECEIVED_ACTIVE_IDS_COMMAND:
                         self._debug('update inmates status')
                         self._search_commands.update_inmates_status(self._inmates_response)
+                    elif msg == self._RECEIVED_RECENTLY_DISCHARGED_INMATES_IDS_COMMAND:
+                        self._debug('initiate confirmation search of recently discharged inmates')
+                        self._search_commands.check_if_really_discharged(self._inmates_response)
                 else:
                     self._debug('Unknown notification from %s, received - %s' % (notifier, msg))
         self.is_running = False
