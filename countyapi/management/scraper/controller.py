@@ -1,9 +1,14 @@
 
 import gevent
 from gevent.queue import Queue
+from datetime import date, timedelta
 
 from heartbeat import Heartbeat
 from search_commands import SearchCommands
+
+
+NEW_INMATE_SEARCH_WINDOW_SIZE = 5
+ONE_DAY = timedelta(1)
 
 
 class Controller:
@@ -29,6 +34,8 @@ class Controller:
         self._inmates_response = []
         self._inmates_response_received_notification_msg = None
         self._start_date_missing_inmates = None
+        self._active_inmate_ids = []
+        self._today = date.today()
 
     def _active_inmates(self):
         self._inmates.active_inmates_ids(self.inmates_response_q)
@@ -36,6 +43,13 @@ class Controller:
 
     def _debug(self, msg):
         self._monitor.debug('Controller: %s' % msg)
+
+    def _end_index_active_inmate_ids_in_search_window(self):
+        end_date = (self._today - ONE_DAY * (NEW_INMATE_SEARCH_WINDOW_SIZE + 2)).strftime('%Y-%m%d')
+        for i in range(len(self._active_inmate_ids)):
+            if end_date >= self._active_inmate_ids[i][0:9]:
+                return i
+        return len(self._active_inmate_ids)
 
     def find_missing_inmates(self, start_date):
         if not self.is_running:
@@ -86,6 +100,11 @@ class Controller:
         self.is_running = False
         self._debug('find_missing_inmates stopped')
 
+    def _find_new_inmates(self):
+        end_index = self._end_index_active_inmate_ids_in_search_window()
+        self._search_commands.find_inmates(self._active_inmate_ids[0:end_index],
+                                           start_date=self._today - ONE_DAY * (NEW_INMATE_SEARCH_WINDOW_SIZE + 1))
+
     def _known_inmates(self):
         self._inmates.known_inmates_ids_starting_with(self.inmates_response_q, self._start_date_missing_inmates)
         self._retrieve_inmates_response(self._RECEIVED_KNOWN_INMATES_COMMAND)
@@ -129,8 +148,8 @@ class Controller:
                     keep_running = False
                 elif notifier == self._search_commands.__class__:
                     if msg == SearchCommands.FINISHED_UPDATE_INMATES_STATUS:
-                        self._debug('find inmates')
-                        self._search_commands.find_inmates()
+                        self._debug('initiate search for new inmates')
+                        self._find_new_inmates()
                     elif msg == SearchCommands.FINISHED_FIND_INMATES:
                         self._debug('fetch recently discharged inmate ids')
                         self._recently_discharged_inmates_ids()
@@ -150,6 +169,7 @@ class Controller:
                         self._active_inmates()
                     elif msg == self._RECEIVED_ACTIVE_IDS_COMMAND:
                         self._debug('update inmates status')
+                        self._active_inmate_ids = self._inmates_response
                         self._search_commands.update_inmates_status(self._inmates_response)
                     elif msg == self._RECEIVED_RECENTLY_DISCHARGED_INMATES_IDS_COMMAND:
                         self._debug('initiate confirmation search of recently discharged inmates')
