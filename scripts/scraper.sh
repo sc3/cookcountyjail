@@ -35,4 +35,7 @@ echo "Dumping database for `date`"
 ${MANAGE} dumpdata countyapi > ${DB_BACKUPS_DIR}/${DB_BACKUP_FILE}
 (cd ${DB_BACKUPS_DIR} && gzip ${DB_BACKUP_FILE} && ln -sf ${DB_BACKUP_FILE}.gz latest.json.gz)
 
+echo "Restart gunicorn servers for better user experience."
+sudo service cookcountyjail restart
+
 echo "Cook County Jail scraper V1.0 finished at `date`"
