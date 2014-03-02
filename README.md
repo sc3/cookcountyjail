@@ -17,9 +17,9 @@ Documentation on the API supports so far is located on the
 To request new functionlity and to influence the choice of what new API method is
 build next add to the [2.0 API Hackpad](http://is.gd/9tQpPj).
 
-# Setting up for local development
-=======
-# Installation
+# Setting up for development
+
+## Installation
 
 ```
 git clone git@github.com:sc3/cookcountyjail.git
@@ -27,10 +27,9 @@ cd cookcountyjail
 pip install -r config/requirements.txt
 ```
 
-# Running it locally
+## Running it locally
 
-After you've checked out the source code repository, you need to install the requirements. You are strongly encouraged
-to create a [virtual environment](https://pypi.python.org/pypi/virtualenv) before installing them.
+After you've checked out the source code repository, you need to install the requirements. You are strongly encouraged to create a [virtual environment](https://pypi.python.org/pypi/virtualenv) before installing them.
 
 To install the requirements, you should have `[pip](https://pypi.python.org/pypi/pip)` installed. If you made a virtual environment, this is already done for you.
 
@@ -41,16 +40,13 @@ By default, the locally running application uses the `[sqlite](http://www.sqlite
     ./manage.py syncdb --noinput
     ./manage.py migrate countyapi
 
-# Cloning the database
+## Cloning the database
 
-Once you have setup your database the easiest way to populate it is to download the backup of the
-database that is made everyday after the Sheriff's website has been scrapped. The url to access this is:
+Once you have setup your database the easiest way to populate it is to download the backup of the database that is made everyday after the Sheriff's website has been scrapped. The url to access this is:
 
     http://cookcountyjail.recoveredfactory.net/api/1.0/clone
 
-This points to a gzipped JSON file of the database.
-
-Here is how to download the cloned copy of the database and use it to populate your database:
+This points to a gzipped JSON file of the database. Here is how to download the cloned copy of the database and use it to populate your database:
 
 ```
 curl http://cookcountyjail.recoveredfactory.net/api/1.0/clone > /tmp/ccj_cloned_db.json.gz
@@ -59,39 +55,34 @@ gunzip /tmp/ccj_cloned_db.json.gz
 rm /tmp/ccj_cloned_db.json
 ```
 
-Note: loading your local database can take upwords of 10 minutes.
+Note: loading your local database can take upwards of 10 minutes.
 
-# Running the scraper locally
+## Running the scraper locally
 
-If you want to then keep your database up to date then you need to run the scraper to populate
-your database with the changed records. The command to run the scraper program is:
+If you want to then keep your database up to date then you need to run the scraper to populate your database with the changed records. The command to run the scraper program is:
 
 ```
 ./manage.py scrape_inmates
 ```
 
-Note that the Cook County Sheriff's department typically finishes updating the inmate records for the previous day
-at around 8:30 am. It is recommend that you collect the records after this time, otherwise you can get partial
-records.
+Note that the Cook County Sheriff's department typically finishes updating the inmate records for the previous day at around 8:30 am. It is recommend that you collect the records after this time, otherwise you can get partial records.
 
-Other useful commands
+<code>scrape_inmates</code> also supports a <code>--limit / -l</code>
+flag which limits the number of records created and <code>--search /
+-s</code> flag which overrides the default A-Z search strategy.
+
+
+Other useful commands are listed below. Please read the documentation of the appropriate modules, and/or browse their code before using these commands. Some are now deprecated, and not all are intended to be used in a standalone fashion. Many supplement the scraper.
+
 ```
 ./manage.py check_inmate
 ./manage.py generate_datebase_audit_script
 ./manage.py generate_search_for_discharged_inmates_cmds
 ./manage.py generate_summaries
-./manage.py inmate_details
-./manage.py inmate_utils
 ./manage.py look_for_missing_inmates
 ./manage.py poll_inmates
-./manage.py scrape_inmates
-./manage.py utils
 ./manage.py validate_inmate_records
 ```
-
-<code>scrape_inmates</code> also supports a <code>--limit / -l</code>
-flag which limits the number of records created and <code>--search /
--s</code> flag which overrides the default A-Z search strategy.
 
 # License
 
