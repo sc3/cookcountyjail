@@ -35,9 +35,12 @@ class Inmate:
         """
         Because the Cook County Jail website has issues, we can have misclassified inmates as discharged. This
         function clears the discharge fields, so the inmate is no longer classified as being discharged.
+        @return True if resurrecting inmate
         """
+        resurrected = self._inmate.discharge_date_earliest is not None
         self._inmate.discharge_date_earliest = None
         self._inmate.discharge_date_latest = None
+        return resurrected
 
     def _debug(self, msg):
         self._monitor.debug('Inmate: %s' % msg)
@@ -85,9 +88,11 @@ class Inmate:
         Fetches inmates detail page and creates or updates inmates record based on it,
         otherwise returns as inmate's details were not found
         """
+        updated_msg = "Updated"
         try:
             self._inmate, created = self._inmate_record_get_or_create()
-            self._clear_discharged()
+            if self._clear_discharged():
+                updated_msg = "Resurrected"
             self._store_person_id()
             self._store_booking_date()
             self._store_physical_characteristics()
@@ -97,7 +102,7 @@ class Inmate:
             self._store_next_court_info()
             try:
                 self._inmate.save()
-                self._debug("%s inmate %s" % ("Created" if created else "Updated", self._inmate_id))
+                self._debug("%s inmate %s" % ("Created" if created else updated_msg, self._inmate_id))
             except DatabaseError as e:
                 self._debug("Could not save inmate '%s'\nException is %s" % (self._inmate_id, str(e)))
         except DatabaseError as e:
