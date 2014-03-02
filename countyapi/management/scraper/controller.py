@@ -32,7 +32,6 @@ class Controller:
         self.inmates_response_q = Queue(None)
         self._inmates_worker = []
         self._inmates_response = []
-        self._inmates_response_received_notification_msg = None
         self._start_date_missing_inmates = None
         self._active_inmate_ids = []
         self._today = date.today()
@@ -54,9 +53,8 @@ class Controller:
     def find_missing_inmates(self, start_date):
         if not self.is_running:
             self._start_date_missing_inmates = start_date
-            self._monitor.notify(self.__class__, self._START_COMMAND)
             self._worker = [gevent.spawn(self._find_missing_inmates)]
-            gevent.sleep(0)
+            self._notify(self._START_COMMAND)
 
     def _find_missing_inmates(self):
         self.is_running = True
@@ -109,25 +107,27 @@ class Controller:
         self._inmates.known_inmates_ids_starting_with(self.inmates_response_q, self._start_date_missing_inmates)
         self._retrieve_inmates_response(self._RECEIVED_KNOWN_INMATES_COMMAND)
 
+    def _notify(self, notification_msg):
+        self._monitor.notify(self.__class__, notification_msg)
+
     def _recently_discharged_inmates_ids(self):
         self._inmates.recently_discharged_inmates_ids(self.inmates_response_q)
         self._retrieve_inmates_response(self._RECEIVED_RECENTLY_DISCHARGED_INMATES_IDS_COMMAND)
 
     def _retrieve_inmates_response(self, received_notification_msg):
-        self._inmates_response_received_notification_msg = received_notification_msg
-        self._inmates_worker = [gevent.spawn(self._retrieve_inmates_response_1)]
+        def _get_response_msg():
+            self._retrieve_inmates_response_1(received_notification_msg)
+        self._inmates_worker = [gevent.spawn(_get_response_msg)]
         gevent.sleep(0)
 
-    def _retrieve_inmates_response_1(self):
+    def _retrieve_inmates_response_1(self, received_notification_msg):
         self._inmates_response = self.inmates_response_q.get()
-        self._monitor.notify(self.__class__, self._inmates_response_received_notification_msg)
-        gevent.sleep(0)
+        self._notify(received_notification_msg)
 
     def run(self):
         if not self.is_running:
-            self._monitor.notify(self.__class__, self._START_COMMAND)
             self._worker = [gevent.spawn(self._run)]
-            gevent.sleep(0)
+            self._notify(self._START_COMMAND)
 
     def _run(self):
         self.is_running = True

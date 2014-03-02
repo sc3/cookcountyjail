@@ -29,7 +29,7 @@ class SearchCommands:
     def _check_if_really_discharged(self, discharged_inmates_ids):
         for discharged_inmate_id in discharged_inmates_ids:
             self._inmate_scraper.resurrect_if_found(discharged_inmate_id)
-        self._monitor.notify(self.__class__, self.FINISHED_CHECK_OF_RECENTLY_DISCHARGED_INMATES)
+        self._notify(self.FINISHED_CHECK_OF_RECENTLY_DISCHARGED_INMATES)
 
     def _debug(self, msg):
         self._monitor.debug('SearchCommands: %s' % msg)
@@ -50,7 +50,10 @@ class SearchCommands:
                 if inmate_id not in excluded_inmates:
                     self._inmate_scraper.create_if_exists(inmate_id)
             cur_date += ONE_DAY
-        self._monitor.notify(self.__class__, self.FINISHED_FIND_INMATES)
+        self._notify(self.FINISHED_FIND_INMATES)
+
+    def _notify(self, notification_msg):
+        self._monitor.notify(self.__class__, notification_msg)
 
     def _process_commands(self):
         while True:
@@ -72,7 +75,7 @@ class SearchCommands:
     def _update_inmates_status(self, active_inmates_ids):
         for inmate_id in active_inmates_ids:
             self._inmate_scraper.update_inmate_status(inmate_id)
-        self._monitor.notify(self.__class__, self.FINISHED_UPDATE_INMATES_STATUS)
+        self._notify(self.FINISHED_UPDATE_INMATES_STATUS)
 
 
 def _jail_ids(cur_date, number_to_fetch):
