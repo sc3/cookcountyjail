@@ -2,6 +2,7 @@
 import gevent
 from gevent.queue import JoinableQueue
 
+from monitor import MONITOR_VERBOSE_DMSG_LEVEL
 from throwable_commands_queue import ThrowawayCommandsQueue
 
 WORKERS_TO_START = 25
@@ -13,13 +14,12 @@ class InmatesScraper:
 
     FINISHED_PROCESSING = 'InmatesScraper: finished processing'
 
-    def __init__(self, http, inmates, inmate_details_class, monitor, workers_to_start=WORKERS_TO_START, verbose=False):
+    def __init__(self, http, inmates, inmate_details_class, monitor, workers_to_start=WORKERS_TO_START):
         self._http = http
         self._inmates = inmates
         self._inmate_details_class = inmate_details_class
         self._monitor = monitor
         self._workers_to_start = workers_to_start
-        self._verbose = verbose
         self._read_commands_q, self._workers = self._setup_command_system()
         self._write_commands_q = self._read_commands_q
 
@@ -27,14 +27,13 @@ class InmatesScraper:
         self._put(self._create_if_exists, arg)
 
     def _create_if_exists(self, inmate_id):
-        if self._verbose:
-            self._debug('check for inmate - %s' % inmate_id)
+        self._debug('check for inmate - %s' % inmate_id, MONITOR_VERBOSE_DMSG_LEVEL)
         worked, inmate_details_in_html = self._http.get(CCJ_INMATE_DETAILS_URL + inmate_id)
         if worked:
             self._inmates.add(self._inmate_details_class(inmate_details_in_html))
 
-    def _debug(self, msg):
-        self._monitor.debug('InmatesScraper: %s' % msg)
+    def _debug(self, msg, debug_level=None):
+        self._monitor.debug('InmatesScraper: %s' % msg, debug_level)
 
     def finish(self):
         self._prevent_new_requests_from_being_processed()
@@ -60,10 +59,10 @@ class InmatesScraper:
         self._put(self._resurrect_if_found, inmate_id)
 
     def _resurrect_if_found(self, inmate_id):
-        if self._verbose:
-            self._debug('check if really discharged inmate %s' % inmate_id)
+        self._debug('check if really discharged inmate %s' % inmate_id, MONITOR_VERBOSE_DMSG_LEVEL)
         worked, inmate_details_in_html = self._http.get(CCJ_INMATE_DETAILS_URL + inmate_id)
         if worked:
+            self._debug('resurrected discharged inmate %s' % inmate_id, MONITOR_VERBOSE_DMSG_LEVEL)
             self._inmates.update(self._inmate_details_class(inmate_details_in_html))
 
     def _setup_command_system(self):

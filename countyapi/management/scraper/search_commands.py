@@ -15,7 +15,7 @@ class SearchCommands:
     _NOTIFICATION_MSG_TEMPLATE = 'SearchCommands: finished generating %s'
     FINISHED_FIND_INMATES = _NOTIFICATION_MSG_TEMPLATE % 'find inmates commands'
     FINISHED_CHECK_OF_RECENTLY_DISCHARGED_INMATES = \
-        _NOTIFICATION_MSG_TEMPLATE % 'finished generate check of recently discharged inmates commands'
+        _NOTIFICATION_MSG_TEMPLATE % 'check of recently discharged inmates commands'
     FINISHED_UPDATE_INMATES_STATUS = _NOTIFICATION_MSG_TEMPLATE % 'update inmates status'
 
     def __init__(self, inmate_scraper, monitor):

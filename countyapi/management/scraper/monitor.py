@@ -3,6 +3,9 @@ import gevent
 from gevent.queue import Queue
 from datetime import datetime
 
+MONITOR_DEFAULT_DMSG_LEVEL = 1
+MONITOR_VERBOSE_DMSG_LEVEL = 2
+
 
 class Monitor:
     """
@@ -12,14 +15,17 @@ class Monitor:
         notifications
     """
 
-    def __init__(self, log, no_debug_msgs=False):
+    def __init__(self, log, no_debug_msgs=False, verbose_debug_mode=False):
         self._log = log
         self._debug_msgs = not no_debug_msgs
+        self._debug_msg_level = MONITOR_VERBOSE_DMSG_LEVEL if verbose_debug_mode else MONITOR_DEFAULT_DMSG_LEVEL
         self._messages = self._setup_msg_system()
         self._notifications = self._setup_notification_queue()
 
-    def debug(self, msg):
-        if self._debug_msgs:
+    def debug(self, msg, debug_level=None):
+        if debug_level is None:
+            debug_level = MONITOR_DEFAULT_DMSG_LEVEL
+        if self._debug_msgs and debug_level <= self._debug_msg_level:
             self._debug(datetime.now(), msg)
 
     def _debug(self, timestamp, msg):

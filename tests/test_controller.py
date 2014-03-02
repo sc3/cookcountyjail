@@ -66,7 +66,7 @@ class TestController:
         send_response(controller, active_jail_ids)
         assert self._search.update_inmates_status.call_args_list == [call(active_jail_ids)]
         self.send_notification(self._search, SearchCommands.FINISHED_UPDATE_INMATES_STATUS)
-        assert self._search.find_inmates.call_args_list == [call(missing_inmate_exclude_list,
+        assert self._search.find_inmates.call_args_list == [call(exclude_list=missing_inmate_exclude_list,
                                                                  start_date=date.today() - ONE_DAY * 6)]
         self.send_notification(self._search, SearchCommands.FINISHED_FIND_INMATES)
         assert inmates.recently_discharged_inmates_ids.call_args_list == [call(controller.inmates_response_q)]
@@ -86,9 +86,9 @@ class TestController:
         controller_missing_inmates(controller, start_date)
         assert inmates.known_inmates_ids_starting_with.call_args_list == [call(controller.inmates_response_q,
                                                                                start_date)]
-        known_inmate_ids = []
+        known_inmate_ids = ['1', '2']
         send_response(controller, known_inmate_ids)
-        assert self._search.find_inmates.call_args_list == [call([], start_date=start_date)]
+        assert self._search.find_inmates.call_args_list == [call(exclude_list=known_inmate_ids, start_date=start_date)]
         self.send_notification(self._search, SearchCommands.FINISHED_FIND_INMATES)
         assert self._inmate_scraper.finish.call_args_list == [call()]
         self.send_notification(self._inmate_scraper, InmatesScraper.FINISHED_PROCESSING)
