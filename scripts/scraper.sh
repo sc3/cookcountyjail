@@ -16,7 +16,9 @@ INMATE_API='http://cookcountyjail.recoveredfactory.net/api/1.0/countyinmate/'
 DB_BACKUPS_DIR=${HOME}/website/1.0/db_backups
 DB_BACKUP_FILE=cookcountyjail-$(date +%Y-%m-%d).json
 
-${MANAGE} ng_scraper
+SCRAPER_OPTIONS=--verbose
+
+${MANAGE} ng_scraper ${SCRAPER_OPTIONS}
 
 echo "Cook County Jail scraper finished scrapping at `date`"
 

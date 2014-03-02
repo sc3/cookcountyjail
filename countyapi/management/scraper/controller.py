@@ -90,7 +90,7 @@ class Controller:
                         self._known_inmates()
                     elif msg == self._RECEIVED_KNOWN_INMATES_COMMAND:
                         self._debug('find missing inmates')
-                        self._search_commands.find_inmates(self._inmates_response,
+                        self._search_commands.find_inmates(exclude_list=self._inmates_response,
                                                            start_date=self._start_date_missing_inmates)
                 else:
                     self._debug('Unknown notification from %s, received - %s' % (notifier, msg))
@@ -100,7 +100,7 @@ class Controller:
 
     def _find_new_inmates(self):
         end_index = self._end_index_active_inmate_ids_in_search_window()
-        self._search_commands.find_inmates(self._active_inmate_ids[0:end_index],
+        self._search_commands.find_inmates(exclude_list=self._active_inmate_ids[0:end_index],
                                            start_date=self._today - ONE_DAY * (NEW_INMATE_SEARCH_WINDOW_SIZE + 1))
 
     def _known_inmates(self):
