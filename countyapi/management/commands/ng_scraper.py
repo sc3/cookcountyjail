@@ -14,7 +14,7 @@ log = logging.getLogger('main')
 class Command(BaseCommand):
 
     START_DATE = 'start_date'
-    VERBOSE_MODE = 'verbose_mode'
+    VERBOSE_MODE = 'verbose'
 
     help = "Scrape inmate data from Cook County Sheriff's site."
     option_list = BaseCommand.option_list + (
