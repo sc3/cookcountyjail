@@ -26,13 +26,16 @@ class Command(BaseCommand):
     )
 
     def handle(self, *args, **options):
-        monitor = Monitor(log, verbose_debug_level=options[self.VERBOSE_MODE])
-        monitor.debug("%s - Started scraping inmates from Cook County Sheriff's site." % datetime.now())
+        try:
+            monitor = Monitor(log, verbose_debug_mode=options[self.VERBOSE_MODE])
+            monitor.debug("%s - Started scraping inmates from Cook County Sheriff's site." % datetime.now())
 
-        scraper = Scraper(monitor)
-        if options[self.START_DATE]:
-            scraper.check_for_missing_inmates(datetime.strptime(options[self.START_DATE], '%Y-%m-%d').date())
-        else:
-            scraper.run()
+            scraper = Scraper(monitor)
+            if options[self.START_DATE]:
+                scraper.check_for_missing_inmates(datetime.strptime(options[self.START_DATE], '%Y-%m-%d').date())
+            else:
+                scraper.run()
 
-        monitor.debug("%s - Finished scraping inmates from Cook County Sheriff's site." % datetime.now())
+            monitor.debug("%s - Finished scraping inmates from Cook County Sheriff's site." % datetime.now())
+        except Exception, e:
+            log.exception(e)
