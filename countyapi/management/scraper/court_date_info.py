@@ -1,5 +1,5 @@
 
-from countyapi.management.commands.utils import convert_to_int, strip_the_lines
+from countyapi.utils import convert_to_int, strip_the_lines
 
 from countyapi.models import CourtLocation
 

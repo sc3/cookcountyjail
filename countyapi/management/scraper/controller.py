@@ -1,14 +1,15 @@
+from datetime import date
 
 import gevent
 from gevent.queue import Queue
-from datetime import date, timedelta
 
 from heartbeat import Heartbeat
+
 from search_commands import SearchCommands
+from countyapi.utils import ONE_DAY
 
 
 NEW_INMATE_SEARCH_WINDOW_SIZE = 5
-ONE_DAY = timedelta(1)
 
 
 class Controller:

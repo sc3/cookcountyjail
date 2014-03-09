@@ -1,9 +1,9 @@
+from datetime import date
 
 import gevent
 from gevent.queue import JoinableQueue
-from datetime import date, timedelta
 
-ONE_DAY = timedelta(1)
+from countyapi.utils import ONE_DAY
 
 from throwable_commands_queue import ThrowawayCommandsQueue
 

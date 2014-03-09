@@ -1,18 +1,15 @@
-
-from datetime import datetime, date, timedelta, time
+from datetime import datetime, date, time
 
 from django.db.utils import DatabaseError
 
-from countyapi.management.commands.utils import convert_to_int
-
+from countyapi.utils import convert_to_int
 from countyapi.models import CountyInmate
-
 from charges import Charges
 from court_date_info import CourtDateInfo
 from housing_location_info import HousingLocationInfo
+from countyapi.utils import ONE_DAY
 
 _MIDNIGHT = time()
-_ONE_DAY = timedelta(1)
 _NUMBER_DAYS_AGO = 5
 
 
@@ -79,7 +76,7 @@ class Inmate:
     @staticmethod
     def recently_discharged_inmates():
         today = date.today()
-        discharge_starting_date = datetime.combine(today - _ONE_DAY * _NUMBER_DAYS_AGO, _MIDNIGHT)
+        discharge_starting_date = datetime.combine(today - ONE_DAY * _NUMBER_DAYS_AGO, _MIDNIGHT)
         return CountyInmate.objects.filter(discharge_date_earliest__gte=discharge_starting_date,
                                            last_seen_date__lt=today)
 
