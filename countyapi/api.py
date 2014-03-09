@@ -5,7 +5,6 @@ import os
 from django.http import HttpResponse
 from django.core.exceptions import ObjectDoesNotExist
 from django.conf import settings
-
 from tastypie.exceptions import ApiFieldError, Unauthorized
 from tastypie.bundle import Bundle
 from tastypie.fields import ToManyField, ToOneField
@@ -15,7 +14,8 @@ from tastypie.authorization import Authorization
 
 from countyapi.models import CountyInmate, CourtLocation, CourtDate, HousingLocation, HousingHistory, \
     DailyPopulationCounts, DailyBookingsCounts, ChargesHistory
-from countyapi.management.commands.utils import convert_to_int
+from countyapi.utils import convert_to_int
+
 
 COUNTY_API_INMATE_RESOURCE = 'countyapi.api.CountyInmateResource'
 

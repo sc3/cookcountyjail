@@ -1,13 +1,11 @@
-
-from datetime import date, timedelta
+from datetime import date
 
 import gevent
 from gevent.queue import Queue
 
+from countyapi.utils import ONE_DAY
 
 MAX_INMATE_NUMBER = 350
-
-ONE_DAY = timedelta(1)
 
 
 class SearchCommands:
