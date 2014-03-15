@@ -8,6 +8,12 @@ and summarizes trends.
 See the [API guide](https://github.com/sc3/cookcountyjail/wiki/API-guide)
 for accessing the production API service and querying the data.
 
+# The Data
+
+Each day a [scraper](https://github.com/sc3/cookcountyjail/wiki/Scraper) runs and
+updates the database of inmate information. The inmate
+information is anonymous, no identifying information is kept.
+
 # 2.0 API
 
 The next generation of this API is currently under development. It is located on branch 2.0-dev.
