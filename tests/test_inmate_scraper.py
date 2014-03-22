@@ -33,7 +33,7 @@ class Test_InmatesScraper:
         expected_inmate_details_calls_args = []
         for jail_id in jail_ids:
             if not http.bad_response_desired(jail_id):
-                expected_inmate_details_calls_args.append(call(InmateDetails_TestDouble(jail_id)))
+                expected_inmate_details_calls_args.append(call(jail_id, InmateDetails_TestDouble(jail_id)))
             inmate_scraper.create_if_exists(jail_id)
         assert inmates.add.call_args_list == expected_inmate_details_calls_args
 
@@ -76,7 +76,7 @@ class Test_InmatesScraper:
             if http.bad_response_desired(jail_id):
                 expected_discharge_calls_args.append(call(jail_id))
             else:
-                expected_update_calls_args.append(call(InmateDetails_TestDouble(jail_id)))
+                expected_update_calls_args.append(call(jail_id, InmateDetails_TestDouble(jail_id)))
         for jail_id in jail_ids:
             inmate_scraper.update_inmate_status(jail_id)
         assert inmates.update.call_args_list == expected_update_calls_args
@@ -99,7 +99,7 @@ class Test_InmatesScraper:
         expected_update_calls_args = []
         for jail_id in jail_ids:
             if not http.bad_response_desired(jail_id):
-                expected_update_calls_args.append(call(InmateDetails_TestDouble(jail_id)))
+                expected_update_calls_args.append(call(jail_id, InmateDetails_TestDouble(jail_id)))
         for jail_id in jail_ids:
             inmate_scraper.resurrect_if_found(jail_id)
         assert inmates.update.call_args_list == expected_update_calls_args
@@ -149,7 +149,7 @@ class Inmates_TestDouble:
     def __init__(self):
         self._messages = self._setup_messages_system()
 
-    def add(self, msg):
+    def add(self, inmate_id, msg):
         self._messages.put(msg)
         gevent.sleep(0)
 
