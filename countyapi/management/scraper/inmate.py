@@ -18,11 +18,11 @@ class Inmate:
     Inmate handling code lifted whole sale from inmate_utils file in countyapi/management/commands
     """
 
-    def __init__(self, inmate_details, monitor):
+    def __init__(self, inmate_id, inmate_details, monitor):
+        self._inmate_id = inmate_id
         self._inmate_details = inmate_details
         self._monitor = monitor
         self._inmate = None
-        self._inmate_id = inmate_details.jail_id()
 
     @staticmethod
     def active_inmates():

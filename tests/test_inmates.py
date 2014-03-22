@@ -22,8 +22,9 @@ class TestInmates:
         Inmate_TestDouble.clear_class_vars()
         inmates = Inmates(Inmate_TestDouble, Mock())
         inmate_details = Mock()
-        inmate_details.jail_id.return_value = 23
-        inmates.add(inmate_details)
+        inmate_id = 23
+        inmate_details.jail_id.return_value = inmate_id
+        inmates.add(inmate_id, inmate_details)
         assert Inmate_TestDouble.instantiated_called(1)
         inmate = Inmate_TestDouble.instantiated[0]
         assert inmate.inmate_details == inmate_details
@@ -59,8 +60,9 @@ class TestInmates:
         Inmate_TestDouble.clear_class_vars()
         inmates = Inmates(Inmate_TestDouble, Mock())
         inmate_details = Mock()
-        inmate_details.jail_id.return_value = 23
-        inmates.update(inmate_details)
+        inmate_id = 23
+        inmate_details.jail_id.return_value = inmate_id
+        inmates.update(inmate_id, inmate_details)
         assert Inmate_TestDouble.instantiated_called(1)
         inmate = Inmate_TestDouble.instantiated[0]
         assert inmate.inmate_details == inmate_details
@@ -71,8 +73,9 @@ class Inmate_TestDouble:
 
     instantiated = []
 
-    def __init__(self, inmate_details, monitor):
+    def __init__(self, inmate_id, inmate_details, monitor):
         Inmate_TestDouble.instantiated.append(self)
+        self.inmate_id = inmate_id
         self.inmate_details = inmate_details
         self._monitor = monitor
         self.saved_count = 0

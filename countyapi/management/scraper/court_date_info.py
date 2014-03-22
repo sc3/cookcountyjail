@@ -1,4 +1,6 @@
 
+from django.db.utils import DatabaseError
+
 from countyapi.utils import convert_to_int, strip_the_lines
 
 from countyapi.models import CourtLocation
@@ -80,11 +82,23 @@ class CourtDateInfo:
 
     def save(self):
         # Court date parsing
-        next_court_date = self._inmate_details.next_court_date()
-        if next_court_date is not None:
-            # Get location record by parsing next Court location string
-            next_court_location, parsed_location = self._parse_court_location()
-            location, _ = CourtLocation.objects.get_or_create(location=next_court_location, **parsed_location)
+        try:
+            next_court_date = self._inmate_details.next_court_date()
+            if next_court_date is not None:
+                # Get location record by parsing next Court location string
+                next_court_location, parsed_location = self._parse_court_location()
+                try:
+                    location, _ = CourtLocation.objects.get_or_create(location=next_court_location, **parsed_location)
+                except DatabaseError as e:
+                    self._debug("For inmate %s, could not save Court Location '%s'.\nException is %s" %
+                                (self._inmate.jail_id, next_court_location, str(e)))
 
-            # Get or create a court date for this inmate
-            self._inmate.court_dates.get_or_create(date=next_court_date.strftime('%Y-%m-%d'), location=location)
+                try:
+                    # Get or create a court date for this inmate
+                    court_date, _ = self._inmate.court_dates.get_or_create(date=next_court_date.strftime('%Y-%m-%d'),
+                                                                           location=location)
+                except DatabaseError as e:
+                    self._debug("For inmate %s, could not save next Court Date history '%s'.\nException is %s" %
+                                (self._inmate.jail_id, court_date, str(e)))
+        except Exception, e:
+            self._debug("Unknown exception for inmate '%s'\nException is %s" % (self._inmate.jail_id, str(e)))

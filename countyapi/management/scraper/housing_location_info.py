@@ -61,28 +61,29 @@ class HousingLocationInfo:
                                self._location_segments[3:])
 
     def save(self):
-        inmate_housing_location = self._inmate_details.housing_location()
-        if inmate_housing_location != '':
-            try:
-                self._housing_location, created_location = \
-                    HousingLocation.objects.get_or_create(housing_location=inmate_housing_location)
-                if created_location:
-                    self._process_housing_location()
-                    self._housing_location.save()
-            except DatabaseError as e:
-                self._debug("Could not save housing location '%s'\nException is %s" % (inmate_housing_location, str(e)))
-            try:
-                housing_history, new_history = \
-                    self._inmate.housing_history.get_or_create(housing_location=self._housing_location)
-                if new_history:
-                    housing_history.housing_date_discovered = yesterday()
-                    housing_history.save()
-            except DatabaseError as e:
-                self._debug("For inmate %s, could not save housing history '%s'.\nException is %s" %
-                            (self._inmate.jail_id, inmate_housing_location, str(e)))
-            except Exception, e:
-                self._debug("For inmate %s, could not save housing history '%s'.\nException is %s" %
-                            (self._inmate.jail_id, inmate_housing_location, str(e)))
+        try:
+            inmate_housing_location = self._inmate_details.housing_location()
+            if inmate_housing_location != '':
+                try:
+                    self._housing_location, created_location = \
+                        HousingLocation.objects.get_or_create(housing_location=inmate_housing_location)
+                    if created_location:
+                        self._process_housing_location()
+                        self._housing_location.save()
+                except DatabaseError as e:
+                    self._debug("Could not save housing location '%s'\nException is %s" % (inmate_housing_location,
+                                                                                           str(e)))
+                try:
+                    housing_history, new_history = \
+                        self._inmate.housing_history.get_or_create(housing_location=self._housing_location)
+                    if new_history:
+                        housing_history.housing_date_discovered = yesterday()
+                        housing_history.save()
+                except DatabaseError as e:
+                    self._debug("For inmate %s, could not save housing history '%s'.\nException is %s" %
+                                (self._inmate.jail_id, inmate_housing_location, str(e)))
+        except Exception, e:
+            self._debug("Unknown exception for inmate '%s'\nException is %s" % (self._inmate.jail_id, str(e)))
 
     def _set_day_release(self):
         for element in self._location_segments:
