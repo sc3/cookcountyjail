@@ -30,7 +30,7 @@ class InmatesScraper:
         self._debug('check for inmate - %s' % inmate_id, MONITOR_VERBOSE_DMSG_LEVEL)
         worked, inmate_details_in_html = self._http.get(CCJ_INMATE_DETAILS_URL + inmate_id)
         if worked:
-            self._inmates.add(self._inmate_details_class(inmate_details_in_html))
+            self._inmates.add(inmate_id, self._inmate_details_class(inmate_details_in_html))
 
     def _debug(self, msg, debug_level=None):
         self._monitor.debug('InmatesScraper: %s' % msg, debug_level)
@@ -63,7 +63,7 @@ class InmatesScraper:
         worked, inmate_details_in_html = self._http.get(CCJ_INMATE_DETAILS_URL + inmate_id)
         if worked:
             self._debug('resurrected discharged inmate %s' % inmate_id, MONITOR_VERBOSE_DMSG_LEVEL)
-            self._inmates.update(self._inmate_details_class(inmate_details_in_html))
+            self._inmates.update(inmate_id, self._inmate_details_class(inmate_details_in_html))
 
     def _setup_command_system(self):
         return JoinableQueue(None), [gevent.spawn(self._process_commands) for x in range(self._workers_to_start)]
@@ -74,7 +74,7 @@ class InmatesScraper:
     def _update_inmate_status(self, inmate_id):
         worked, inmate_details_in_html = self._http.get(CCJ_INMATE_DETAILS_URL + inmate_id)
         if worked:
-            self._inmates.update(self._inmate_details_class(inmate_details_in_html))
+            self._inmates.update(inmate_id, self._inmate_details_class(inmate_details_in_html))
         else:
             self._inmates.discharge(inmate_id)
 

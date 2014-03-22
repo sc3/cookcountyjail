@@ -25,11 +25,11 @@ class Inmates:
     def _active_inmates_ids(self, response_queue):
         _send_inmate_ids(response_queue, self._inmate_class.active_inmates())
 
-    def add(self, inmate_details):
-        self._put(self._create_update_inmate, inmate_details)
+    def add(self, inmate_id, inmate_details):
+        self._put(self._create_update_inmate, {'inmate_id': inmate_id, 'inmate_details': inmate_details})
 
-    def _create_update_inmate(self, inmate_details):
-        inmate = self._inmate_class(inmate_details, self._monitor)
+    def _create_update_inmate(self, args):
+        inmate = self._inmate_class(args['inmate_id'], args['inmate_details'], self._monitor)
         inmate.save()
 
     def _debug(self, msg):
@@ -82,8 +82,8 @@ class Inmates:
     def _setup_command_system(self):
         return JoinableQueue(None), [gevent.spawn(self._process_commands)]
 
-    def update(self, inmate_details):
-        self._put(self._create_update_inmate, inmate_details)
+    def update(self, inmate_id, inmate_details):
+        self._put(self._create_update_inmate, {'inmate_id': inmate_id, 'inmate_details': inmate_details})
 
     def _wait_for_processing_to_finish(self):
         self._read_commands_q.join()
