@@ -70,6 +70,7 @@ class HousingLocationInfo:
                     if created_location:
                         self._process_housing_location()
                         self._housing_location.save()
+                        self._debug('New housing location encountered: %s' % self._housing_location.housing_location)
                 except DatabaseError as e:
                     self._debug("Could not save housing location '%s'\nException is %s" % (inmate_housing_location,
                                                                                            str(e)))
@@ -79,6 +80,7 @@ class HousingLocationInfo:
                     if new_history:
                         housing_history.housing_date_discovered = yesterday()
                         housing_history.save()
+                        self._inmate.in_jail = self._housing_location.in_jail
                 except DatabaseError as e:
                     self._debug("For inmate %s, could not save housing history '%s'.\nException is %s" %
                                 (self._inmate.jail_id, inmate_housing_location, str(e)))
