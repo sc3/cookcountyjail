@@ -18,7 +18,7 @@ class CountyInmate(models.Model):
     age_at_booking = models.IntegerField(null=True, blank=True)
     bail_status = models.CharField(max_length=50, null=True)
     bail_amount = models.IntegerField(null=True, blank=True)
-    #incarcerated = models.BooleanField(default=True)
+    in_jail = models.BooleanField(default=True)
 
     def __unicode__(self):
         return self.jail_id
@@ -75,7 +75,7 @@ class HousingLocation(models.Model):
     division = models.CharField(max_length=4)
     sub_division = models.CharField(max_length=20)
     sub_division_location = models.CharField(max_length=20)
-    in_jail = models.NullBooleanField()
+    in_jail = models.BooleanField(default=True)
     in_program = models.CharField(max_length=60)
 
     def __unicode__(self):

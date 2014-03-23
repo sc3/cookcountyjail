@@ -35,8 +35,10 @@ class Inmate:
         @return True if resurrecting inmate
         """
         resurrected = self._inmate.discharge_date_earliest is not None
-        self._inmate.discharge_date_earliest = None
-        self._inmate.discharge_date_latest = None
+        if resurrected:
+            self._inmate.discharge_date_earliest = None
+            self._inmate.discharge_date_latest = None
+            self._inmate.in_jail = self._inmate.housing_history.latest().housing_location.in_jail
         return resurrected
 
     def _debug(self, msg):
@@ -50,6 +52,7 @@ class Inmate:
                 now = datetime.now()
                 inmate.discharge_date_earliest = inmate.last_seen_date
                 inmate.discharge_date_latest = now
+                inmate.in_jail = False
                 inmate.save()
                 monitor.debug("Inmate: Discharged inmate %s" % inmate_id)
         except DatabaseError as e:
