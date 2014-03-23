@@ -23,3 +23,7 @@ wsgiref==0.1.2
 gevent>=1.0
 greenlet>=0.4.2
 grequests>=0.2.0
+pytest>= 2.5.2
+grequests
+httpretty
+mock
