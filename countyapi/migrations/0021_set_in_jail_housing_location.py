@@ -46,14 +46,14 @@ class Migration(DataMigration):
             'TRANSIT',
             'UNKNOWN',
         ]
-        for hlnij in housing_locations_not_in_jail:
-            housing_location = orm.HousingLocation.objects.get(housing_location=hlnij)
-            housing_location.in_jail = False
-            housing_location.save()
-        for housing_location in orm.HousingLocation.objects.all():
-            if housing_location.in_jail is None:
-                housing_location.in_jail = True
-                housing_location.save()
+        # for hlnij in housing_locations_not_in_jail:
+        #     housing_location = orm.HousingLocation.objects.get(housing_location=hlnij)
+        #     housing_location.in_jail = False
+        #     housing_location.save()
+        # for housing_location in orm.HousingLocation.objects.all():
+        #     if housing_location.in_jail is None:
+        #         housing_location.in_jail = True
+        #         housing_location.save()
 
     def backwards(self, orm):
         pass
