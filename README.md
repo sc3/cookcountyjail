@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/sc3/cookcountyjail.svg?branch=master)](https://travis-ci.org/sc3/cookcountyjail)
+
 # Cook County Jail Data Project
 
 This repo backs a Django app that tracks the population of Cook County Jail over time and summarizes trends, the production version of which is currently running at http://cookcountyjail.recoveredfactory.net. We are also working on a Flask app to supplement and eventually replace the one currently available.
