@@ -100,13 +100,9 @@ We don't have excellent test coverage at the moment, unfortunately, so please be
     
 ### Our Issues
 
-Here's a list of issues that need someone to tackle them:
+Here's a list of [issues](https://github.com/sc3/cookcountyjail/issues?labels=ready&state=open) that need someone to tackle them. 
 
-https://github.com/sc3/cookcountyjail/issues?labels=ready&state=open
-
-And here's another for things people are currently working on:
-
-https://github.com/sc3/cookcountyjail/issues?labels=in+progress&state=open
+And here's [another](https://github.com/sc3/cookcountyjail/issues?labels=in+progress&state=open), for things people are currently working on.
     
     
 ## Contributors
