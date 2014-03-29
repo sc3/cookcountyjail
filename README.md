@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/sc3/cookcountyjail.svg?branch=v2.0-dev)](https://travis-ci.org/sc3/cookcountyjail)
+
 # Cook County Jail inmate tracker V2.0
 
 A web application that tracks the population of Cook County Jail over time

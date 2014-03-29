@@ -31,7 +31,9 @@ def daily_population():
     """
     returns the set of summarized daily population changes.
     """
-    return Response(DPC(app.config['DPC_DIR_PATH']).to_json(),  mimetype='application/json')
+    return Response(DPC(app.config['DPC_DIR_PATH']).to_json(), 
+        headers={'Access-Control-Allow-Origin': '*'}, 
+	    mimetype='application/json')
 
 
 @app.route('/os_env_info')
@@ -54,7 +56,7 @@ def starting_population():
     """
     returns the set of starting daily population values used to calculate daily changes.
     """
-    return Response(dumps(DPC(app.config['DPC_DIR_PATH']).starting_population()),  mimetype='application/json')
+    return Response(dumps(DPC(app.config['DPC_DIR_PATH']).starting_population()), mimetype='application/json')
 
 
 @app.route('/version')
