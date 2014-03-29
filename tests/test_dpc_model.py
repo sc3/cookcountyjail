@@ -9,7 +9,7 @@ from helpers import inmate_population, count_population, expected_starting_popul
     EXCLUDE_SET
 
 
-class Test_DailyPopulation_Model:
+class TestDailyPopulationModel:
 
     def setup_method(self, method):
         self._tmp_dir = mkdtemp(dir='/tmp')

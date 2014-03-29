@@ -1,5 +1,5 @@
 #
-# Model for sumarized Daily Population Changes
+# Model for summarized Daily Population Changes
 #
 
 from json import dumps
@@ -73,7 +73,8 @@ class DailyPopulation:
                             "configured for our file's creation on your system, "
                             "at '{0}'.".format(self._path))
 
-    def _clear_booked_left_totals(self, new_population):
+    @staticmethod
+    def _clear_booked_left_totals(new_population):
         for gender in GENDERS:
             for action in ACTIONS:
                 new_population[action] = 0
@@ -210,25 +211,31 @@ class DailyPopulation:
         with dp.writer() as writer:
             writer.store(population_changes)
         """
-        class CsvPopulationStore:
-
-            def __init__(self, dpc, writer, previous_entry):
-                self._dpc = dpc
-                self._writer = writer
-                self._previous_entry = previous_entry
-
-            def store(self, population_changes):
-                """
-                Append an entry to our file. Expects a dict object.
-                """
-                assert isinstance(population_changes, dict)
-                entry = self._dpc.next_entry(self._previous_entry, population_changes)
-                self._writer.writerow([entry[column_name] for column_name in self._dpc.column_names()])
-                self._previous_entry = entry
-
         with open(self._path, 'a') as f:
-            csv_writer = CsvPopulationStore(self, csv.writer(f), self.previous_population())
+            csv_writer = _CsvPopulationStore(self, csv.writer(f), self.previous_population())
             try:
                 yield csv_writer
             finally:
                 pass
+
+
+class _CsvPopulationStore:
+    """
+    Helper class that implements a writer class used in the writer method of DailyPopulation.
+
+    Assumes provide writer implements CSV class functionality.
+    """
+
+    def __init__(self, dpc, writer, previous_entry):
+        self._dpc = dpc
+        self._writer = writer
+        self._previous_entry = previous_entry
+
+    def store(self, population_changes):
+        """
+        Append an entry to the output. Expects a dict object.
+        """
+        assert isinstance(population_changes, dict)
+        entry = self._dpc.next_entry(self._previous_entry, population_changes)
+        self._writer.writerow([entry[column_name] for column_name in self._dpc.column_names()])
+        self._previous_entry = entry

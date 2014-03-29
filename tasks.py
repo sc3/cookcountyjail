@@ -19,6 +19,11 @@ def deploy():
 
 
 @task
+def requirements():
+    run('pip install -U -r config/requirements.txt')
+
+
+@task
 def scraper():
     with _TestModeOn():
         run('python -3 scripts/scraper.py')

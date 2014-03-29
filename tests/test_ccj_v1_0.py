@@ -1,6 +1,5 @@
 
 import httpretty
-from datetime import datetime, timedelta
 from random import randint
 from helpers import STARTING_DATE, discharged_null_inmate_records, discharged_on_or_after_start_date_inmate_records
 from json import dumps
@@ -10,7 +9,7 @@ from scripts.ccj_api_v1 import CcjApiV1, BOOKING_DATE_URL_TEMPLATE, LEFT_DATE_UR
     NOT_DISCHARGED_URL_TEMPLATE, DISCHARGED_ON_OR_AFTER_STARTING_DATE_URL_TEMPLATE
 
 
-class Test_CcjV1:
+class TestCcjV1:
 
     @httpretty.activate
     def test_booked_left(self):
@@ -25,7 +24,8 @@ class Test_CcjV1:
         expected.extend(expected_left_cmd)
 
         ccj_api_requests = {}
-        def fulfill_ccj_api_request(method, uri, headers):
+
+        def fulfill_ccj_api_request(_, uri, headers):
             assert uri == booked_cmd or uri == left_cmd
             if uri == booked_cmd:
                 ccj_api_requests['booked_cmd'] = True
@@ -60,7 +60,7 @@ class Test_CcjV1:
 
         cook_county_get_count = {}
 
-        def fulfill_county_api_request(method, uri, headers):
+        def fulfill_county_api_request(_, uri, headers):
             assert uri == not_discharged_command or uri == discharged_after_start_date_command
             if uri == not_discharged_command:
                 cook_county_get_count['not_discharged_cmd'] = True
@@ -85,5 +85,5 @@ class Test_CcjV1:
         last_request = httpretty.last_request()
         assert last_request.method == "GET"
         assert cook_county_get_count['not_discharged_cmd'] and \
-               cook_county_get_count['discharged_after_start_date_command']
+            cook_county_get_count['discharged_after_start_date_command']
         assert booked_left == expected

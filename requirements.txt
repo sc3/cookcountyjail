@@ -5,6 +5,7 @@ Werkzeug>=0.9.4
 invoke>=0.5.1
 itsdangerous>=0.23
 Flask-Sqlalchemy>=1.0
+SQLAlchemy>=0.8.2
 Gunicorn>=18.0
 Fabric>=1.8.0
 psycopg2>=2.5

@@ -11,7 +11,7 @@ DAY_BEFORE_STARTING_DATE = '2012-12-31'
 STARTING_DATE = '2013-01-01'
 
 
-class Test_Scraper:
+class TestScraper:
 
     def _date_before_today(self, number_of_missing_days):
         return str(self._today - ONE_DAY * number_of_missing_days)
