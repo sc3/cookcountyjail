@@ -64,7 +64,7 @@ class Command(BaseCommand):
             housing_history_length = len(housing_history)
             if housing_history_length == 0:
                 self.increment_stat(NO_HOUSING_LOC)
-                if not inmate.in_jail:
+                if inmate.in_jail:
                     self.increment_stat(IN_JAIL_INCORRECT)
             else:
                 if inmate.in_jail != housing_history[housing_history_length - 1].housing_location.in_jail:
