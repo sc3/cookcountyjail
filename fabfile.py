@@ -189,7 +189,7 @@ def install_requirements():
     require('settings', provided_by=[production, staging])
     require('branch', provided_by=[stable, master, branch])
     with activate_cmd():
-        run('pip install -U -r %(config_dir)s/requirements.txt' % env)
+        run('pip install -U -r %(path)s/requirements.txt' % env)
 
 
 def run_migrations():
