@@ -26,3 +26,4 @@ grequests>=0.2.0
 pytest>= 2.5.2
 httpretty>=0.8.0
 mock>=1.0.1
+pytest-django>=2.6
