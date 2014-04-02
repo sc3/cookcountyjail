@@ -551,7 +551,8 @@ class CountyInmateResource(JailResource):
             COURT_DATES: ALL_WITH_RELATIONS,
             HOUSING_HISTORY: ALL_WITH_RELATIONS,
             CHARGES_HISTORY: ALL_WITH_RELATIONS,
-            'person_id': ALL
+            'person_id': ALL,
+            'in_jail': ALL
         }
         ordering = filtering.keys()
 
