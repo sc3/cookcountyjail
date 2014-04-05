@@ -8,7 +8,7 @@ export PATH=$PATH:/usr/local/bin
 # Indicate that Production Database is to be used
 export CCJ_PRODUCTION=1
 
-# bind in virtualev settings
+# bind in virtualenv settings
 source ${HOME}/.virtualenvs/cookcountyjail/bin/activate
 
 MANAGE='python '${HOME}'/apps/cookcountyjail/manage.py'
@@ -20,7 +20,16 @@ SCRAPER_OPTIONS=--verbose
 
 ${MANAGE} ng_scraper ${SCRAPER_OPTIONS}
 
-echo "Cook County Jail scraper finished scrapping at `date`"
+echo "Cook County Jail scraper finished scraping at `date`"
+
+AUDIT_RESULT=$(${MANAGE} audit_db)
+echo ${AUDIT_RESULT} 
+
+# Only notify if the database audit failed; 
+# modifying the auditor to return a failing or 
+# succeeding code would be helpful at this stage
+
+# python scripts/notify.py ${AUDIT_RESULT}
 
 echo "Generating summaries - `date`"
 ${MANAGE} generate_summaries
