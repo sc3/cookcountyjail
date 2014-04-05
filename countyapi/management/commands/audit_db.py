@@ -41,6 +41,7 @@ class Command(BaseCommand):
         @param options:
         @return: None
         """
+        
         start_time = datetime.now()
         inmate_id = 'Uninitialized'
         print("Starting database audit: %s" % str(start_time))

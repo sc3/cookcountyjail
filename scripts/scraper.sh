@@ -25,6 +25,12 @@ echo "Cook County Jail scraper finished scraping at `date`"
 AUDIT_RESULT=$(${MANAGE} audit_db)
 echo ${AUDIT_RESULT} 
 
+# If problems found send notification
+echo ${AUDIT_RESULT} | grep -q 'in_jail'
+if [ $? -eq 0 ];then
+    echo ${AUDIT_RESULT} | python scripts/notify.py
+fi
+
 # Only notify if the database audit failed; 
 # modifying the auditor to return a failing or 
 # succeeding code would be helpful at this stage

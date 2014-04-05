@@ -7,6 +7,6 @@ SUCCESS_TOPIC = 'cookcountyjail_onSuccess'
 
 if __name__ == '__main__':
 
-    subject = 'DB audit: "in_jail" field set incorrectly'
-    message = sys.argv[1]
+    subject = 'DB Audit Failed'
+    message = sys.stdin.read()
     publish(FAIL_TOPIC, subject, message)
