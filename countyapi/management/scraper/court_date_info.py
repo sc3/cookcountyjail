@@ -45,23 +45,26 @@ class CourtDateInfo:
         """
 
         location_string = self._inmate_details.court_house_location()
+
+        # No matter what, normalize whitespace, newlines (and weird unicode 
+        # character).
+        location_string = location_string.replace(u'\xa0', u' ')
         lines = strip_the_lines(location_string.splitlines())
         if len(lines) == 4:
             try:
-                # The first line is the location_name
+                # First line is the shortened form of the branch name, usually.
                 location_name = lines[0]
 
-                # Second line must be split into room number and branch name
+                # Second line must be split into room number and branch name.
                 branch_line = lines[1].split(', Room:')
                 branch_name = branch_line[0].strip()
                 room_number = convert_to_int(branch_line[1], 0)
 
-                # Third line has address - remove room number and store
+                # Remove room number and store the address.
                 address = lines[2].split('Room:')[0].strip()
 
-                # Fourth line has city, state and zip separated by spaces,
-                # or a weird unicode space character
-                city_state_zip = lines[3].replace(u'\xa0', u' ').split(' ')
+                # Fourth line has city, state and zip separated by spaces.
+                city_state_zip = lines[3].split(' ')
 
                 city = " ".join(city_state_zip[0:-2]).replace(',', '').strip()
                 state = city_state_zip[-2].strip()
@@ -84,7 +87,7 @@ class CourtDateInfo:
 
         else:
             self._debug("Following Court location doesn't have right number of lines: %s" % location_string)
-            return location_string, {}
+            return "\n".join(lines), {}
 
     def save(self):
         # Court date parsing
