@@ -17,14 +17,15 @@ class CourtDateInfo:
         self._monitor.debug('CourtDateInfo: %s' % msg)
 
     def _parse_court_location(self):
+
         """
         Takes a location string of the form:
 
         "Criminal C\nCriminal Courts Building, Room:506\n2650 South California Avenue Room: 506\nChicago, IL 60608"
 
-        The lines can contain spurious white-space at the beginning and end of the lines, these are stripped
-
-         and returns two values, cleaned up version the input string and a dict of the form:
+        The lines can contain spurious white-space at their beginning and end; these are
+        stripped, and returns two values, a cleaned up version of the input string and a 
+        dict of the form:
         {
             'location_name': 'Criminal C',
             'branch_name': 'Criminal Courts Building',
@@ -35,7 +36,12 @@ class CourtDateInfo:
             'zip_code': 60608,
         }
 
-        If location is malformed, then original location string is returned with an empty dict
+        Note that room_number and zip_code are stored as ints, not strings.
+
+        If location string is something other than 4 lines long, or doesn't match our 
+        current parsing expectations (mostly based around where the characters "Room:"
+        appear in the string), then the original location string is returned after being
+        stripped of spurious whitespace and having newline characters normalized.
         """
 
         location_string = self._inmate_details.court_house_location()
