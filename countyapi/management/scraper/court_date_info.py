@@ -48,11 +48,13 @@ class CourtDateInfo:
 
         location_string = self._inmate_details.court_house_location()
 
-        # No matter what, normalize whitespace, newlines (and weird unicode 
-        # character).
+        if location_string == "":
+            return "", {}
+
+        # Normalize whitespace, newlines (and weird unicode character).
         location_string = location_string.replace(u'\xa0', u' ')
         lines = strip_the_lines(location_string.splitlines())
-        
+
         if len(lines) == 4:
             try:
                 # First line is the shortened form of the branch name, usually.
