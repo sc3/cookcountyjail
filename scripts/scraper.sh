@@ -31,12 +31,6 @@ if [ $? -eq 0 ];then
     echo ${AUDIT_RESULT} | python scripts/notify.py
 fi
 
-# Only notify if the database audit failed; 
-# modifying the auditor to return a failing or 
-# succeeding code would be helpful at this stage
-
-# python scripts/notify.py ${AUDIT_RESULT}
-
 echo "Generating summaries - `date`"
 ${MANAGE} generate_summaries
 
