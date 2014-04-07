@@ -10,20 +10,22 @@ class TestCourtDateInfo:
 
         ::_parse_court_location
 
-        - whether incorrect # of lines or other unknown format
-            result in returning the raw court location string, 
-            plus an empty dict. 
-        - whether the raw court location string which gets
-            returned no matter what is normalized
-        - whether branch name, room number, and address parts 
-            get parsed correctly with a valid court string.
+        - incorrect # of lines or other unknown format results in 
+            returning an empty dict instead of parsing out fields
+        - raw court location string is normalized before it is returned,
+            no matter what.
+        - if the court location string is valid, branch name, room number, 
+            and the address parts get parsed correctly. 
+
 
         ::save
 
-        - whether there being no court date gets handled in expected way
-        - whether format of next_court_date is correct
-        - whether DB exceptions get handled correctly
-        - whether unknown exceptions get handled correctly
+        - if there is no court date that can be associated with an inmate,
+            parsing stops
+        - get_or_create is called for CourtLocation
+        - get_or_create is called for CourtDate, with proper date format, as follows:
+            "YYYY-MM-DD"
+        - if any exception is thrown, we call the monitor's debug func
 
         Resources to fake:
 

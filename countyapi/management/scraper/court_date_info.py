@@ -23,9 +23,11 @@ class CourtDateInfo:
 
         "Criminal C\nCriminal Courts Building, Room:506\n2650 South California Avenue Room: 506\nChicago, IL 60608"
 
-        The lines can contain spurious white-space at their beginning and end; these are
-        stripped, and returns two values, a cleaned up version of the input string and a 
-        dict of the form:
+        The lines can contain spurious white-space at their beginning and end, 
+        multiple newline characters, and annoying ASCII characters; this is all
+        normalized, no matter what. We return two values: a cleaned up version 
+        of the input string, and a dict of the following form...
+
         {
             'location_name': 'Criminal C',
             'branch_name': 'Criminal Courts Building',
@@ -36,12 +38,12 @@ class CourtDateInfo:
             'zip_code': 60608,
         }
 
-        Note that room_number and zip_code are stored as ints, not strings.
-
         If location string is something other than 4 lines long, or doesn't match our 
         current parsing expectations (mostly based around where the characters "Room:"
-        appear in the string), then the original location string is returned after being
-        stripped of spurious whitespace and having newline characters normalized.
+        appear in the string), then the normalized location string is returned,
+        as well an empty dict.
+
+        Note that room_number and zip_code are stored as ints, not strings.
         """
 
         location_string = self._inmate_details.court_house_location()
@@ -50,6 +52,7 @@ class CourtDateInfo:
         # character).
         location_string = location_string.replace(u'\xa0', u' ')
         lines = strip_the_lines(location_string.splitlines())
+        
         if len(lines) == 4:
             try:
                 # First line is the shortened form of the branch name, usually.
