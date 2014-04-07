@@ -17,14 +17,15 @@ class CourtDateInfo:
         self._monitor.debug('CourtDateInfo: %s' % msg)
 
     def _parse_court_location(self):
+
         """
         Takes a location string of the form:
 
         "Criminal C\nCriminal Courts Building, Room:506\n2650 South California Avenue Room: 506\nChicago, IL 60608"
 
-        The lines can contain spurious white-space at the beginning and end of the lines, these are stripped
-
-         and returns two values, cleaned up version the input string and a dict of the form:
+        The lines can contain spurious white-space at their beginning and end; these are
+        stripped, and returns two values, a cleaned up version of the input string and a 
+        dict of the form:
         {
             'location_name': 'Criminal C',
             'branch_name': 'Criminal Courts Building',
@@ -35,27 +36,35 @@ class CourtDateInfo:
             'zip_code': 60608,
         }
 
-        If location is malformed, then original location string is returned with an empty dict
+        Note that room_number and zip_code are stored as ints, not strings.
+
+        If location string is something other than 4 lines long, or doesn't match our 
+        current parsing expectations (mostly based around where the characters "Room:"
+        appear in the string), then the original location string is returned after being
+        stripped of spurious whitespace and having newline characters normalized.
         """
 
         location_string = self._inmate_details.court_house_location()
+
+        # No matter what, normalize whitespace, newlines (and weird unicode 
+        # character).
+        location_string = location_string.replace(u'\xa0', u' ')
         lines = strip_the_lines(location_string.splitlines())
         if len(lines) == 4:
             try:
-                # The first line is the location_name
+                # First line is the shortened form of the branch name, usually.
                 location_name = lines[0]
 
-                # Second line must be split into room number and branch name
+                # Second line must be split into room number and branch name.
                 branch_line = lines[1].split(', Room:')
                 branch_name = branch_line[0].strip()
                 room_number = convert_to_int(branch_line[1], 0)
 
-                # Third line has address - remove room number and store
+                # Remove room number and store the address.
                 address = lines[2].split('Room:')[0].strip()
 
-                # Fourth line has city, state and zip separated by spaces,
-                # or a weird unicode space character
-                city_state_zip = lines[3].replace(u'\xa0', u' ').split(' ')
+                # Fourth line has city, state and zip separated by spaces.
+                city_state_zip = lines[3].split(' ')
 
                 city = " ".join(city_state_zip[0:-2]).replace(',', '').strip()
                 state = city_state_zip[-2].strip()
@@ -78,7 +87,7 @@ class CourtDateInfo:
 
         else:
             self._debug("Following Court location doesn't have right number of lines: %s" % location_string)
-            return location_string, {}
+            return "\n".join(lines), {}
 
     def save(self):
         # Court date parsing
