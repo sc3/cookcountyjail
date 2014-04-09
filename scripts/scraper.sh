@@ -28,7 +28,7 @@ echo ${AUDIT_RESULT}
 # If problems found send notification
 echo ${AUDIT_RESULT} | grep -q 'in_jail'
 if [ $? -eq 0 ];then
-    echo ${AUDIT_RESULT} | python scripts/notify.py
+    echo ${AUDIT_RESULT} | python ${HOME}/apps/cookcountyjail/scripts/notify.py
 fi
 
 echo "Generating summaries - `date`"
