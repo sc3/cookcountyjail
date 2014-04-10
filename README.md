@@ -2,116 +2,50 @@
 
 # Cook County Jail Data Project
 
-This repo backs a Django app that tracks the population of Cook County Jail over time and summarizes trends, the production version of which is currently running at http://cookcountyjail.recoveredfactory.net. We are also working on a Flask app to supplement and eventually replace the one currently available.
+We have built an API that tracks the population of Cook County Jail over time and summarizes trends, the workin version of which is running at http://cookcountyjail.recoveredfactory.net. We are also working on a newer version to supplement and eventually replace the one currently available. 
 
-The application has three essential components: **(1) an API**, **(2) the database and models** that back the API, and **(3) the scraper** that populates the database.
-
-
-## Using the API
-
-For details on how to use the API we expose, see the [API guide](https://github.com/sc3/cookcountyjail/wiki/API-guide) for information on how to access the production API service and get a handle on our data.
+Our whole application has three essential components: **(1) the aforementioned API**, **(2) the database** that backs the API, and **(3) the web scraper** that populates the database. 
 
 
-### 2.0 API
+### Our Data
 
-The next generation of this API is currently under development. It is located on branch 2.0-dev. Documentation on what the API supports so far is located on the [API 2.0 Guide](https://github.com/sc3/cookcountyjail/wiki/API-2.0-Guide) page.
+Each day, our web scraper runs and updates our database of inmate information; personally identifying information is not kept. Over time, we have uncovered a lot of potentially interesting data that can be used to analyze trends in the Cook County Jail System, though it is not definitive. For a basic look at some of these trends, see our sister project, [26th and California](http://26thandcalifornia.recoveredfactory.net/v1.0/) and the code that backs it: https://github.com/sc3/26thandcalifornia.  
 
-To request new functionality and to influence the choice of what API methods are built next, leave a comment on the [2.0 API Hackpad](http://is.gd/9tQpPj).
-
-## The Data
-
-Each day, a [scraper](https://github.com/sc3/cookcountyjail/wiki/Scraper) runs and updates our database of inmate information; personally identifying information is not kept. Over time, we have uncovered a lot of potentially interesting data that can be used to analyze trends in the Cook County Jail System. For a basic look at some of these trends, see our sister project, [26th and California](https://github.com/sc3/26thandcalifornia) and the site its running on: http://26thandcalifornia.recoveredfactory.net/v1.0/.  
+If you are interested in exploring or otherwise using the raw data from our API, see our [API Guide](https://github.com/sc3/cookcountyjail/wiki/API-guide) on what data is available, and the best way to access it. There is also a small [v2.0 API Guide](https://github.com/sc3/cookcountyjail/wiki/API-2.0-Guide), which is still growing. While this is being developed, you can influence the choice of what API methods are built next by leaving a comment on the [2.0 API Hackpad](https://freegeekchicago.hackpad.com/Cook-Count-Jail-2.0-API-Requests-and-Ideas-for-Functionality-BbMobFdtEKu).
 
 
-## Contributing
+### Contributing
 
-Below is a guide to getting set up for development on this project.
+Want to help out? There's a lot of ways you can contribute.
 
+- by reporting bugs
+- by suggesting new features
+- by translating to a new language
+- by writing or editing documentation
+- by writing code (no patch is too small: fix typos, add comments, clean up inconsistent whitespace)
+- by refactoring code
+- by closing issues
+- by reviewing patches
 
-#### Installation
-
-First, you'll want to get a copy of the present repository:
-
-```
-git clone git@github.com:sc3/cookcountyjail.git
-```
-
-After you've checked out the source code repository, you need to install the requirements. You are strongly encouraged to create a [virtual environment](https://pypi.python.org/pypi/virtualenv) before installing them.
-
-To install the requirements, you should have [pip](https://pypi.python.org/pypi/pip) installed. If you made a virtual environment, this is already done for you.
-
-    pip install -r requirements.txt
-    
-    
-#### Setting up the database
-
-By default, the locally running application uses the [sqlite](http://www.sqlite.org/) database, which is often already installed on modern operating systems. Assuming you have it available, you may now initialize the application database:
-
-    ./manage.py syncdb --noinput
-    ./manage.py migrate countyapi
+If you want to contribute to the development of the project itself, please see our [wiki page on getting started](https://github.com/sc3/cookcountyjail/wiki/Contributing).
 
 
-#### Cloning the database
-
-Once you have setup your database, the easiest way to populate it is to download the backup of the database that is made everyday after the Sheriff's website has been scraped. The URL to access this is:
-
-    http://cookcountyjail.recoveredfactory.net/api/1.0/clone
-
-This points to a gzipped JSON file of the database. Here is how to download the cloned copy of the database and use it to populate your database:
-
-```
-curl http://cookcountyjail.recoveredfactory.net/api/1.0/clone > /tmp/ccj_cloned_db.json.gz
-gunzip /tmp/ccj_cloned_db.json.gz
-./manage.py loaddata /tmp/ccj_cloned_db.json
-rm /tmp/ccj_cloned_db.json
-```
-
-Note: loading your local database can take upwards of 10 minutes.
-
-
-#### Running the scraper locally
-
-If you want to then keep your database up to date then you need to run the scraper to populate your database with the changed records. The command to run the scraper program is:
-
-```
-./manage.py scrape_inmates
-```
-
-Note that the Cook County Sheriff's department typically finishes updating the inmate records for the previous day at around 8:30 am. It is recommend that you collect the records after this time, otherwise you can get partial records.
-
-<code>scrape_inmates</code> also supports a <code>--limit / -l</code>
-flag which limits the number of records created and <code>--search /
--s</code> flag which overrides the default A-Z search strategy.
-
-
-### Making a Pull Request
-
-If, after setting up your local environment, you want to make contributions back to our project's code, you can do so. Please submit a pull request to this repository on the appropriate branch, either master or 2.0-dev. Github should tell you if your contribution is able to be merged automatically. 
-
-Additionally, if you wait for around 3-5 minutes after your submit your pull, [Travis](https://travis-ci.org), the continuous integration service, will verify whether your new code meets our requirements. Specifically, whether it passes our tests, and whether it is py3 compatible. If, conversely, you DON'T want Travis to do a build for a given commit, you can include "[skip ci]" in your commit message. 
-
-
-### Testing
-
-If you want to make sure you're not breaking anything before submitting a pull request, you can run the following command:
-
-    python -3 -m py.test
-    
-We don't have excellent test coverage at the moment, unfortunately, so please be encouraged to write a test for an existing feature as a way to start contributing, or to make sure you do include one if you are adding a new feature.
-    
-    
 ### Our Issues
 
-Here's a list of [issues that need someone to tackle them](https://github.com/sc3/cookcountyjail/issues?labels=ready&state=open). 
+We use GitHub's issue tracker to report problems and to coordinate development efforts.
 
-And here's another, [for things people are currently working on](https://github.com/sc3/cookcountyjail/issues?labels=in+progress&state=open).
-    
-    
-## Contributors
-    
-See AUTHORS.md for other contributors.
+Here's a list of issues that are **self-contained and need someone to tackle them**:  
+https://github.com/sc3/cookcountyjail/issues?labels=ready&state=open. 
 
-## License
+And here's another, for **things people are currently working on**:  
+https://github.com/sc3/cookcountyjail/issues?labels=in+progress&state=open.
+    
+    
+### Contributors
+    
+See [AUTHORS.md](https://github.com/sc3/cookcountyjail/blob/master/AUTHORS.md) for our list of contributors.
+
+### License
 
 Licensed under the GNU General Public License Version 3.
-See LICENSE.md.
+See [LICENSE.md](https://github.com/sc3/cookcountyjail/blob/master/LICENSE.md).
