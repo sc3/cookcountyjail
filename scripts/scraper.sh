@@ -25,11 +25,11 @@ echo "Cook County Jail scraper finished scraping at `date`"
 AUDIT_RESULT=$(${MANAGE} audit_db)
 echo ${AUDIT_RESULT} 
 
-# If problems found send notification
-echo ${AUDIT_RESULT} | grep -q 'in_jail'
-if [ $? -eq 0 ];then
-    echo ${AUDIT_RESULT} | python ${HOME}/apps/cookcountyjail/scripts/notify.py
-fi
+# If problems found, send notification
+# echo ${AUDIT_RESULT} | grep -q 'in_jail'
+# if [ $? -eq 0 ];then
+#     echo ${AUDIT_RESULT} | python ${HOME}/apps/cookcountyjail/scripts/notify.py
+# fi
 
 echo "Generating summaries - `date`"
 ${MANAGE} generate_summaries
