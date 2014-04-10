@@ -27,7 +27,7 @@ Want to help out? There's a lot of ways you can contribute.
 - by closing issues
 - by reviewing patches
 
-If you want to contribute to the development of the project itself, you'll want to see our [wiki page on getting started](https://github.com/sc3/cookcountyjail/wiki/Contributing).
+If you want to contribute to the development of the project itself, please see our [wiki page on getting started](https://github.com/sc3/cookcountyjail/wiki/Contributing).
 
 
 ### Our Issues
