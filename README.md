@@ -43,9 +43,9 @@ https://github.com/sc3/cookcountyjail/issues?labels=in+progress&state=open.
     
 ### Contributors
     
-See AUTHORS.md for our list of contributors.
+See [AUTHORS.md](https://github.com/sc3/cookcountyjail/blob/master/AUTHORS.md) for our list of contributors.
 
 ### License
 
 Licensed under the GNU General Public License Version 3.
-See LICENSE.md.
+See [LICENSE.md](https://github.com/sc3/cookcountyjail/blob/master/LICENSE.md).
