@@ -70,8 +70,12 @@ class Test_DailyPopulationChanges_API:
         assert fetched_data == expected
 
     def test_external_post_fails(self):
-        result = self.client.post(DAILY_POPULATION_API_PATH, data={})
-        assert result.status_code == 405
+
+        data = {}
+        result = self.client.post('/daily_population', 
+                        data=data, 
+                        environ_overrides={'REMOTE_ADDR': '8.8.8.8'})
+        assert result.status_code == 401
 
     def test_starting_population_api(self):
         starting_population_counts = self._store_starting_population()
