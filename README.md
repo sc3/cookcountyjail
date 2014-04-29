@@ -92,8 +92,8 @@ conditions are met:
 * API documentation updated
 
 An information data model exists for this project and is located here:
-* Requirements for [Information Model](Google Doc /document/d/1ZoY-R0deM8OUGtsLfyegqE-QMwnZBp3vmbMQ3eQcXcw/edit?usp=sharing)
-* Design of [Information Model](Google Doc /drawings/d/1WAXGB1l5QcX_2XV5_VjvVNNxOO9UvGIh5jXgakNnICo/edit?usp=sharing)
+* Requirements for [Information Model](https://docs.google.com/document/d/1ZoY-R0deM8OUGtsLfyegqE-QMwnZBp3vmbMQ3eQcXcw/edit)
+* Design of [Information Model](https://docs.google.com/drawings/d/1WAXGB1l5QcX_2XV5_VjvVNNxOO9UvGIh5jXgakNnICo/edit)
 
 This project has a sister project based on sc3/26thandcalifornia that will use the
 API. Details on this project are XXXX (this is to filled in later).
