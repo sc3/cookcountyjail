@@ -11,3 +11,4 @@ lib
 *.swp
 build_info
 build_info/**
+*.db

@@ -104,7 +104,7 @@ API. Details on this project are XXXX (this is to filled in later).
 * /ccj - website code
     * /__init.py__
     * /templates
-    * appy.py - main entry point to application
+    * app.py - main entry point to application
     * /models - where all of the application code is located
 * /config - where all the configuration files are located
 * /scripts - scripts used to do other activities like scrape Cook County Sheriff's website
@@ -131,7 +131,7 @@ It is recommend that you use the virtualenv to work with this python project.
 git clone git@github.com:<your github account>/cookcountyjail.git
 cd cookcountyjail
 git checkout v2.0-dev
-pip install -U -r config/requirements.txt
+pip install -U -r requirements.txt
 ```
 
 #Usage
