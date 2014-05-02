@@ -6,6 +6,8 @@
 from flask import Flask, jsonify, request, Response
 from flask.json import dumps
 from flask.ext.sqlalchemy import SQLAlchemy
+from flask.ext import restful as rest
+
 from os import getcwd
 from datetime import datetime
 
@@ -22,17 +24,18 @@ app.config.from_object(config)
 
 db = SQLAlchemy(app)
 
+api = rest.Api(app)
+
 if app.config['IN_TESTING']:
     app.debug = True
-
 
 @app.route('/daily_population', methods=['GET'])
 def daily_population():
     """
     returns the set of summarized daily population changes.
     """
-    return Response(DPC(app.config['DPC_DIR_PATH']).to_json(), 
-        headers={'Access-Control-Allow-Origin': '*'}, 
+    return Response(DPC(app.config['DPC_DIR_PATH']).to_json(),
+        headers={'Access-Control-Allow-Origin': '*'},
 	    mimetype='application/json')
 
 
@@ -58,12 +61,15 @@ def starting_population():
     """
     return Response(dumps(DPC(app.config['DPC_DIR_PATH']).starting_population()), mimetype='application/json')
 
-
-@app.route('/version')
-def version_info():
+class Version(rest.Resource):
     """
     returns the version info
     """
-    args = request.args
-    v_i = VersionInfo(STARTUP_TIME).fetch(all_version_info=('all' in args and args['all'] == '1'))
-    return Response(dumps(v_i), mimetype='application/json')
+    def get(self):
+        args = request.args
+        v_i = VersionInfo(STARTUP_TIME).fetch(all_version_info=('all' in args and args['all'] == '1'))
+
+        return v_i
+
+api.add_resource(Version, '/version')
+

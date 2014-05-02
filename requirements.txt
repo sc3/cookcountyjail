@@ -15,3 +15,5 @@ pytest>=2.4.2
 httpretty>=0.7.0
 requests>=2.0.1
 mock>=1.0.1
+flask-restful
+
