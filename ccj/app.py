@@ -9,6 +9,7 @@ from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext import restful as rest
 from os import getcwd
 from datetime import datetime
+from datetime import date
 
 from ccj.models.daily_population import DailyPopulation as DPC
 from ccj.models.version_info import VersionInfo
@@ -48,6 +49,9 @@ app = Flask(__name__)
 app.config.from_object(config)
 
 db = SQLAlchemy(app)
+
+from ccj.models.person import Person
+
 api = CcjApi(app)
 
 if app.config['IN_TESTING']:
@@ -60,7 +64,6 @@ def env_info(self):
     is no longer a dev branch.
 
     """
-
     return jsonify(cwd=getcwd(),
                     remote_addr=request.environ.get('REMOTE_ADDR', 'not set'),
                     headers=str(request.headers),
@@ -89,9 +92,63 @@ def version(self):
     args = request.args
     return VersionInfo(STARTUP_TIME).fetch(all_version_info=('all' in args and args['all'] == '1'))
 
+"""
+Base Models resources
+
+"""
+
+class PersonResource(rest.Resource):
+    def get(self): pass
+    def post(self): pass
+
+class ChargeResource(rest.Resource):
+    def get(self): pass
+    def post(self): pass
+
+class HousingResource(rest.Resource):
+    def get(self): pass
+    def post(self): pass
+
+class CourtBuildingResource(rest.Resource):
+    def get(self): pass
+    def post(self): pass
+
+class CourtRoomResource(rest.Resource):
+    def get(self): pass
+    def post(self): pass
+
+"""
+Temporal Models Resources
+
+"""
+
+class StayResource(rest.Resource): pass # ??
+
+class ChargeHistoryResource(rest.Resource):
+    def get(self): pass
+    def post(self): pass
+
+class HousingHistoryResource(rest.Resource):
+    def get(self): pass
+    def post(self): pass
+
+class CourtHistoryResource(rest.Resource):
+    def get(self): pass
+    def post(self): pass
+
 EnvInfo = api.create_resource(env_info, "/os_env_info")
 DailyPopulation = api.create_resource(daily_population, "/daily_population")
 StartingPopulation = api.create_resource(starting_population, "/starting_population")
-Version = api.create_resource(version, "version")
+Version = api.create_resource(version, "/version")
 
+api.add_resource(PersonResource, "/person")
+api.add_resource(ChargeResource, "/charge")
+api.add_resource(HousingResource, "/housing")
+api.add_resource(CourtBuildingResource, "/court_building")
+api.add_resource(CourtRoomResource, "/court_room")
+
+api.add_resource(StayResource, "/stay")
+api.add_resource(ChargeHistoryResource, "/charge_history")
+api.add_resource(HousingHistoryResource, "/housing_history")
+api.add_resource(CourtHistoryResource, "/court_history")
 

@@ -6,6 +6,8 @@ https://docs.google.com/drawings/d/1WAXGB1l5QcX_2XV5_VjvVNNxOO9UvGIh5jXgakNnICo/
 
 """
 
+from ccj.app import db
+
 class Person(db.Model):
     """
     A person model used to identify people who
@@ -29,7 +31,7 @@ class Person(db.Model):
 
     # the date this person was added to the
     # database
-    date_created = db.Column(db.Unicode)
+    date_created = db.Column(db.Date)
 
 
 
