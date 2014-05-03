@@ -17,9 +17,11 @@ class Person(db.Model):
     We don't track first or last names.
 
     """
+    id = db.Column(db.Integer, primary_key=True)
+
     # a hash to uniquely identify the person
     # if he or she came back to the jail
-    hash = db.Column(db.Unicode, primary_key=True)
+    hash = db.Column(db.Unicode(64), unique=True)
 
     # gender can only be M(male) or F(female)
     gender = db.Column(db.Enum("M", "F"))
