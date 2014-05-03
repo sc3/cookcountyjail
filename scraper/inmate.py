@@ -2,12 +2,12 @@ from datetime import datetime, date, time
 
 from django.db.utils import DatabaseError
 
-from countyapi.utils import convert_to_int
+from utils import convert_to_int
 from countyapi.models import CountyInmate
 from charges import Charges
 from court_date_info import CourtDateInfo
 from housing_location_info import HousingLocationInfo
-from countyapi.utils import ONE_DAY
+from utils import ONE_DAY
 
 _MIDNIGHT = time()
 _NUMBER_DAYS_AGO = 5

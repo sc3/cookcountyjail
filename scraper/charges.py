@@ -1,6 +1,6 @@
 from django.db.utils import DatabaseError
 
-from countyapi.utils import just_empty_lines, strip_the_lines, yesterday
+from utils import just_empty_lines, strip_the_lines, yesterday
 
 
 class Charges:

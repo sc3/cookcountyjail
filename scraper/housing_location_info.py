@@ -1,6 +1,6 @@
 from django.db.utils import DatabaseError
 
-from countyapi.utils import convert_to_int, join_with_space_and_convert_spaces, yesterday
+from utils import convert_to_int, join_with_space_and_convert_spaces, yesterday
 from countyapi.models import HousingLocation
 
 

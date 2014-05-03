@@ -6,7 +6,7 @@ from gevent.queue import Queue
 from heartbeat import Heartbeat
 
 from search_commands import SearchCommands
-from countyapi.utils import ONE_DAY
+from utils import ONE_DAY
 
 
 NEW_INMATE_SEARCH_WINDOW_SIZE = 5

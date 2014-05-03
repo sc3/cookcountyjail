@@ -1,6 +1,6 @@
 from datetime import date
 
-from countyapi.utils import ONE_DAY, yesterday
+from utils import ONE_DAY, yesterday
 from concurrent_base import ConcurrentBase
 
 MAX_INMATE_NUMBER = 350
