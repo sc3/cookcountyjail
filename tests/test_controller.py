@@ -74,9 +74,9 @@ class TestController:
         assert self._search.check_if_really_discharged.call_args_list == [call(active_jail_ids)]
         self.send_notification(self._search, SearchCommands.FINISHED_CHECK_OF_RECENTLY_DISCHARGED_INMATES)
         assert self._inmate_scraper.finish.call_args_list == [call()]
-        self.send_notification(self._inmate_scraper, InmatesScraper.FINISHED_PROCESSING)
+        self.send_notification(self._inmate_scraper, self._inmate_scraper.FINISHED_PROCESSING)
         assert inmates.finish.call_args_list == [call()]
-        self.send_notification(inmates, Inmates.FINISHED_PROCESSING)
+        self.send_notification(inmates, inmates.FINISHED_PROCESSING)
         assert not controller.is_running
 
     def test_search_missing_inmates(self):
@@ -91,9 +91,9 @@ class TestController:
         assert self._search.find_inmates.call_args_list == [call(exclude_list=known_inmate_ids, start_date=start_date)]
         self.send_notification(self._search, SearchCommands.FINISHED_FIND_INMATES)
         assert self._inmate_scraper.finish.call_args_list == [call()]
-        self.send_notification(self._inmate_scraper, InmatesScraper.FINISHED_PROCESSING)
+        self.send_notification(self._inmate_scraper, self._inmate_scraper.FINISHED_PROCESSING)
         assert inmates.finish.call_args_list == [call()]
-        self.send_notification(inmates, Inmates.FINISHED_PROCESSING)
+        self.send_notification(inmates, inmates.FINISHED_PROCESSING)
         assert not controller.is_running
 
 

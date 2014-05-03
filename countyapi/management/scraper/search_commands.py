@@ -3,12 +3,13 @@ from datetime import date
 import gevent
 from gevent.queue import Queue
 
-from countyapi.utils import ONE_DAY
+from countyapi.utils import ONE_DAY, yesterday
+from concurrent_base import ConcurrentBase
 
 MAX_INMATE_NUMBER = 350
 
 
-class SearchCommands:
+class SearchCommands(ConcurrentBase):
 
     _NOTIFICATION_MSG_TEMPLATE = 'SearchCommands: finished generating %s'
     FINISHED_FIND_INMATES = _NOTIFICATION_MSG_TEMPLATE % 'find inmates commands'
@@ -17,9 +18,8 @@ class SearchCommands:
     FINISHED_UPDATE_INMATES_STATUS = _NOTIFICATION_MSG_TEMPLATE % 'update inmates status'
 
     def __init__(self, inmate_scraper, monitor):
+        super(SearchCommands, self).__init__(monitor)
         self._inmate_scraper = inmate_scraper
-        self._monitor = monitor
-        self._commands = self._setup_command_system()
 
     def check_if_really_discharged(self, discharged_inmates_ids):
         self._put(self._check_if_really_discharged, discharged_inmates_ids)
@@ -28,9 +28,6 @@ class SearchCommands:
         for discharged_inmate_id in discharged_inmates_ids:
             self._inmate_scraper.resurrect_if_found(discharged_inmate_id)
         self._notify(self.FINISHED_CHECK_OF_RECENTLY_DISCHARGED_INMATES)
-
-    def _debug(self, msg):
-        self._monitor.debug('SearchCommands: %s' % msg)
 
     def find_inmates(self, exclude_list=None, number_to_fetch=MAX_INMATE_NUMBER, start_date=None):
         if exclude_list is None:
@@ -50,23 +47,6 @@ class SearchCommands:
             cur_date += ONE_DAY
         self._notify(self.FINISHED_FIND_INMATES)
 
-    def _notify(self, notification_msg):
-        self._monitor.notify(self.__class__, notification_msg)
-
-    def _process_commands(self):
-        while True:
-            func, args = self._commands.get()
-            func(args)
-
-    def _put(self, method, args):
-        self._commands.put((method, args))
-        gevent.sleep(0)
-
-    def _setup_command_system(self):
-        commands = Queue(None)
-        gevent.spawn(self._process_commands)
-        return commands
-
     def update_inmates_status(self, active_inmates_ids):
         self._put(self._update_inmates_status, active_inmates_ids)
 
@@ -81,6 +61,3 @@ def _jail_ids(cur_date, number_to_fetch):
     for booking_number in range(1, number_to_fetch + 1):
         yield prefix % booking_number
 
-
-def yesterday():
-    return date.today() - ONE_DAY
