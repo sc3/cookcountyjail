@@ -3,7 +3,7 @@ from controller import Controller
 from search_commands import SearchCommands
 from inmates_scraper import InmatesScraper
 from inmates import Inmates
-from inmate import Inmate
+from countyapi.inmate import Inmate
 from inmate_details import InmateDetails
 from http import Http
 

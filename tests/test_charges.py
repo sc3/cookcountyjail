@@ -1,5 +1,5 @@
 from mock import Mock, call
-from scraper.charges import Charges
+from countyapi.charges import Charges
 
 class TestCharges:
 

@@ -1,5 +1,5 @@
-from django.db.utils import DatabaseError
 
+from django.db.utils import DatabaseError
 from utils import just_empty_lines, strip_the_lines, yesterday
 
 
