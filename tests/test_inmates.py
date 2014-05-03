@@ -43,7 +43,7 @@ class TestInmates:
         monitor = Mock()
         inmates = Inmates(Inmate_TestDouble, monitor)
         inmates.finish()
-        assert monitor.notify.call_args_list == [call(inmates.__class__, Inmates.FINISHED_PROCESSING)]
+        assert monitor.notify.call_args_list == [call(inmates.__class__, inmates.FINISHED_PROCESSING)]
 
     def test_recently_discharged_inmates_ids(self):
         inmate_class = Mock()
