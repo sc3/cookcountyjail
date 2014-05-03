@@ -25,11 +25,11 @@ env.home = '/home/%(user)s' % env
 env.venv = '%(home)s/.virtualenvs/%(project)s' % env
 env.apps = '%(home)s/apps' % env
 env.path = '%(apps)s/%(project)s' % env
-env.static_files_dir = '%(path)s/templates' % env
+env.static_files_dir = '%(path)s/static' % env
 env.config_dir = '%(path)s/config' % env
 env.backup_dirs = 'website/1.0/db_backups'
 
-######## Gunicorn Upstart Config #########
+######## Upstart Config #########
 
 env.upstart_conf = '%(config_dir)s/upstart.conf' % env
 env.upstart_inst = '/etc/init/cookcountyjail.conf'

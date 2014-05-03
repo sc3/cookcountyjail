@@ -4,7 +4,7 @@ from datetime import date, timedelta
 
 ONE_DAY = timedelta(1)
 
-from countyapi.management.scraper.search_commands import SearchCommands
+from scraper.search_commands import SearchCommands
 
 
 class Test_SearchCommands:

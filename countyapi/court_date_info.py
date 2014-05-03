@@ -1,9 +1,7 @@
 
 from django.db.utils import DatabaseError
-
-from countyapi.utils import convert_to_int, strip_the_lines
-
-from countyapi.models import CourtLocation
+from utils import convert_to_int, strip_the_lines
+from models import CourtLocation
 
 
 class CourtDateInfo:

@@ -120,10 +120,10 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.messages.middleware.MessageMiddleware',
 )
 
-ROOT_URLCONF = 'cookcountyjail.urls'
+ROOT_URLCONF = 'countyapi.urls'
 
 # Python dotted path to the WSGI application used by Django's runserver.
-WSGI_APPLICATION = 'cookcountyjail.wsgi.application'
+WSGI_APPLICATION = 'countyapi.wsgi.application'
 
 TEMPLATE_DIRS = (os.path.join(os.path.dirname(os.path.dirname(__file__)), 'templates'))
 
