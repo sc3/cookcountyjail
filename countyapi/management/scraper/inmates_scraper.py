@@ -16,8 +16,6 @@ class InmatesScraper(ConcurrentBase):
         self._http = http
         self._inmates = inmates
         self._inmate_details_class = inmate_details_class
-        self._monitor = monitor
-        self._workers_to_start = workers_to_start
 
     def create_if_exists(self, arg):
         self._put(self._create_if_exists, arg)
