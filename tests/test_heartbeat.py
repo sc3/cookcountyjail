@@ -1,8 +1,8 @@
 
 
 from datetime import datetime
-from countyapi.management.scraper.monitor import Monitor
-from countyapi.management.scraper.heartbeat import Heartbeat
+from scraper.monitor import Monitor
+from scraper.heartbeat import Heartbeat
 
 
 class TestHeartbeat:

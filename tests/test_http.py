@@ -3,7 +3,7 @@
 import httpretty
 from random import randint
 
-from countyapi.management.scraper.http import Http, COOK_COUNTY_JAIL_INMATE_DETAILS_URL, BAD_URL_NETWORK_PROBLEM
+from scraper.http import Http, COOK_COUNTY_JAIL_INMATE_DETAILS_URL, BAD_URL_NETWORK_PROBLEM
 
 
 INMATE_URL = COOK_COUNTY_JAIL_INMATE_DETAILS_URL + '2014-0118034'

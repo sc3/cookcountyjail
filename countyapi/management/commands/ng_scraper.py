@@ -5,8 +5,8 @@ from optparse import make_option
 
 from django.core.management.base import BaseCommand
 
-from countyapi.management.scraper.scraper import Scraper
-from countyapi.management.scraper.monitor import Monitor
+from scraper.scraper import Scraper
+from scraper.monitor import Monitor
 
 log = logging.getLogger('main')
 

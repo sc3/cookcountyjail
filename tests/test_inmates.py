@@ -2,7 +2,7 @@
 from gevent.queue import Queue
 from mock import Mock, call
 
-from countyapi.management.scraper.inmates import Inmates
+from scraper.inmates import Inmates
 
 
 class TestInmates:

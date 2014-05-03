@@ -5,7 +5,7 @@ from datetime import datetime
 import gevent
 from gevent.queue import Queue
 
-from countyapi.management.scraper.inmates_scraper import InmatesScraper, CCJ_INMATE_DETAILS_URL
+from scraper.inmates_scraper import InmatesScraper, CCJ_INMATE_DETAILS_URL
 
 ONE_SECOND = 1
 

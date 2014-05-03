@@ -2,7 +2,7 @@
 
 from datetime import datetime
 
-from countyapi.management.scraper.inmate_details import InmateDetails
+from scraper.inmate_details import InmateDetails
 
 INMATE_1 = u'2014-0117015'
 inmates_html = {}
