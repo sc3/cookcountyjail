@@ -1,5 +1,5 @@
 
-from countyapi.management.scraper.monitor import Monitor, MONITOR_VERBOSE_DMSG_LEVEL
+from scraper.monitor import Monitor, MONITOR_VERBOSE_DMSG_LEVEL
 
 from mock import Mock, call
 

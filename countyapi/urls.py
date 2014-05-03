@@ -1,6 +1,5 @@
 from django.conf.urls import patterns, include, url
 from tastypie.api import Api
-from countyapi import views
 from countyapi.api import CountyInmateResource, CourtLocationResource, \
     CourtDateResource, HousingLocationResource, HousingHistoryResource, \
     DailyPopulationCountsResource, DailyBookingsCountsResource, ChargesHistoryResource
@@ -15,4 +14,4 @@ v1_api.register(DailyPopulationCountsResource())
 v1_api.register(DailyBookingsCountsResource())
 v1_api.register(ChargesHistoryResource())
 
-urlpatterns = patterns('', url(r'', include(v1_api.urls)))
+urlpatterns = patterns('', url(r'^api/', include(v1_api.urls)))
