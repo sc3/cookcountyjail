@@ -1,8 +1,5 @@
 from datetime import date
 
-import gevent
-from gevent.queue import Queue
-
 from countyapi.utils import ONE_DAY, yesterday
 from concurrent_base import ConcurrentBase
 

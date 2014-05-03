@@ -1,6 +1,3 @@
-
-import gevent
-
 from monitor import MONITOR_VERBOSE_DMSG_LEVEL
 from concurrent_base import ConcurrentBase
 
