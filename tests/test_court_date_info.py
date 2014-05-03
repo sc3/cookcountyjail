@@ -1,6 +1,6 @@
 from mock import Mock, call
 from datetime import datetime
-from countyapi.utils import strip_the_lines
+from utils import strip_the_lines
 from scraper.court_date_info import CourtDateInfo
 
 class TestCourtDateInfo:
