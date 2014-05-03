@@ -4,7 +4,7 @@ MarkupSafe==0.18
 SQLAlchemy==0.8.2
 South==0.8.2
 Werkzeug==0.9.4
-argparse==1.2.1
+argparse==1.1
 cssselect==0.8
 django-tastypie==0.11.0
 ecdsa==0.9
@@ -27,5 +27,4 @@ pytest>= 2.5.2
 httpretty>=0.8.0
 mock>=1.0.1
 pytest-django>=2.6
-boto>=2.27.0
 
