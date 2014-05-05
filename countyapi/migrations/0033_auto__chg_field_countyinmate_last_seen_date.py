@@ -8,17 +8,14 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        """
-        End of converting CountyInmate.booking_date field from datetime to date
-        turning back on auto updating of last_seen_date field.
-        @param orm:
-        @return:
-        """
+
         # Changing field 'CountyInmate.last_seen_date'
         db.alter_column(u'countyapi_countyinmate', 'last_seen_date', self.gf('django.db.models.fields.DateTimeField')(auto_now=True))
 
     def backwards(self, orm):
-        raise RuntimeError("Cannot reverse this migration.")
+
+        # Changing field 'CountyInmate.last_seen_date'
+        db.alter_column(u'countyapi_countyinmate', 'last_seen_date', self.gf('django.db.models.fields.DateTimeField')())
 
     models = {
         u'countyapi.chargeshistory': {
