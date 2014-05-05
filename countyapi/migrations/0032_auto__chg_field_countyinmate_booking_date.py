@@ -8,11 +8,14 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
+
         # Changing field 'CountyInmate.booking_date'
-        db.alter_column(u'countyapi_countyinmate', 'booking_date', self.gf('django.db.models.fields.DateField'))
+        db.alter_column(u'countyapi_countyinmate', 'booking_date', self.gf('django.db.models.fields.DateField')(default=datetime.datetime(2014, 5, 5, 0, 0)))
 
     def backwards(self, orm):
-        raise RuntimeError("Cannot reverse this migration.")
+
+        # Changing field 'CountyInmate.booking_date'
+        db.alter_column(u'countyapi_countyinmate', 'booking_date', self.gf('django.db.models.fields.DateField')(null=True))
 
     models = {
         u'countyapi.chargeshistory': {
