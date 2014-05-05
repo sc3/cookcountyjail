@@ -14,4 +14,4 @@ cd $PROJECT_DIR
 source /home/ubuntu/.virtualenvs/cookcountyjail/bin/activate
 gunicorn -w $NUM_WORKERS --user=$USER --group=$GROUP \
     --log-level=debug --timeout=$TIMEOUT --log-file=$LOGFILE \
-    cookcountyjail.wsgi:application 2>>$LOGFILE
+    countyapi.wsgi:application 2>>$LOGFILE
