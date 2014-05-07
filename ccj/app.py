@@ -43,7 +43,14 @@ def simple_resource(class_name, get_fun):
     which responds to just Get requests with get_fun.
 
     """
-    return type(class_name, (rest.Resource,), {'get': get_fun})
+
+    def _method(self):
+        # this will be the new class' method
+        # that is called on Get requests
+        # a wrapper aroud the get function
+        return get_fun()
+
+    return type(class_name, (rest.Resource,), {'get': _method})
 
 app = Flask(__name__)
 app.config.from_object(config)
@@ -57,7 +64,7 @@ api = CcjApi(app)
 if app.config['IN_TESTING']:
     app.debug = True
 
-def env_info(self):
+def env_info():
     """
     Displays information about the current OS environment.
     Used for development purposes, to be deleted when this
@@ -69,14 +76,14 @@ def env_info(self):
                     headers=str(request.headers),
                     environ=str(request.environ))
 
-def daily_population(self):
+def daily_population():
     """
     returns the set of summarized daily population changes.
 
     """
     return DPC(app.config['DPC_DIR_PATH']).to_json()
 
-def starting_population(self):
+def starting_population():
     """
     returns the set of starting daily population values used
     to calculate daily changes.
@@ -84,7 +91,7 @@ def starting_population(self):
     """
     return DPC(app.config['DPC_DIR_PATH']).starting_population()
 
-def version(self):
+def version():
     """
     returns the version info
 
