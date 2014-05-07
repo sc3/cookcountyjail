@@ -50,7 +50,7 @@ app.config.from_object(config)
 
 db = SQLAlchemy(app)
 
-from ccj.models.person import Person
+from ccj.models.models import Person, Charge, Housing, CourtBuilding, CourtRoom
 
 api = CcjApi(app)
 
