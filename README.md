@@ -136,7 +136,13 @@ pip install -U -r requirements.txt
 
 #Usage
 
-On development server:
+First get some data:
+
+```
+python -m scripts.scraper
+```
+
+Then see it on the development server:
 
 ```
 python -3 manage.py -sdb
