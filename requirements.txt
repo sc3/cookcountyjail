@@ -18,4 +18,5 @@ mock>=1.0.1
 flask-restful
 flask-script
 flask-migrate
+flask-restless
 
