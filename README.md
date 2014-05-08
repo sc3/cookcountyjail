@@ -99,22 +99,29 @@ This project has a sister project based on sc3/26thandcalifornia that will use t
 API. Details on this project are XXXX (this is to filled in later).
 
 # Directory Structure
+```
+/ - root
+├── AUTHORS.md - people who contributed to building this functionality
+├── ccj - website code
+│   ├── app.py - main entry point to application
+│   ├── ccj.db - all data
+│   ├── models - database models and database related code
+│   │   ├── migrations - database migrations using alembic
+│   ├── rest_api.py - restful api code
+│   └── templates - website page templates
+├── config - where all the configuration files are located
+├── fabfile.py - Fabric tasks that deploy new website and launch it and roll it back on production server
+├── gunicorn.sh - Bash script to run application usin Gunicorn Python based webserver
+├── LICENSE.md - project license
+├── manage.py - task to do various operations with application
+├── README.md - this file
+├── requirements.txt - app requirements to be installed with pip
+├── scripts - scripts used to do other activities like scrape Cook County Sheriff's website
+├── tasks.py - invoke tasks
+└── tests - tests stored here, both unit and BDD
 
-* / - top level files, like this one
-* /ccj - website code
-    * /__init.py__
-    * /templates
-    * app.py - main entry point to application
-    * /models - where all of the application code is located
-* /config - where all the configuration files are located
-* /scripts - scripts used to do other activities like scrape Cook County Sheriff's website
-* /tests - tests stored here, both unit and BDD
-* /AUTHORS.md - people who contributed to building this functionality
-* /fabfile.py - Fabric tasks that deploy new website and launch it and roll it back on production server
-* /gunicorn.sh - Bash script to run application usin Gunicorn Python based webserver
-* /manage.py - task to do various operations with application
-* /README.md - this file
-* /tasks.py - Invoke tasks that
+
+``` 
 
 
 # Setting up for local development
