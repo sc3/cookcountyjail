@@ -3,7 +3,7 @@
 #        processing should be pushed down into model files.
 #
 
-from flask import Flask, request
+from flask import Flask, request, render_template
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext import restful as rest
 
@@ -28,6 +28,14 @@ api = CcjApi(app, db)
 
 if app.config['IN_TESTING']:
     app.debug = True
+
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+@app.route('/about-api')
+def about_api():
+    return render_template('api.html')
 
 def env_info():
     """

@@ -58,7 +58,7 @@ class CcjApiV1:
     @staticmethod
     def _convert_to_beginning_of_day(starting_date):
         starting_date_time = datetime.strptime(starting_date, DATE_FORMAT)
-        return starting_date_time.replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
+        return starting_date_time.date()
 
     @staticmethod
     def _convert_to_end_of_day(ending_date):
