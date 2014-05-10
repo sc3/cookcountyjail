@@ -102,7 +102,8 @@ class Controller:
     def _find_new_inmates(self):
         end_index = self._end_index_active_inmate_ids_in_search_window()
         self._search_commands.find_inmates(exclude_list=self._active_inmate_ids[0:end_index],
-l
+                                           start_date=self._today - ONE_DAY * (NEW_INMATE_SEARCH_WINDOW_SIZE + 1))
+
     def _known_inmates(self):
         self._inmates.known_inmates_ids_starting_with(self.inmates_response_q, self._start_date_missing_inmates)
         self._retrieve_inmates_response(self._RECEIVED_KNOWN_INMATES_COMMAND)
