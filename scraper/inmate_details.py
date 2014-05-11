@@ -34,10 +34,10 @@ class InmateDetails:
         return self._column_content(10)
 
     def _birth_date(self):
-        return self._convert_date(2)
+        return self.__convert_datetime(2)
 
     def booking_date(self):
-        return self._convert_date(7)
+        return self.__convert_date(7)
 
     def charges(self):
         return self._column_content(11)
@@ -45,7 +45,11 @@ class InmateDetails:
     def _column_content(self, columns_index):
         return self.__columns[columns_index].text_content().strip()
 
-    def _convert_date(self, column_index):
+    def __convert_date(self, column_index):
+        result = self.__convert_datetime(column_index)
+        return result if result is None else result.date()
+
+    def __convert_datetime(self, column_index):
         try:
             result = datetime.strptime(self._column_content(column_index),
                                        '%m/%d/%Y')
@@ -82,7 +86,7 @@ class InmateDetails:
         return self._column_content(1)
 
     def next_court_date(self):
-        return self._convert_date(12)
+        return self.__convert_datetime(12)
 
     def race(self):
         return self._column_content(3)
