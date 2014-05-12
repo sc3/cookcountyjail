@@ -73,7 +73,11 @@ class CcjApiV1:
     def _fetch_json_data(self, url_to_fetch):
         try:
             the_response = requests.get(url_to_fetch)
-            assert the_response.status_code == 200
+            if the_response.status_code != 200:
+                print 'failed to fetch {0}, got status code {1}'.format(
+                        url_to_fetch, the_response.status_code)
+                return []
+
         except requests.ConnectionError:
             _, exc_value, _ = sys.exc_info()
             print exc_value
