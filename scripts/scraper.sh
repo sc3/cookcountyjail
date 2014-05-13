@@ -47,4 +47,10 @@ ${MANAGE} dumpdata countyapi > ${DB_BACKUPS_DIR}/${DB_BACKUP_FILE}
 echo "Restart gunicorn servers for better user experience."
 sudo service cookcountyjail restart
 
+# now wait until server is back up and running before terminating the scraper
+http_code='0'
+while [ "$http_code" != "301" ];do
+  http_code=`curl -o /dev/null --silent --head --write-out '%{http_code}\n' "http://cookcountyjail.recoveredfactory.net/api/1.0/countyinmate?format=json&limit=0&booking_date__exact=2014-03-15"`
+done
+
 echo "Cook County Jail scraper V1.0 finished at `date`"
