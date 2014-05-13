@@ -13,8 +13,8 @@ class TestCcjV1:
 
     @httpretty.activate
     def test_booked_left(self):
-        start_of_day = STARTING_DATE + 'T00:00:00'
-        end_of_day = STARTING_DATE + 'T23:59:59'
+        start_of_day = STARTING_DATE
+        end_of_day = STARTING_DATE
         booked_cmd = BOOKING_DATE_URL_TEMPLATE % start_of_day
         expected_booked_value = [{'booked_val': 'booked value is %d' % randint(0, 25)}]
         left_cmd = LEFT_DATE_URL_TEMPLATE % (start_of_day, end_of_day)
@@ -26,6 +26,7 @@ class TestCcjV1:
         ccj_api_requests = {}
 
         def fulfill_ccj_api_request(_, uri, headers):
+            print uri
             assert uri == booked_cmd or uri == left_cmd
             if uri == booked_cmd:
                 ccj_api_requests['booked_cmd'] = True
@@ -47,9 +48,11 @@ class TestCcjV1:
         assert ccj_api_requests['booked_cmd'] and ccj_api_requests['left_cmd']
         assert booked_left == expected
 
+
+
     @httpretty.activate
     def test_build_starting_population_count(self):
-        starting_date_time = (STARTING_DATE + 'T00:00:00')
+        starting_date_time = (STARTING_DATE)
         not_discharged_command = NOT_DISCHARGED_URL_TEMPLATE % starting_date_time
         discharged_after_start_date_command = \
             DISCHARGED_ON_OR_AFTER_STARTING_DATE_URL_TEMPLATE % (starting_date_time, starting_date_time)

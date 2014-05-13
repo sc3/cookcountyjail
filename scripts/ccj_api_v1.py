@@ -8,6 +8,9 @@ from datetime import datetime
 from json import loads
 from copy import copy
 
+
+
+
 #
 # The fields booking_date and discharge_date_earliest both contains a datetime value. However,
 # the time component of booking_value is always 00:00:00, where as for discharge_date_earliest
@@ -50,9 +53,10 @@ class CcjApiV1:
 
     def booked_left(self, date_to_fetch):
         start_of_day = self._convert_to_beginning_of_day(date_to_fetch)
-        inmates = copy(self.booked_inmates(start_of_day))
         end_of_day = self._convert_to_end_of_day(date_to_fetch)
-        inmates.extend(self.left_inmates(start_of_day, end_of_day))
+        inmates = copy(self.booked_inmates(start_of_day))
+        left_inmates = self.left_inmates(start_of_day, end_of_day)
+        inmates.extend(left_inmates)
         return inmates
 
     @staticmethod
@@ -62,8 +66,8 @@ class CcjApiV1:
 
     @staticmethod
     def _convert_to_end_of_day(ending_date):
-        end_of_day = datetime.strptime(ending_date, DATE_FORMAT)
-        return end_of_day.replace(hour=23, minute=59, second=59, microsecond=0).isoformat()
+        ending_date_time = datetime.strptime(ending_date, DATE_FORMAT)
+        return ending_date_time.date()
 
     def _discharged_inmates(self, starting_date_time):
         discharged_on_or_after_start_date_command = \

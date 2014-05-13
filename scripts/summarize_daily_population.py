@@ -48,5 +48,5 @@ class SummarizeDailyPopulation:
         discharged for the date specified in parameter change_date
         """
         self._initialize_change_counts(change_date)
-        self._count_changes(inmates, change_date + 'T00:00:00')
+        self._count_changes(inmates, change_date)
         return self._change_counts
