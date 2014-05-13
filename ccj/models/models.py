@@ -32,12 +32,12 @@ class Person(db.Model):
     hash = db.Column(db.Unicode(64), unique=True)
 
     # gender can only be M(male) or F(female)
-    gender = db.Column(db.Enum("M", "F"))
+    gender = db.Column(db.Enum("M", "F"), name="pgender")
 
     # race would be harder to parse with an
     # enum so we are sticking to good old
     # strings
-    race = db.Column(db.Unicode)
+    race = db.Column(db.Unicode(4))
 
     # the date this person was added to the
     # database
