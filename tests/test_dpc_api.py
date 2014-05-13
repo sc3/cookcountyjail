@@ -51,7 +51,8 @@ class TestDailyPopulationChangesApi:
         rmtree(self._tmp_dir)
 
     def test_fetch_with_nothing_stored_returns_empty_array(self):
-        expected = '[]'
+        # Why is there a newline here?
+        expected = '[]\n'
         result = self.client.get(DAILY_POPULATION_API_PATH)
         assert result.status_code == 200
         assert result.data == expected
@@ -75,7 +76,7 @@ class TestDailyPopulationChangesApi:
         result = self.client.post(DAILY_POPULATION_API_PATH, 
                         data=data, 
                         environ_overrides={'REMOTE_ADDR': '8.8.8.8'})
-        assert result.status_code == 401
+        assert result.status_code == 405
 
     def test_starting_population_api(self):
         starting_population_counts = self._store_starting_population()

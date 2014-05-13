@@ -9,7 +9,8 @@ from json import loads
 from copy import copy
 
 
-
+# NOTE: The following paragraph is now out of date and needs to be brought up to day; all of 
+# the date fields mentioned are now dates and not datetimes.
 
 #
 # The fields booking_date and discharge_date_earliest both contains a datetime value. However,

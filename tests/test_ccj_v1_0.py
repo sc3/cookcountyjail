@@ -26,7 +26,6 @@ class TestCcjV1:
         ccj_api_requests = {}
 
         def fulfill_ccj_api_request(_, uri, headers):
-            print uri
             assert uri == booked_cmd or uri == left_cmd
             if uri == booked_cmd:
                 ccj_api_requests['booked_cmd'] = True
