@@ -11,22 +11,14 @@ NEGATIVE_VALUES = set(['0', 'false'])
 
 
 def get_db_uri():
-    if use_postgres():
-        db_config = {
-            'dialect': 'postgresql',
-            'db_user': 'cookcountyjail',
-            'db_name': 'cookcountyjail_v2_0_dev',
-            'pw': 'walblgadb;lgall',
-            'host': 'localhost',
-        }
-        template = '%(dialect)s://%(db_user)s:%(pw)s@%(host)s/%(db_name)s'
-    else:
-        db_config = {
-            'dialect': 'sqlite',
-            'abs_path_to_db': '%s/ccj.db' % _basedir
-        }
-        template = '%(dialect)s:///%(abs_path_to_db)s'
-
+    db_config = {
+        'dialect': 'postgresql',
+        'db_user': 'cookcountyjail',
+        'db_name': 'cookcountyjail_v2_0_dev',
+        'pw': 'walblgadb;lgall',
+        'host': 'localhost',
+    }
+    template = '%(dialect)s://%(db_user)s:%(pw)s@%(host)s/%(db_name)s'
     return (template % db_config)
 
 
