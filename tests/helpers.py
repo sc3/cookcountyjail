@@ -89,7 +89,7 @@ def add_jail_id(inmates):
 
 
 def change_counts(inmates):
-    starting_datetime = STARTING_DATE + 'T00:00:00'
+    starting_datetime = STARTING_DATE
     counts = initialize_change_counts()
     for inmate in inmates:
         if inmate[BOOKING_DATE] == starting_datetime:
@@ -146,7 +146,7 @@ def count_population(inmates, population_date=None, calculate_totals=True):
 
 
 def discharged_null_inmate_records(number_to_make):
-    starting_datetime = STARTING_DATE + 'T00:00:00'
+    starting_datetime = STARTING_DATE
     how_many_to_make = {'F': number_to_make / 2, 'M': number_to_make}
     return add_jail_id([{GENDER: gender, RACE: pick_race(gender), BOOKING_DATE: starting_datetime,
                          DISCHARGE_DATE_EARLIEST: None}
@@ -238,7 +238,7 @@ class RandomDates:
         return self._next()
 
     def _random_next(self):
-        return str(self._starting_date + (self._one_day * randint(0, self._number_days))) + 'T01:01:01'
+        return str(self._starting_date + (self._one_day * randint(0, self._number_days)))
 
     def _static_next(self):
         return self._starting_date

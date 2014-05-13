@@ -20,7 +20,7 @@ def deploy():
 
 @task
 def requirements():
-    run('pip install -U -r config/requirements.txt')
+    run('pip install -U -r requirements.txt')
 
 
 @task
