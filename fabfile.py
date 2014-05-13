@@ -210,7 +210,7 @@ def install_requirements():
     """
     std_requires()
     with activate_cmd():
-        run('pip install -U -r %(new_website_path)s/config/requirements.txt' % env)
+        run('pip install -U -r %(new_website_path)s/requirements.txt' % env)
 
 
 def link_to_new_website(new_website_id):
