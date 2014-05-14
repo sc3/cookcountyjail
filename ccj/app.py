@@ -7,12 +7,15 @@ from flask import Flask, request, render_template
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext import restful as rest
 
+from json import loads
 from os import getcwd
-from datetime import datetime
+from datetime import datetime, date
 
 from ccj.models.daily_population import DailyPopulation as DPC
 from ccj.models.version_info import VersionInfo
 from ccj import config
+
+from rest_api import CcjApi, get_or_create
 
 STARTUP_TIME = datetime.now()
 
@@ -22,7 +25,6 @@ app.config.from_object(config)
 db = SQLAlchemy(app)
 
 from ccj.models.models import Person, ChargeDescription, Statue, Housing, CourtBuilding, CourtRoom
-from rest_api import CcjApi
 
 api = CcjApi(app, db)
 
@@ -73,8 +75,51 @@ def version():
     return VersionInfo(STARTUP_TIME).fetch(all_version_info=('all' in args and args['all'] == '1'))
 
 class Process(rest.Resource):
+    """
+    The Proccess route handles all database input.
+    Scraper instances make POST requests to to this
+    route and it takes care of saving the data.
+
+    In the near future scrapers might be whitelisted.
+
+    The process route expects all data to be in a 'data'
+    key in the request's body. The data must be valid JSON.
+
+    Example data:
+
+    {
+
+    }
+
+    """
+
     def post(self):
-        return {"status": "saved"}
+
+        data = None
+
+        try:
+            data = loads(request.form['data'])
+
+        except ValueError:
+            return {"message": "Error parsing json data", "status": 500}, 500
+
+        # the Person's attributes
+        phash = data.get("hash")
+        gender = data.get("gender")
+        race = data.get("race")
+
+        new_person, person = get_or_create(db.session, Person, hash=phash)
+        person.gender = gender
+        person.race = race
+
+        if new_person:
+            person.date_created = date.today()
+
+        db.session.add(person)
+        db.session.commit()
+
+        return {"message": "saved", "status": 200}
+
 
 api.full_resource(env_info, "/os_env_info")
 api.full_resource(daily_population, "/daily_population")
@@ -88,5 +133,4 @@ api.less_resource(Statue)
 api.less_resource(Housing)
 api.less_resource(CourtBuilding)
 api.less_resource(CourtRoom)
-
 

@@ -87,4 +87,19 @@ class CcjApi():
         self._less.create_api(db_model, url_prefix='', methods=['GET'])
         return self
 
+def get_or_create(session, model, **kwargs):
+    """
+    Django styled get or create method for
+    sqlalchemy.
+
+    kwargs are the values that would UNIQUELY
+    identified the record.
+
+    """
+    instance = session.query(model).filter_by(**kwargs).first()
+    if instance:
+        return (False, instance)
+    else:
+        instance = model(**kwargs)
+        return (True, instance)
 
