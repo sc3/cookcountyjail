@@ -27,7 +27,7 @@ def upgrade():
     op.create_table('person',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('hash', sa.Unicode(length=64), nullable=True),
-    sa.Column('gender', sa.Enum('M', 'F'), nullable=True),
+    sa.Column('gender', sa.Enum('M', 'F', name='pgender'), nullable=True),
     sa.Column('race', sa.Unicode(), nullable=True),
     sa.Column('date_created', sa.Date(), nullable=True),
     sa.PrimaryKeyConstraint('id'),
