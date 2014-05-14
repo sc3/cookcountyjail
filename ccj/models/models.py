@@ -43,7 +43,7 @@ class Person(db.Model):
     # database
     date_created = db.Column(db.Date)
 
-class Charge(db.Model):
+class ChargeDescription(db.Model):
     """
     Every inmate gets a charge when they are
     booked. Often this changes overtime for
@@ -56,10 +56,17 @@ class Charge(db.Model):
     # the charge will have a description
     description = db.Column(db.Unicode)
 
-    # and a official citation
-    citation = db.Column(db.Unicode)
+    date_created = db.Column(db.Date)
 
-    primary_type = db.Column(db.Unicode)
+class Statue(db.Model):
+    """
+    A statue.
+
+    """
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    citation = db.Column(db.Unicode)
 
     date_created = db.Column(db.Date)
 
