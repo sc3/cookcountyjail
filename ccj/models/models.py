@@ -29,7 +29,7 @@ class Person(db.Model):
 
     # a hash to uniquely identify the person
     # if he or she came back to the jail
-    hash = db.Column(db.Unicode(64), unique=True)
+    hash = db.Column(db.Unicode(64), unique=True, nullable=False)
 
     # gender can only be M(male) or F(female)
     gender = db.Column(db.Enum("M", "F", name="pgender"))
@@ -54,7 +54,7 @@ class ChargeDescription(db.Model):
     id = db.Column(db.Integer, primary_key=True)
 
     # the charge will have a description
-    description = db.Column(db.Unicode)
+    description = db.Column(db.Unicode, nullable=False, unique=True)
 
     date_created = db.Column(db.Date)
 
@@ -66,7 +66,7 @@ class Statue(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
 
-    citation = db.Column(db.Unicode)
+    citation = db.Column(db.Unicode, nullable=False, unique=True)
 
     date_created = db.Column(db.Date)
 
@@ -142,7 +142,11 @@ class CourtRoom(db.Model):
     # the court room's number
     number = db.Column(db.Integer)
 
-    # court_building_id =
+    court_building_id = db.Column(db.Integer, db.ForeignKey('court_building.id'))
+
+    court_building = db.relationship('CourtBuilding',
+        backref=db.backref('court_rooms', lazy='dynamic'))
+
 
     date_created = db.Column(db.Date)
 

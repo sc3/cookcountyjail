@@ -159,7 +159,6 @@ GRANT ALL PRIVILEGES ON DATABASE cookcountyjail_v2_0_dev to cookcountyjail;
 Set up the database
 
 ```
-python -3 ./manage.py db init
 python -3 ./manage.py upgrade
 
 ```
