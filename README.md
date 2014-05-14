@@ -141,20 +141,45 @@ git checkout v2.0-dev
 pip install -U -r requirements.txt
 ```
 
+Make sure you have the `Postgres` database running. See [Ubuntu's help page](https://help.ubuntu.com/community/PostgreSQL) on setting it up.
+
+After that create the database and user with from your postgres interface.
+
+```
+CREATE USER cookcountyjail WITH PASSWORD 'walblgadb;lgall';
+
+CREATE DATABASE cookcountyjail_v2_0_dev;
+
+GRANT ALL PRIVILEGES ON DATABASE cookcountyjail_v2_0_dev to cookcountyjail;
+
+```
+
 #Usage
+
+Set up the database
+
+```
+python -3 ./manage.py db init
+python -3 ./manage.py upgrade
+
+```
 
 First get some data:
 
 ```
 python -m scripts.scraper
+
 ```
 
 Then see it on the development server:
 
 ```
-python -3 manage.py -sdb
-python -3 manage.py
+python -3 ./manage.py runserver
+
 ```
+
+The `-3` portion on all of these is optional. It just tells Python to wine about code
+that wouldn't work on Python 3. You can ommit it when it's distracting you.
 
 #Testing
 
