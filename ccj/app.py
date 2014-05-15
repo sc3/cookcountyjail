@@ -24,7 +24,7 @@ app.config.from_object(config)
 
 db = SQLAlchemy(app)
 
-from ccj.models.models import Person, ChargeDescription, Statue, Housing, CourtBuilding, CourtRoom
+from ccj.models.models import Person, ChargeDescription, Statute, Housing, CourtBuilding, CourtRoom
 
 api = CcjApi(app, db)
 
@@ -129,7 +129,7 @@ api.full_class_resource(Process, "/process")
 
 api.less_resource(Person)
 api.less_resource(ChargeDescription)
-api.less_resource(Statue)
+api.less_resource(Statute)
 api.less_resource(Housing)
 api.less_resource(CourtBuilding)
 api.less_resource(CourtRoom)

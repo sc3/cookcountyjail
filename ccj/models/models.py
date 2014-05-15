@@ -58,9 +58,9 @@ class ChargeDescription(db.Model):
 
     date_created = db.Column(db.Date)
 
-class Statue(db.Model):
+class Statute(db.Model):
     """
-    A statue.
+    A statute.
 
     """
 
