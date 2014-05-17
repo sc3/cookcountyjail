@@ -92,10 +92,11 @@ class Process(rest.Resource):
     }
 
     """
-
     def post(self):
 
         data = None
+
+        today = date.today()
 
         try:
             data = loads(request.form['data'])
@@ -108,16 +109,39 @@ class Process(rest.Resource):
         gender = data.get("gender")
         race = data.get("race")
 
-        new_person, person = get_or_create(db.session, Person, hash=phash)
-        person.gender = gender
-        person.race = race
+        if phash:
+            new_person, person = get_or_create(db.session, Person, hash=phash)
+            person.gender = gender
+            person.race = race
 
-        if new_person:
-            person.date_created = date.today()
+            if new_person:
+                person.date_created = today
 
-        db.session.add(person)
+            db.session.add(person)
+
+        charge_d = data.get('charge_description')
+
+        if charge_d:
+            new_charge_description, charge_description = get_or_create(db.session,
+                                                                    ChargeDescription,
+                                                                    description=charge_d)
+
+            if new_charge_description:
+                charge_description.date_created = today
+
+            db.session.add(charge_description)
+
+        citation = data.get('citation')
+
+        if citation:
+            new_statue, statute = get_or_create(db.session, Statute, citation=citation)
+
+            if new_statue:
+                statute.date_created = today
+
+            db.session.add(statute)
+
         db.session.commit()
-
         return {"message": "saved", "status": 200}
 
 
