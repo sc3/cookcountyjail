@@ -106,13 +106,12 @@ class Process(rest.Resource):
 
         # the Person's attributes
         phash = data.get("hash")
-        gender = data.get("gender")
-        race = data.get("race")
 
         if phash:
             new_person, person = get_or_create(db.session, Person, hash=phash)
-            person.gender = gender
-            person.race = race
+
+            person.gender = data.get("gender")
+            person.race = data.get("race")
 
             if new_person:
                 person.date_created = today
@@ -140,6 +139,20 @@ class Process(rest.Resource):
                 statute.date_created = today
 
             db.session.add(statute)
+
+        location = data.get('location')
+
+        if location:
+            new_housing, housing = get_or_create(db.session, Housing, location=location)
+
+            housing.in_program = data.get('in_program')
+
+            housing.in_jail = data.get('in_jail')
+
+            if new_housing:
+                housing.date_created = today
+
+            db.session.add(housing)
 
         db.session.commit()
         return {"message": "saved", "status": 200}
