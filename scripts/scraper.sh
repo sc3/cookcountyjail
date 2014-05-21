@@ -8,29 +8,41 @@ export PATH=$PATH:/usr/local/bin
 # Indicate that Production Database is to be used
 export CCJ_PRODUCTION=1
 
-# bind in virtualenv settings
-source ${HOME}/.virtualenvs/cookcountyjail/bin/activate
+# Specify the location of django settings 
+export DJANGO_SETTINGS_MODULE=countyapi.settings
 
-MANAGE='python '${HOME}'/apps/cookcountyjail/manage.py'
+# Set some constants
+PROJECT_DIR=${HOME}'/apps/cookcountyjail'
+SCRIPTS_DIR=${PROJECT_DIR}'/scripts'
+MANAGE='python '${PROJECT_DIR}'/manage.py'
 INMATE_API='http://cookcountyjail.recoveredfactory.net/api/1.0/countyinmate/'
 DB_BACKUPS_DIR=${HOME}/website/1.0/db_backups
 DB_BACKUP_FILE=cookcountyjail-$(date +%Y-%m-%d).json
+SCRAPER_OPTIONS='--verbose'
 
-SCRAPER_OPTIONS=--verbose
+# Bind in virtualenv settings
+source ${HOME}/.virtualenvs/cookcountyjail/bin/activate
 
-${MANAGE} ng_scraper ${SCRAPER_OPTIONS}
+# Make sure project is on python path, for testing
+add2virtualenv ${PROJECT_DIR}
+
+# Actually run the scraper
+python {SCRIPTS_DIR}/ng_scraper ${SCRAPER_OPTIONS}
 
 echo "Cook County Jail scraper finished scraping at `date`"
 
+# TODO: port the audit_db command to v2
 AUDIT_RESULT=$(${MANAGE} audit_db)
 echo ${AUDIT_RESULT} 
 
+# TODO: fix this broken notification code
 # If problems found, send notification
 # echo ${AUDIT_RESULT} | grep -q 'in_jail'
 # if [ $? -eq 0 ];then
 #     echo ${AUDIT_RESULT} | python ${HOME}/apps/cookcountyjail/scripts/notify.py
 # fi
 
+# TODO: take this out, or replace it with v2 summaries
 echo "Generating summaries - `date`"
 ${MANAGE} generate_summaries
 
@@ -40,6 +52,7 @@ time curl -v -L -G -s -o/dev/null -d "format=jsonp&callback=processJSONP&limit=0
 time curl -v -L -G -s -o/dev/null -d "format=csv&limit=0" ${INMATE_API}
 time curl -v -L -G -s -o/dev/null -d "format=json&limit=0" ${INMATE_API}
 
+# TODO: port the dumpdata command
 echo "Dumping database for `date`"
 ${MANAGE} dumpdata countyapi > ${DB_BACKUPS_DIR}/${DB_BACKUP_FILE}
 (cd ${DB_BACKUPS_DIR} && gzip ${DB_BACKUP_FILE} && ln -sf ${DB_BACKUP_FILE}.gz latest.json.gz)
