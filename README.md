@@ -34,7 +34,6 @@ If you want to contribute to the development of the project itself, please see o
 We use GitHub's issue tracker to report problems, as well as to coordinate development efforts:
 
 - Here's a list of issues that are [self-contained and need someone to tackle them](https://github.com/sc3/cookcountyjail/issues?labels=ready&state=open). 
-
 - And here's another, for [things people are currently working on](https://github.com/sc3/cookcountyjail/issues?labels=in+progress&state=open).
     
     
