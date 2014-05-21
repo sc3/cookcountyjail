@@ -6,8 +6,7 @@ python:
 
 # set env vars
 env: 
-  - DJANGO_SETTINGS_MODULE=countyapi.settings
-  - PYTHONPATH=''
+  - DJANGO_SETTINGS_MODULE=countyapi.settings PYTHONPATH=''
 
 # command to install dependencies
 install: "pip install -r requirements.txt"
