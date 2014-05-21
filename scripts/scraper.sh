@@ -11,23 +11,27 @@ export CCJ_PRODUCTION=1
 # Specify the location of django settings 
 export DJANGO_SETTINGS_MODULE=countyapi.settings
 
-# bind in virtualenv settings
-source ${HOME}/.virtualenvs/cookcountyjail/bin/activate
-
-PROJECT_DIR=''${HOME}'/apps/cookcountyjail/'
-MANAGE='python '$PROJECT_DIR' manage.py'
-SCRIPTS=''$PROJECT_DIR' scripts/'
+# Set some constants
+PROJECT_DIR=${HOME}'/apps/cookcountyjail'
+SCRIPTS_DIR=${PROJECT_DIR}'/scripts'
+MANAGE='python '${PROJECT_DIR}'/manage.py'
 INMATE_API='http://cookcountyjail.recoveredfactory.net/api/1.0/countyinmate/'
 DB_BACKUPS_DIR=${HOME}/website/1.0/db_backups
 DB_BACKUP_FILE=cookcountyjail-$(date +%Y-%m-%d).json
-
 SCRAPER_OPTIONS='--verbose'
 
-python {SCRIPTS}ng_scraper ${SCRAPER_OPTIONS}
+# Bind in virtualenv settings
+source ${HOME}/.virtualenvs/cookcountyjail/bin/activate
+
+# Make sure project is on python path, for testing
+add2virtualenv ${PROJECT_DIR}
+
+# Actually run the scraper
+python {SCRIPTS_DIR}/ng_scraper ${SCRAPER_OPTIONS}
 
 echo "Cook County Jail scraper finished scraping at `date`"
 
-# TODO: port the audit_db command 
+# TODO: port the audit_db command to v2
 AUDIT_RESULT=$(${MANAGE} audit_db)
 echo ${AUDIT_RESULT} 
 
