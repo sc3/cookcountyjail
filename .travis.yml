@@ -7,12 +7,10 @@ python:
 # set env vars
 env: 
   - DJANGO_SETTINGS_MODULE=countyapi.settings
+  - PYTHONPATH=''
 
 # command to install dependencies
 install: "pip install -r requirements.txt"
-
-before_script:
-  - python -c "import sys, os; sys.path.append(os.environ.get('TRAVIS_BUILD_DIR'));"
 
 # command to run tests
 script: "py.test"
