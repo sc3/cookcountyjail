@@ -12,8 +12,7 @@ env:
 install: "pip install -r requirements.txt"
 
 before_script:
-  - import sys, os; 
-  - sys.path.append(os.environ.get('TRAVIS_BUILD_DIR'))
+  - python -c "import sys, os; sys.path.append(os.environ.get('TRAVIS_BUILD_DIR'));"
 
 # command to run tests
 script: "py.test"
