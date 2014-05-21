@@ -27,7 +27,7 @@ source ${HOME}/.virtualenvs/cookcountyjail/bin/activate
 add2virtualenv ${PROJECT_DIR}
 
 # Actually run the scraper
-python ${SCRIPTS_DIR}/ng_scraper ${SCRAPER_OPTIONS}
+python ${SCRIPTS_DIR}/ng_scraper.py ${SCRAPER_OPTIONS}
 
 echo "Cook County Jail scraper finished scraping at `date`"
 
