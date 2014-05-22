@@ -150,3 +150,79 @@ class CourtRoom(db.Model):
 
     date_created = db.Column(db.Date)
 
+"""
+Temporal Models
+
+"""
+
+class ChargeHistory(db.Model):
+    """
+    During a stay, some people's charges
+    change. With this model we would be able to
+    see a stay's charges.
+
+    """
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    # a charge history will have a stay related
+    # to it
+    stay_id = db.Column(db.ForeignKey('stay.id'))
+    stay = db.relationship('Stay',
+        backref=db.backref('charges', lazy='dynamic'))
+
+    # and a statute
+    statute_id = db.Column(db.ForeignKey('statute.id'))
+    statute = db.relationship('Statute',
+        backref=db.backref('charges', lazy='dynamic'))
+
+    # with a description
+    charge_description_id = db.Column(db.ForeignKey('charge_description.id'))
+    charge_description = db.relationship('ChargeDescription',
+        backref=db.backref('charges', lazy='dynamic'))
+
+    date_created = db.Column(db.Date)
+
+class HousingHistory(db.Model):
+    """
+    During a stay, a person can be moved through
+    out the jail. This model lets us see how
+    people are moved from housing location to
+    housing location.
+
+    """
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    # the refrence to the stay in which
+    # a person is being housed
+    stay_id = db.Column(db.ForeignKey('stay.id'))
+    stay = db.relationship('Stay',
+        backref=db.backref('housings', lazy='dynamic'))
+
+    # the housing location
+    housing_id = db.Column(db.ForeignKey('housing.id'))
+    housing = db.relationship('Housing',
+        backref=db.backref('housings', lazy='dynamic'))
+
+    date_created = db.Column(db.Date)
+
+class CourtHistory(db.Model):
+    """
+
+    """
+    id = db.Column(db.Integer, primary_key=True)
+
+    # the refrence to the stay in which
+    # a person is being housed
+    stay_id = db.Column(db.ForeignKey('stay.id'))
+    stay = db.relationship('Stay',
+        backref=db.backref('court_dates', lazy='dynamic'))
+
+    court_room_id = db.Column(db.ForeignKey('court_room.id'))
+    court_room = db.relationship('CourtRoom',
+        backref=db.backref('court_dates', lazy='dynamic'))
+
+    date_created = db.Column(db.Date)
+
+
