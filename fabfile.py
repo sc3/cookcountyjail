@@ -135,6 +135,12 @@ def add_directories():
             run("mkdir -p '%s'" % d)
 
 
+def add_project_to_path():
+    """ Documents how to add the project to the path. """
+    with activate_cmd():
+        run('add2virtualenv {}'.format(env.path))
+
+
 def checkout_latest():
     """Check out latest copy on a given branch."""
     require('settings', provided_by=[production, staging])
@@ -220,10 +226,9 @@ def sudo_cp(src_fname, trg_fname):
 
 
 def v1_static():
-    """Links the 1.0 static files to main static file location."""
+    """Documents how to link the 1.0 static files to main static file location."""
     with cd(WEBSITE):
         run("ln -sf '%(static_files_dir)s' static" % env)
-
 
 #
 # Install (@TODO refactor into server setup + local bootstrap)

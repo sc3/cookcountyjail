@@ -23,9 +23,6 @@ SCRAPER_OPTIONS='--verbose'
 # Bind in virtualenv settings
 source ${HOME}/.virtualenvs/cookcountyjail/bin/activate
 
-# Make sure project is on python path, for testing
-add2virtualenv ${PROJECT_DIR}
-
 # Actually run the scraper
 python ${SCRIPTS_DIR}/ng_scraper.py ${SCRAPER_OPTIONS}
 
