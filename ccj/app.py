@@ -3,13 +3,14 @@
 #        processing should be pushed down into model files.
 #
 
-from flask import Flask, request, render_template
+from flask import Flask, request, render_template, current_app
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext import restful as rest
 
-from json import loads
+from json import loads, dumps
 from os import getcwd
 from datetime import datetime, date
+from functools import wraps
 
 from ccj.models.daily_population import DailyPopulation as DPC
 from ccj.models.version_info import VersionInfo
@@ -31,6 +32,25 @@ api = CcjApi(app, db)
 if app.config['IN_TESTING']:
     app.debug = True
 
+
+def jsonp(func):
+    """
+    Wraps JSONified output for JSONP requests.
+    
+    From http://flask.pocoo.org/snippets/79/
+    """
+    @wraps(func)
+    def decorated_function(*args, **kwargs):
+        callback = request.args.get('callback', False)
+        if callback:
+            data = dumps(func(*args, **kwargs))
+            content = str(callback) + '(' + data + ')'
+            mimetype = 'application/javascript'
+            return current_app.response_class(content, mimetype=mimetype)
+        else:
+            return func(*args, **kwargs)
+    return decorated_function
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -51,6 +71,7 @@ def env_info():
             "headers": str(request.headers),
             "environ": str(request.environ)}
 
+@jsonp
 def daily_population():
     """
     returns the set of summarized daily population changes.
@@ -58,6 +79,7 @@ def daily_population():
     """
     return DPC(app.config['DPC_DIR_PATH']).query()
 
+@jsonp
 def starting_population():
     """
     returns the set of starting daily population values used
@@ -66,6 +88,7 @@ def starting_population():
     """
     return DPC(app.config['DPC_DIR_PATH']).starting_population()
 
+@jsonp
 def version():
     """
     returns the version info
