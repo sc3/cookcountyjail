@@ -209,6 +209,8 @@ class HousingHistory(db.Model):
 
 class CourtHistory(db.Model):
     """
+    During a stay a person has to go to court.
+    Often more than once or twice.
 
     """
     id = db.Column(db.Integer, primary_key=True)
