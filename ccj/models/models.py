@@ -229,12 +229,17 @@ class CourtHistory(db.Model):
 
 class Stay(db.Model):
     """
+    A person stays in the Cook County Jail and leaves.
+    This model represents one of those stays. They
+    might come back or not. If the hash is the same
+    we will see people who come back and have multiple
+    stays.
 
     """
     id = db.Column(db.Integer, primary_key=True)
 
     # the id assigned by the jail to the inmate
-    jail_id_num = db.Column(db.Unicode, unique=True)
+    jail_id_num = db.Column(db.Unicode(15), unique=True)
 
     # the reported date in which the inmate was booked
     booking_date = db.Column(db.Date)
@@ -243,7 +248,7 @@ class Stay(db.Model):
     duration = db.Column(db.Interval)
 
     # the status can be set or not
-    bail_status = db.Column(db.Enum('Bond in Process', 'NO BOND', 'Set', name='bail_states'))
+    bail_status = db.Column(db.Enum('Bond in Process', 'No Bond', 'Set', name='bail_states'))
 
     # how much is needed to bail this inmate
     bail_amount = db.Column(db.Integer)
