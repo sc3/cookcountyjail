@@ -227,4 +227,50 @@ class CourtHistory(db.Model):
 
     date_created = db.Column(db.Date)
 
+class Stay(db.Model):
+    """
+
+    """
+    id = db.Column(db.Integer, primary_key=True)
+
+    # the id assigned by the jail to the inmate
+    jail_id_num = db.Column(db.Unicode, unique=True)
+
+    # the reported date in which the inmate was booked
+    booking_date = db.Column(db.Date)
+
+    # how long was the inmate in the system for
+    duration = db.Column(db.Interval)
+
+    # the status can be set or not
+    bail_status = db.Column(db.Enum('Bond in Process', 'NO BOND', 'Set', name='bail_states'))
+
+    # how much is needed to bail this inmate
+    bail_amount = db.Column(db.Integer)
+
+    # how old was the inmate when he was
+    # booked
+    age_at_booking = db.Column(db.Integer)
+
+    # we also see their weights and heights
+    weight = db.Column(db.Integer)
+
+    height = db.Column(db.Integer)
+
+    # the date when the inmate isn't reported
+    # as still being in the system
+    discharge_date = db.Column(db.Date)
+
+    # the last time this inmate's record
+    # was visible to the scraper
+    last_seen = db.Column(db.Date)
+
+    # a refrence to the person who
+    # is 'staying' in the jail
+    person_id = db.Column(db.ForeignKey('person.id'))
+
+    person = db.relationship('Person',
+        backref=db.backref('stays', lazy='dynamic'))
+
+    date_created = db.Column(db.Date)
 
