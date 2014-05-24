@@ -150,3 +150,132 @@ class CourtRoom(db.Model):
 
     date_created = db.Column(db.Date)
 
+"""
+Temporal Models
+
+"""
+
+class ChargeHistory(db.Model):
+    """
+    During a stay, some people's charges
+    change. With this model we would be able to
+    see a stay's charges.
+
+    """
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    # a charge history will have a stay related
+    # to it
+    stay_id = db.Column(db.ForeignKey('stay.id'))
+    stay = db.relationship('Stay',
+        backref=db.backref('charges', lazy='dynamic'))
+
+    # and a statute
+    statute_id = db.Column(db.ForeignKey('statute.id'))
+    statute = db.relationship('Statute',
+        backref=db.backref('charges', lazy='dynamic'))
+
+    # with a description
+    charge_description_id = db.Column(db.ForeignKey('charge_description.id'))
+    charge_description = db.relationship('ChargeDescription',
+        backref=db.backref('charges', lazy='dynamic'))
+
+    date_created = db.Column(db.Date)
+
+class HousingHistory(db.Model):
+    """
+    During a stay, a person can be moved through
+    out the jail. This model lets us see how
+    people are moved from housing location to
+    housing location.
+
+    """
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    # the refrence to the stay in which
+    # a person is being housed
+    stay_id = db.Column(db.ForeignKey('stay.id'))
+    stay = db.relationship('Stay',
+        backref=db.backref('housings', lazy='dynamic'))
+
+    # the housing location
+    housing_id = db.Column(db.ForeignKey('housing.id'))
+    housing = db.relationship('Housing',
+        backref=db.backref('housings', lazy='dynamic'))
+
+    date_created = db.Column(db.Date)
+
+class CourtHistory(db.Model):
+    """
+    During a stay a person has to go to court.
+    Often more than once or twice.
+
+    """
+    id = db.Column(db.Integer, primary_key=True)
+
+    # the refrence to the stay in which
+    # a person is being housed
+    stay_id = db.Column(db.ForeignKey('stay.id'))
+    stay = db.relationship('Stay',
+        backref=db.backref('court_dates', lazy='dynamic'))
+
+    court_room_id = db.Column(db.ForeignKey('court_room.id'))
+    court_room = db.relationship('CourtRoom',
+        backref=db.backref('court_dates', lazy='dynamic'))
+
+    date_created = db.Column(db.Date)
+
+class Stay(db.Model):
+    """
+    A person stays in the Cook County Jail and leaves.
+    This model represents one of those stays. They
+    might come back or not. If the hash is the same
+    we will see people who come back and have multiple
+    stays.
+
+    """
+    id = db.Column(db.Integer, primary_key=True)
+
+    # the id assigned by the jail to the inmate
+    jail_id_num = db.Column(db.Unicode(15), unique=True)
+
+    # the reported date in which the inmate was booked
+    booking_date = db.Column(db.Date)
+
+    # how long was the inmate in the system for
+    duration = db.Column(db.Interval)
+
+    # the status can be set or not
+    bail_status = db.Column(db.Enum('Bond in Process', 'No Bond', 'Set', name='bail_states'))
+
+    # how much is needed to bail this inmate
+    bail_amount = db.Column(db.Integer)
+
+    # how old was the inmate when he was
+    # booked
+    age_at_booking = db.Column(db.Integer)
+
+    # we also see their weights and heights
+    weight = db.Column(db.Integer)
+
+    height = db.Column(db.Integer)
+
+    # the date when the inmate isn't reported
+    # as still being in the system
+    discharge_date = db.Column(db.Date)
+
+    # the last time this inmate's record
+    # was visible to the scraper
+    last_seen = db.Column(db.Date)
+
+    # a refrence to the person who
+    # is 'staying' in the jail
+    person_id = db.Column(db.ForeignKey('person.id'))
+
+    person = db.relationship('Person',
+        backref=db.backref('stays', lazy='dynamic'))
+
+    date_created = db.Column(db.Date)
+
