@@ -48,26 +48,17 @@ class CcjApiV1:
         return self._booked_inmates[start_of_day]
 
     def booked_left(self, date_to_fetch):
-        start_of_day = self._convert_to_beginning_of_day(date_to_fetch)
-        end_of_day = self._convert_to_end_of_day(date_to_fetch)
-        inmates = copy(self.booked_inmates(start_of_day))
+        start_of_day = convert_to_beginning_of_day(date_to_fetch)
+        end_of_day = convert_to_end_of_day(date_to_fetch)
+        inmates = copy(self.booked_inmates(date_to_fetch))
         left_inmates = self.left_inmates(start_of_day, end_of_day)
         inmates.extend(left_inmates)
         return inmates
 
-    @staticmethod
-    def _convert_to_beginning_of_day(starting_date):
-        starting_date_time = datetime.strptime(starting_date, DATE_FORMAT)
-        return starting_date_time.replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
-
-    @staticmethod
-    def _convert_to_end_of_day(ending_date):
-        ending_date_time = datetime.strptime(ending_date, DATE_FORMAT)
-        return ending_date_time.replace(hour=23, minute=59, second=59, microsecond=0).isoformat()
-
     def _discharged_inmates(self, starting_date_time):
         discharged_on_or_after_start_date_command = \
-            DISCHARGED_ON_OR_AFTER_STARTING_DATE_URL_TEMPLATE % (starting_date_time, starting_date_time)
+            DISCHARGED_ON_OR_AFTER_STARTING_DATE_URL_TEMPLATE % (starting_date_time,
+                                                                 convert_to_beginning_of_day(starting_date_time))
         return self._fetch_json_data(discharged_on_or_after_start_date_command)
 
     def _fetch_json_data(self, url_to_fetch):
@@ -112,8 +103,17 @@ class CcjApiV1:
         return new_obj
 
     def start_population_data(self, starting_date):
-        starting_date_time = self._convert_to_beginning_of_day(starting_date)
-        inmates = copy(self._not_discharged_inmates(starting_date_time))
-        discharged_data = self._discharged_inmates(starting_date_time)
+        inmates = copy(self._not_discharged_inmates(starting_date))
+        discharged_data = self._discharged_inmates(starting_date)
         inmates.extend(discharged_data)
         return inmates
+
+
+def convert_to_beginning_of_day(starting_date):
+    starting_date_time = datetime.strptime(starting_date, DATE_FORMAT)
+    return starting_date_time.replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
+
+
+def convert_to_end_of_day(ending_date):
+    ending_date_time = datetime.strptime(ending_date, DATE_FORMAT)
+    return ending_date_time.replace(hour=23, minute=59, second=59, microsecond=0).isoformat()
