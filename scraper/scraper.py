@@ -39,4 +39,5 @@ class Scraper:
         controller.run()
         self._debug('waiting for processing to finish')
         controller.wait_for_finish()
+        raw_inmate_data.finish()
         self._debug('finished')
