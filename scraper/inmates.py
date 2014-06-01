@@ -35,8 +35,8 @@ class Inmates(ConcurrentBase):
     def _known_inmates_ids_starting_with(self, args):
         known_inmates_ids = []
         cur_date = args['start_date']
-        yesterday = _yesterday()
-        while cur_date <= yesterday:
+        the_yesterday = yesterday()
+        while cur_date <= the_yesterday:
             known_inmates_ids.extend([inmate.jail_id for inmate in self._inmate_class.known_inmates_for_date(cur_date)])
             cur_date += ONE_DAY
         args['response_queue'].put(known_inmates_ids)
