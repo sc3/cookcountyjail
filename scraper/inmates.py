@@ -1,4 +1,3 @@
-from datetime import date
 
 from utils import ONE_DAY, yesterday
 from concurrent_base import ConcurrentBase
@@ -6,9 +5,10 @@ from concurrent_base import ConcurrentBase
 
 class Inmates(ConcurrentBase):
 
-    def __init__(self, inmate_class, monitor):
+    def __init__(self, inmate_class, raw_inmate_data, monitor):
         super(Inmates, self).__init__(monitor)
         self._inmate_class = inmate_class
+        self.__raw_inmate_data = raw_inmate_data
 
     def active_inmates_ids(self, response_queue):
         self._put(self._active_inmates_ids, response_queue)
@@ -22,6 +22,7 @@ class Inmates(ConcurrentBase):
     def _create_update_inmate(self, args):
         inmate = self._inmate_class(args['inmate_id'], args['inmate_details'], self._monitor)
         inmate.save()
+        self.__raw_inmate_data.add(args['inmate_details'])
 
     def discharge(self, inmate_id):
         self._put(self._discharge, inmate_id)
@@ -35,8 +36,8 @@ class Inmates(ConcurrentBase):
     def _known_inmates_ids_starting_with(self, args):
         known_inmates_ids = []
         cur_date = args['start_date']
-        yesterday = _yesterday()
-        while cur_date <= yesterday:
+        the_yesterday = yesterday()
+        while cur_date <= the_yesterday:
             known_inmates_ids.extend([inmate.jail_id for inmate in self._inmate_class.known_inmates_for_date(cur_date)])
             cur_date += ONE_DAY
         args['response_queue'].put(known_inmates_ids)

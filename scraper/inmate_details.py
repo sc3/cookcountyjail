@@ -24,25 +24,25 @@ class InmateDetails:
         Calculates the inmates age at the time of booking,
         code taken from http://is.gd/ep7Thb
         """
-        birth_date, booking_date = self._birth_date(), self.booking_date()
+        birth_date, booking_date = self.__birth_date(), self.booking_date()
         if (birth_date.month <= booking_date.month and
                 birth_date.day <= booking_date.day):
             return booking_date.year - birth_date.year
         return booking_date.year - birth_date.year - 1
 
     def bail_amount(self):
-        return self._column_content(10)
+        return self.__column_content(10)
 
-    def _birth_date(self):
+    def __birth_date(self):
         return self.__convert_datetime(2)
 
     def booking_date(self):
         return self.__convert_date(7)
 
     def charges(self):
-        return self._column_content(11)
+        return self.__column_content(11)
 
-    def _column_content(self, columns_index):
+    def __column_content(self, columns_index):
         return self.__columns[columns_index].text_content().strip()
 
     def __convert_date(self, column_index):
@@ -51,22 +51,21 @@ class InmateDetails:
 
     def __convert_datetime(self, column_index):
         try:
-            result = datetime.strptime(self._column_content(column_index),
-                                       '%m/%d/%Y')
+            result = datetime.strptime(self.__column_content(column_index), '%m/%d/%Y')
         except ValueError:
             result = None
         return result
 
     def court_house_location(self):
-        return self._column_content(13)
+        return self.__column_content(13)
 
     def gender(self):
-        return self._column_content(4)
+        return self.__column_content(4)
 
     def hash_id(self):
         id_string = "%s%s%s%s" % (
-            self._name().replace(" ", ""),
-            self._birth_date().strftime('%m%d%Y'),
+            self.__name().replace(" ", ""),
+            self.__birth_date().strftime('%m%d%Y'),
             self.race()[0],
             self.gender(),
         )
@@ -74,22 +73,22 @@ class InmateDetails:
         return hashlib.sha256(byte_string).hexdigest()
 
     def height(self):
-        return self._column_content(5)
+        return self.__column_content(5)
 
     def housing_location(self):
-        return self._column_content(8)
+        return self.__column_content(8)
 
     def jail_id(self):
-        return self._column_content(0)
+        return self.__column_content(0)
 
-    def _name(self):
-        return self._column_content(1)
+    def __name(self):
+        return self.__column_content(1)
 
     def next_court_date(self):
         return self.__convert_datetime(12)
 
     def race(self):
-        return self._column_content(3)
+        return self.__column_content(3)
 
     def weight(self):
-        return self._column_content(6)
+        return self.__column_content(6)

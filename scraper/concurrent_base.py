@@ -7,8 +7,6 @@ from throwable_commands_queue import ThrowawayCommandsQueue
 
 
 class ConcurrentBase(object):
-
-
     """
     Provides the following useful methods to its inheriting classes:
 
@@ -25,6 +23,7 @@ class ConcurrentBase(object):
         self.FINISHED_PROCESSING = '{0}: finished processing'.format(self.klass_name)
         self._monitor = monitor
         self._workers_to_start = workers
+        self._read_commands_q, self._write_commands_q = None, None
         self._setup_command_system()
         gevent.sleep(0)
 
@@ -57,7 +56,6 @@ class ConcurrentBase(object):
         self._write_commands_q.put((method, args))
         gevent.sleep(0)
 
-
     def _setup_command_system(self):
         # we have two refs to the commands queue,
         # but write_commands_q will switch to throwaway
@@ -70,5 +68,3 @@ class ConcurrentBase(object):
     def _wait_for_processing_to_finish(self):
         self._read_commands_q.join()
         self._monitor.notify(self.klass, self.FINISHED_PROCESSING)
-
-        

@@ -7,8 +7,6 @@ from scraper.controller import Controller, NEW_INMATE_SEARCH_WINDOW_SIZE
 from scraper.monitor import Monitor
 from scraper.heartbeat import HEARTBEAT_INTERVAL
 from scraper.search_commands import SearchCommands
-from scraper.inmates_scraper import InmatesScraper
-from scraper.inmates import Inmates
 
 
 NUM_DAYS_MISSING_INMATES = 3

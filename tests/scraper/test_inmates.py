@@ -7,20 +7,24 @@ from scraper.inmates import Inmates
 
 class TestInmates:
 
+    def setup_method(self, method):
+        self.__raw_inmate_data = Mock()
+
     def test_active_inmates_ids(self):
         inmate_class = Mock()
         j_ids = [j_id for j_id in range(1, 4)]
         input_values = [make_county_inmate(j_id) for j_id in j_ids]
         inmate_class.active_inmates.return_value = input_values
-        inmates = Inmates(inmate_class, Mock())
+        inmates = Inmates(inmate_class, self.__raw_inmate_data, Mock())
         response_q = Queue(1)
         inmates.active_inmates_ids(response_q)
         active_inmates_ids = response_q.get()
         assert active_inmates_ids == j_ids
+        assert self.__raw_inmate_data.call_args_list == []
 
     def test_add_inmate(self):
         Inmate_TestDouble.clear_class_vars()
-        inmates = Inmates(Inmate_TestDouble, Mock())
+        inmates = Inmates(Inmate_TestDouble, self.__raw_inmate_data, Mock())
         inmate_details = Mock()
         inmate_id = 23
         inmate_details.jail_id.return_value = inmate_id
@@ -29,36 +33,40 @@ class TestInmates:
         inmate = Inmate_TestDouble.instantiated[0]
         assert inmate.inmate_details == inmate_details
         assert inmate.saved_count == 1
+        assert self.__raw_inmate_data.add.call_args_list == [call(inmate_details)]
 
     def test_discharge_inmate(self):
         inmate_class = Mock()
         monitor = Mock()
-        inmates = Inmates(inmate_class, monitor)
+        inmates = Inmates(inmate_class, self.__raw_inmate_data, monitor)
         inmate__id = 232
         inmates.discharge(inmate__id)
         assert inmate_class.discharge.call_args_list == [call(inmate__id, monitor)]
+        assert self.__raw_inmate_data.call_args_list == []
 
     def test_finish(self):
         Inmate_TestDouble.clear_class_vars()
         monitor = Mock()
-        inmates = Inmates(Inmate_TestDouble, monitor)
+        inmates = Inmates(Inmate_TestDouble, self.__raw_inmate_data, monitor)
         inmates.finish()
         assert monitor.notify.call_args_list == [call(inmates.__class__, inmates.FINISHED_PROCESSING)]
+        assert self.__raw_inmate_data.call_args_list == []
 
     def test_recently_discharged_inmates_ids(self):
         inmate_class = Mock()
         j_ids = [j_id for j_id in range(1, 4)]
         input_values = [make_county_inmate(j_id) for j_id in j_ids]
         inmate_class.recently_discharged_inmates.return_value = input_values
-        inmates = Inmates(inmate_class, Mock())
+        inmates = Inmates(inmate_class, self.__raw_inmate_data, Mock())
         response_q = Queue(1)
         inmates.recently_discharged_inmates_ids(response_q)
         recently_discharged_inmates_ids = response_q.get()
         assert recently_discharged_inmates_ids == j_ids
+        assert self.__raw_inmate_data.call_args_list == []
 
     def test_update_inmate(self):
         Inmate_TestDouble.clear_class_vars()
-        inmates = Inmates(Inmate_TestDouble, Mock())
+        inmates = Inmates(Inmate_TestDouble, self.__raw_inmate_data, Mock())
         inmate_details = Mock()
         inmate_id = 23
         inmate_details.jail_id.return_value = inmate_id
@@ -67,6 +75,7 @@ class TestInmates:
         inmate = Inmate_TestDouble.instantiated[0]
         assert inmate.inmate_details == inmate_details
         assert inmate.saved_count == 1
+        assert self.__raw_inmate_data.add.call_args_list == [call(inmate_details)]
 
 
 class Inmate_TestDouble:
