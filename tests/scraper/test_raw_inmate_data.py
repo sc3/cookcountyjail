@@ -3,13 +3,15 @@ from datetime import date
 from mock import Mock
 import os.path
 import csv
-from scraper.raw_inmate_data import RawInmateData
+from scraper.raw_inmate_data import RawInmateData, RAW_INMATE_DATA_BUILD_DIR, RAW_INMATE_DATA_RELEASE_DIR, \
+    STORE_RAW_INMATE_DATA, FEATURE_CONTROL_IDS
 
 
 class TestRawInmateData:
 
-    def __add_inmates(self):
-        raw_inmate_data = RawInmateData(self.__today, str(self.__raw_inmate_data_dir), str(self.__build_dir))
+    def __add_inmates(self, feature_activated=True):
+        feature_controls = self.__feature_controls(feature_activated)
+        raw_inmate_data = RawInmateData(self.__today, feature_controls, Mock())
         raw_inmate_data.add(self.__inmates.next())
         raw_inmate_data.add(self.__inmates.next())
         return raw_inmate_data
@@ -56,6 +58,14 @@ class TestRawInmateData:
         dir_name = os.path.basename(str(dir_list[0]))
         assert dir_name == self.__today.strftime('%Y')
 
+    def __feature_controls(self, feature_activated):
+        feature_controls = {
+            RAW_INMATE_DATA_BUILD_DIR: str(self.__build_dir),
+            RAW_INMATE_DATA_RELEASE_DIR: str(self.__raw_inmate_data_dir),
+            STORE_RAW_INMATE_DATA: feature_activated
+        }
+        return feature_controls
+
     def __make_tmp_dirs(self, tmp_dir):
         self.__raw_inmate_data_dir = tmp_dir.mkdir("raw_inmate_data")
         self.__build_dir = tmp_dir.mkdir("build_dir")
@@ -70,6 +80,40 @@ class TestRawInmateData:
         assert len(self.__raw_inmate_data_dir.listdir()) == 0
         self.__assert_build_file(raw_inmate_data)
 
+    def test_feature_switch_off_means_no_processing(self, tmpdir):
+        self.__make_tmp_dirs(tmpdir)
+        raw_inmate_data = self.__add_inmates(feature_activated=False)
+        raw_inmate_data.finish()
+        assert len(self.__raw_inmate_data_dir.listdir()) == 0
+        assert len(self.__build_dir.listdir()) == 0
+
+    def test_no_feature_controls(self, tmpdir):
+        self.__make_tmp_dirs(tmpdir)
+        raw_inmate_data = RawInmateData(self.__today, None, Mock())
+        raw_inmate_data.add(self.__inmates.next())
+        raw_inmate_data.finish()
+        assert len(self.__raw_inmate_data_dir.listdir()) == 0
+        assert len(self.__build_dir.listdir()) == 0
+
+    def test_no_feature_controls(self, tmpdir):
+        self.__make_tmp_dirs(tmpdir)
+        raw_inmate_data = RawInmateData(self.__today, None, Mock())
+        raw_inmate_data.add(self.__inmates.next())
+        raw_inmate_data.finish()
+        assert len(self.__raw_inmate_data_dir.listdir()) == 0
+        assert len(self.__build_dir.listdir()) == 0
+
+    def test_feature_active_no_dirs(self, tmpdir):
+        self.__make_tmp_dirs(tmpdir)
+        for feature_control in FEATURE_CONTROL_IDS:
+            feature_controls = self.__feature_controls(feature_activated=True)
+            del feature_controls[feature_control]
+            raw_inmate_data = RawInmateData(self.__today, feature_controls, Mock())
+            raw_inmate_data.add(self.__inmates.next())
+            raw_inmate_data.finish()
+            assert len(self.__raw_inmate_data_dir.listdir()) == 0
+            assert len(self.__build_dir.listdir()) == 0
+
     def test_finishing_places_inmates_file_in_public_dir(self, tmpdir):
         self.__make_tmp_dirs(tmpdir)
         raw_inmate_data = self.__add_inmates()
@@ -79,7 +123,8 @@ class TestRawInmateData:
 
     def test_initialize(self, tmpdir):
         self.__make_tmp_dirs(tmpdir)
-        RawInmateData(self.__today, str(self.__raw_inmate_data_dir), str(self.__build_dir))
+        feature_controls = self.__feature_controls(feature_activated=True)
+        RawInmateData(self.__today, feature_controls, Mock())
         assert len(self.__raw_inmate_data_dir.listdir()) == 0
         assert len(self.__build_dir.listdir()) == 0
 
