@@ -19,6 +19,7 @@ INMATE_API='http://cookcountyjail.recoveredfactory.net/api/1.0/countyinmate/'
 DB_BACKUPS_DIR=${HOME}/website/1.0/db_backups
 DB_BACKUP_FILE=cookcountyjail-$(date +%Y-%m-%d).json
 SCRAPER_OPTIONS='--verbose'
+export CCJ_RAW_INMATE_DATA_BUILD_DIR=${HOME}'/website/scraper/raw_inmate_data'
 
 # Bind in virtualenv settings
 source ${HOME}/.virtualenvs/cookcountyjail/bin/activate
