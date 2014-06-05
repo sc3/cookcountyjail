@@ -6,13 +6,23 @@ server {
     listen   80;
     server_name ec2-54-234-175-21.compute-1.amazonaws.com;
 
-    include conf.d/nginx-v1.conf;
-    include conf.d/nginx-v2.conf;
+    include conf.d/nginx-v1;
+    include conf.d/nginx-v2;
+
+    location /raw_inmate_data {
+        limit_except GET {
+            deny all;
+        }
+        root /home/ubuntu/website/scratch/scraper;
+        autoindex on;
+        autoindex_exact_size off;
+        autoindex_localtime on;
+    }
 
     location / {
-        root /home/ubuntu/website/static;
-        default_type text/html;
-        try_files $uri $uri/index.html =404;
+       root /home/ubuntu/website/static;
+       default_type text/html;
+       try_files $uri $uri/index.html =404;
     }
 }
 
