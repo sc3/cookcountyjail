@@ -126,10 +126,8 @@ def activate_cmd():
 
 
 def add_directories():
-    """
-    Adds directories if needed
-    """
-    dirs = [WEBSITE, WEBSITE + '/1.0/db_backups/']
+    """ Documents how to create requisite project directories. """
+    dirs = [WEBSITE, WEBSITE + '/1.0/db_backups/', WEBSITE + '/raw_inmate_data']
     for d in dirs:
         if not exists(d):
             run("mkdir -p '%s'" % d)

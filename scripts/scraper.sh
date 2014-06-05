@@ -21,8 +21,8 @@ DB_BACKUP_FILE=cookcountyjail-$(date +%Y-%m-%d).json
 SCRAPER_OPTIONS='--verbose'
 
 # export env variables related to raw inmate data
-export CCJ_RAW_INMATE_DATA_BUILD_DIR=${HOME}'/website/scraper/raw_inmate_data'
-export CCJ_RAW_INMATE_DATA_RELEASE_DIR=${CCJ_RAW_INMATE_DATA_BUILD_DIR}
+export CCJ_RAW_INMATE_DATA_BUILD_DIR=${HOME}'/website/scratch/scraper/raw_inmate_data'
+export CCJ_RAW_INMATE_DATA_RELEASE_DIR=${HOME}'/website/raw_inmate_data'
 export CCJ_STORE_RAW_INMATE_DATA=1
 
 # Bind in virtualenv settings
