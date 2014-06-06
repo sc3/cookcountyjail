@@ -16,7 +16,7 @@ If you are interested in exploring or otherwise using the raw data from our API,
 
 ### Contributing
 
-Want to help out? There's a lot of ways you can contribute. Especially when it comes to documentation, code, and tests, no patch is too small: fix typos, add comments, clean up inconsistent whitespace, etc.
+Want to help out? There's a lot of ways you can contribute, and no patch is too small. You can:
 
 - report bugs
 - suggest new features
@@ -25,6 +25,7 @@ Want to help out? There's a lot of ways you can contribute. Especially when it c
 - write or refactor tests
 - close issues
 - review patches
+- participate in design decisions made during a weekly, in-person Saturday meeting at [FreeGeek Chicago](http://freegeekchicago.org) or during a [Wednesday](https://plus.google.com/hangouts/_/calendar/YmVwZXRlcnNuQGdtYWlsLmNvbQ.pmb0hhk7mhjec8hd9rrhvudb5s) remote meeting.
 
 If you want to contribute to the development of the project itself, please see our [wiki page on getting started](https://github.com/sc3/cookcountyjail/wiki/Contributing).
 
