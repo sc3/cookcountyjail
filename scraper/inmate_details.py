@@ -43,7 +43,7 @@ class InmateDetails:
         return self.__column_content(11)
 
     def __column_content(self, columns_index):
-        return self.__columns[columns_index].text_content().strip()
+        return self.__columns[columns_index].text_content().strip().replace(u'\xa0', u' ')
 
     def __convert_date(self, column_index):
         result = self.__convert_datetime(column_index)
