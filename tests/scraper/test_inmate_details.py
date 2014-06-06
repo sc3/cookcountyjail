@@ -5,24 +5,25 @@ from datetime import datetime
 from scraper.inmate_details import InmateDetails
 
 INMATE_1 = u'2014-0117015'
-inmates_html = {}
 MARKHAM_COURT_HOUSE_LOCATION = (
     u"Markham\n          "
     u"Markham, Room:101\n       	  "
     u"16501 South Kedzie Parkway Room: 101\n       	 	"
-    u"Markham, IL 60426")
+    u"Markham, IL\x2060426")  # note the deliberate insertion of space as hex number this is done to make sure that
+                             # conversion of &nbsp; value, u'\xa0' is converted to ordinary space
 
 
 class Test_InmateDetails:
 
     def setup_method(self, method):
+        self.__inmates_html = {}
         for jail_id in [INMATE_1]:
-            if jail_id not in inmates_html:
+            if jail_id not in self.__inmates_html:
                 with open("tests/data/%s.html" % jail_id, "r") as inmates_file:
-                    inmates_html[jail_id] = inmates_file.read()
+                    self.__inmates_html[jail_id] = inmates_file.read()
 
     def test_inmate_details(self):
-        inmate_details = InmateDetails(inmates_html[INMATE_1])
+        inmate_details = InmateDetails(self.__inmates_html[INMATE_1])
         assert inmate_details.age_at_booking() == 52
         assert inmate_details.bail_amount() == u'20,000'
         assert inmate_details.charges() == u"625 ILCS 5 6-303(d) [5883000]\n\t  DRIVING REVOKED/SUSPENDED 2ND+"
