@@ -97,95 +97,11 @@ def version():
     args = request.args
     return VersionInfo(STARTUP_TIME).fetch(all_version_info=('all' in args and args['all'] == '1'))
 
-class Process(rest.Resource):
-    """
-    The Proccess route handles all database input.
-    Scraper instances make POST requests to to this
-    route and it takes care of saving the data.
-
-    In the near future scrapers might be whitelisted.
-
-    The process route expects all data to be in a 'data'
-    key in the request's body. The data must be valid JSON.
-
-    Example data:
-
-    {
-
-    }
-
-    """
-    def post(self):
-
-        data = None
-
-        today = date.today()
-
-        try:
-            data = loads(request.form['data'])
-
-        except ValueError:
-            return {"message": "Error parsing json data", "status": 500}, 500
-
-        # the Person's attributes
-        phash = data.get("hash")
-
-        if phash:
-            new_person, person = get_or_create(db.session, Person, hash=phash)
-
-            person.gender = data.get("gender")
-            person.race = data.get("race")
-
-            if new_person:
-                person.date_created = today
-
-            db.session.add(person)
-
-        charge_d = data.get('charge_description')
-
-        if charge_d:
-            new_charge_description, charge_description = get_or_create(db.session,
-                                                                    ChargeDescription,
-                                                                    description=charge_d)
-
-            if new_charge_description:
-                charge_description.date_created = today
-
-            db.session.add(charge_description)
-
-        citation = data.get('citation')
-
-        if citation:
-            new_statue, statute = get_or_create(db.session, Statute, citation=citation)
-
-            if new_statue:
-                statute.date_created = today
-
-            db.session.add(statute)
-
-        location = data.get('location')
-
-        if location:
-            new_housing, housing = get_or_create(db.session, Housing, location=location)
-
-            housing.in_program = data.get('in_program')
-
-            housing.in_jail = data.get('in_jail')
-
-            if new_housing:
-                housing.date_created = today
-
-            db.session.add(housing)
-
-        db.session.commit()
-        return {"message": "saved", "status": 200}
-
 
 api.full_resource(env_info, "/os_env_info")
 api.full_resource(daily_population, "/daily_population")
 api.full_resource(starting_population, "/starting_population")
 api.full_resource(version, "/version")
-api.full_class_resource(Process, "/process")
 
 api.less_resource(Person)
 api.less_resource(ChargeDescription)
