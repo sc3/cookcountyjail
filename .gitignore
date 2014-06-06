@@ -12,3 +12,5 @@ lib
 build_info
 build_info/**
 *.db
+
+env
