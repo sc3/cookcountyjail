@@ -26,13 +26,13 @@ https://docs.google.com/document/d/1mgC8HLHHP4qvHR-jN6GQX04abiZkJp2mNffEicCIjuw/
 
 """
 
-
 import csv, requests
 from datetime import date
+from ccj.models.models import db, Person
 
 RAW_INMATES_ROOT = "http://cookcountyjail.recoveredfactory.net/raw_inmate_data/%s/%s-%s.csv"
 
-def get_data(desired_date):
+def get_data(desired_date, base=RAW_INMATES_ROOT):
     """
     Gets the data for a date from the server.
 
@@ -42,7 +42,7 @@ def get_data(desired_date):
     # TODO: refactor, I'm sure we already do a lot of this
 
     year, month, day = desired_date.strftime('%Y-%m-%d').split('-')
-    r = requests.get(RAW_INMATES_ROOT % (year, month, day))
+    r = requests.get(base % (year, month, day))
 
     if r.status_code == requests.codes.ok:
         return r.content
@@ -50,14 +50,29 @@ def get_data(desired_date):
         raise BaseException('Something went wrong while making '
                             'the request for %s-%s-%s' % (year, month, day))
 
+
 def get_csv_data(desired_date):
     """
-    A csv dict reader object from the date.
+    A csv reader object from the date's data.
 
     :param desired_date: a date instance
     :return: csv reader with inmate data for desired date
     """
-    return csv.DictReader(get_data(desired_date).split('\n'))
+    return csv.reader(get_data(desired_date).split('\n'))
+
+def save_data(csv_data):
+    map(save_record, csv_data)
+
+def save_record(record):
+    booking_id, booking_date, inmate_hash, \
+    gender, race, height, weight, age_at_booking, \
+    housing_location, charges, bail_amount, \
+    court_date, court_location = record
+
+    today = date.today()
+
+    p = Person(inmate_hash, gender, race, today)
 
 
-
+    db.session.add(p)
+    db.session.commit()
