@@ -1,3 +1,4 @@
+[![Stories in Ready](https://badge.waffle.io/sc3/cookcountyjail.png?label=ready&title=Ready)](https://waffle.io/sc3/cookcountyjail)
 [![Build Status](https://travis-ci.org/sc3/cookcountyjail.svg?branch=master)](https://travis-ci.org/sc3/cookcountyjail)
 
 # Cook County Jail Data Project
