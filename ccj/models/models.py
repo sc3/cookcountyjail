@@ -37,11 +37,11 @@ class Person(db.Model):
     # race would be harder to parse with an
     # enum so we are sticking to good old
     # strings
-    race = db.Column(db.Unicode(4))
+    race = db.Column(db.Unicode(4), nullable=False)
 
     # the date this person was added to the
     # database
-    date_created = db.Column(db.Date)
+    date_created = db.Column(db.Date, nullable=False)
 
 class ChargeDescription(db.Model):
     """
@@ -56,7 +56,7 @@ class ChargeDescription(db.Model):
     # the charge will have a description
     description = db.Column(db.Unicode, nullable=False, unique=True)
 
-    date_created = db.Column(db.Date)
+    date_created = db.Column(db.Date, nullable=False)
 
 class Statute(db.Model):
     """
@@ -68,7 +68,7 @@ class Statute(db.Model):
 
     citation = db.Column(db.Unicode, nullable=False, unique=True)
 
-    date_created = db.Column(db.Date)
+    date_created = db.Column(db.Date, nullable=False)
 
 class Housing(db.Model):
     """
@@ -81,7 +81,7 @@ class Housing(db.Model):
 
     # the entire housing location without
     # any alterations
-    location = db.Column(db.Unicode)
+    location = db.Column(db.Unicode, nullable=False)
 
     # the inmates are housed in different
     # divisions
@@ -95,7 +95,7 @@ class Housing(db.Model):
     # in the division
     sub_division_location = db.Column(db.Unicode)
 
-    date_created = db.Column(db.Date)
+    date_created = db.Column(db.Date, nullable=False)
 
     # some location represent inmates who
     # aren't really housed in the jail
@@ -115,7 +115,7 @@ class CourtBuilding(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
 
-    text = db.Column(db.Unicode)
+    text = db.Column(db.Unicode, nullable=False)
 
     name = db.Column(db.Unicode)
 
@@ -129,7 +129,7 @@ class CourtBuilding(db.Model):
 
     zip = db.Column(db.Unicode)
 
-    date_created = db.Column(db.Date)
+    date_created = db.Column(db.Date, nullable=False)
 
 class CourtRoom(db.Model):
     """
@@ -140,15 +140,16 @@ class CourtRoom(db.Model):
     id = db.Column(db.Integer, primary_key=True)
 
     # the court room's number
-    number = db.Column(db.Integer)
+    number = db.Column(db.Integer, nullable=False)
 
-    court_building_id = db.Column(db.Integer, db.ForeignKey('court_building.id'))
+    court_building_id = db.Column(db.Integer, db.ForeignKey('court_building.id'),
+                                  nullable=False)
 
     court_building = db.relationship('CourtBuilding',
         backref=db.backref('court_rooms', lazy='dynamic'))
 
 
-    date_created = db.Column(db.Date)
+    date_created = db.Column(db.Date, nullable=False)
 
 """
 Temporal Models
@@ -167,21 +168,22 @@ class ChargeHistory(db.Model):
 
     # a charge history will have a stay related
     # to it
-    stay_id = db.Column(db.ForeignKey('stay.id'))
+    stay_id = db.Column(db.ForeignKey('stay.id'), nullable=False)
     stay = db.relationship('Stay',
         backref=db.backref('charges', lazy='dynamic'))
 
     # and a statute
-    statute_id = db.Column(db.ForeignKey('statute.id'))
+    statute_id = db.Column(db.ForeignKey('statute.id'), nullable=False)
     statute = db.relationship('Statute',
         backref=db.backref('charges', lazy='dynamic'))
 
     # with a description
-    charge_description_id = db.Column(db.ForeignKey('charge_description.id'))
+    charge_description_id = db.Column(db.ForeignKey('charge_description.id'),
+                                      nullable=False)
     charge_description = db.relationship('ChargeDescription',
         backref=db.backref('charges', lazy='dynamic'))
 
-    date_created = db.Column(db.Date)
+    date_created = db.Column(db.Date, nullable=False)
 
 class HousingHistory(db.Model):
     """
@@ -196,16 +198,16 @@ class HousingHistory(db.Model):
 
     # the refrence to the stay in which
     # a person is being housed
-    stay_id = db.Column(db.ForeignKey('stay.id'))
+    stay_id = db.Column(db.ForeignKey('stay.id'), nullable=False)
     stay = db.relationship('Stay',
         backref=db.backref('housings', lazy='dynamic'))
 
     # the housing location
-    housing_id = db.Column(db.ForeignKey('housing.id'))
+    housing_id = db.Column(db.ForeignKey('housing.id'), nullable=False)
     housing = db.relationship('Housing',
         backref=db.backref('housings', lazy='dynamic'))
 
-    date_created = db.Column(db.Date)
+    date_created = db.Column(db.Date, nullable=False)
 
 class CourtHistory(db.Model):
     """
@@ -215,17 +217,19 @@ class CourtHistory(db.Model):
     """
     id = db.Column(db.Integer, primary_key=True)
 
-    # the refrence to the stay in which
+    court_date = db.Column(db.Date, nullable=False)
+
+    # the reference to the stay in which
     # a person is being housed
-    stay_id = db.Column(db.ForeignKey('stay.id'))
+    stay_id = db.Column(db.ForeignKey('stay.id'), nullable=False)
     stay = db.relationship('Stay',
         backref=db.backref('court_dates', lazy='dynamic'))
 
-    court_room_id = db.Column(db.ForeignKey('court_room.id'))
+    court_room_id = db.Column(db.ForeignKey('court_room.id'), nullable=False)
     court_room = db.relationship('CourtRoom',
         backref=db.backref('court_dates', lazy='dynamic'))
 
-    date_created = db.Column(db.Date)
+    date_created = db.Column(db.Date, nullable=False)
 
 class Stay(db.Model):
     """
@@ -239,43 +243,37 @@ class Stay(db.Model):
     id = db.Column(db.Integer, primary_key=True)
 
     # the id assigned by the jail to the inmate
-    jail_id_num = db.Column(db.Unicode(15), unique=True)
+    jail_id_num = db.Column(db.Unicode(15), unique=True, nullable=False)
 
     # the reported date in which the inmate was booked
-    booking_date = db.Column(db.Date)
-
-    # how long was the inmate in the system for
-    duration = db.Column(db.Interval)
+    booking_date = db.Column(db.Date, nullable=False)
 
     # the status can be set or not
-    bail_status = db.Column(db.Enum('Bond in Process', 'No Bond', 'Set', name='bail_states'))
+    bail_status = db.Column(db.Enum('Bond in Process', 'No Bond', 'Set', name='bail_states'),
+                            nullable=False)
 
     # how much is needed to bail this inmate
-    bail_amount = db.Column(db.Integer)
+    bail_amount = db.Column(db.Integer, nullable=False)
 
     # how old was the inmate when he was
     # booked
-    age_at_booking = db.Column(db.Integer)
+    age_at_booking = db.Column(db.Integer, nullable=False)
 
     # we also see their weights and heights
-    weight = db.Column(db.Integer)
+    weight = db.Column(db.Integer, nullable=False)
 
-    height = db.Column(db.Integer)
+    height = db.Column(db.Integer, nullable=False)
 
     # the date when the inmate isn't reported
     # as still being in the system
     discharge_date = db.Column(db.Date)
 
-    # the last time this inmate's record
-    # was visible to the scraper
-    last_seen = db.Column(db.Date)
-
-    # a refrence to the person who
+    # a reference to the person who
     # is 'staying' in the jail
-    person_id = db.Column(db.ForeignKey('person.id'))
+    person_id = db.Column(db.ForeignKey('person.id'), nullable=False)
 
     person = db.relationship('Person',
         backref=db.backref('stays', lazy='dynamic'))
 
-    date_created = db.Column(db.Date)
+    date_created = db.Column(db.Date, nullable=False)
 
