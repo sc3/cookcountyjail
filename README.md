@@ -10,7 +10,7 @@ Our whole project has two essential components: **(1) the aforementioned API**, 
 
 ### Our Data
 
-Each day, our web scraper runs and updates our database of inmate information; personally identifying information is not kept. Over time, we have uncovered a lot of potentially interesting data that can be used to analyze trends in the Cook County Jail System, though it is not definitive. For a basic look at some of these trends, see our sister project, [26th and California](http://26thandcalifornia.recoveredfactory.net/v1.0/). The code that backs it is [also on Github](https://github.com/sc3/26thandcalifornia).  
+Each day, our web scraper runs and updates our database of inmate information; personally identifying information is not kept. Over time, we have uncovered a lot of potentially interesting data that can be used to analyze trends in the Cook County Jail System, though it is not definitive. For a basic look at some of these trends, see our sister project, [26th and California](http://26thandcalifornia.recoveredfactory.net/). The code that backs it is [also on Github](https://github.com/sc3/26thandcalifornia).  
 
 If you are interested in exploring or otherwise using the raw data from our API, see our [API Guide](https://github.com/sc3/cookcountyjail/wiki/API-guide) on what data is available, and the best way to access it. There is also a small [v2.0 API Guide](https://github.com/sc3/cookcountyjail/wiki/API-2.0-Guide), which is still growing. While this is being developed, you can influence the choice of what API methods are built next by leaving a comment on the [2.0 API Hackpad](https://freegeekchicago.hackpad.com/Cook-Count-Jail-2.0-API-Requests-and-Ideas-for-Functionality-BbMobFdtEKu).
 
