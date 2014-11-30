@@ -37,7 +37,8 @@ class InmateDetails:
         return self.__convert_datetime(2)
 
     def booking_date(self):
-        return self.__convert_date(7)
+        booking_date = self.__convert_date(7)
+        return booking_date if booking_date else self.__convert_jail_id_2_booking_date()
 
     def charges(self):
         return self.__column_content(11)
@@ -55,6 +56,9 @@ class InmateDetails:
         except ValueError:
             result = None
         return result
+
+    def __convert_jail_id_2_booking_date(self):
+        return datetime.strptime(self.jail_id()[0:9], '%Y-%m%d').date()
 
     def court_house_location(self):
         return self.__column_content(13)
