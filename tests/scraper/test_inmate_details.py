@@ -1,6 +1,6 @@
 # coding=utf-8
 
-from datetime import datetime
+from datetime import datetime, date
 
 from scraper.inmate_details import InmateDetails
 
@@ -12,12 +12,14 @@ MARKHAM_COURT_HOUSE_LOCATION = (
     u"Markham, IL\x2060426")  # note the deliberate insertion of space as hex number this is done to make sure that
                              # conversion of &nbsp; value, u'\xa0' is converted to ordinary space
 
+INMATE_2 = u'2014-1107234'  # Has missing booking date
+
 
 class Test_InmateDetails:
 
     def setup_method(self, method):
         self.__inmates_html = {}
-        for jail_id in [INMATE_1]:
+        for jail_id in [INMATE_1, INMATE_2]:
             if jail_id not in self.__inmates_html:
                 with open("tests/data/%s.html" % jail_id, "r") as inmates_file:
                     self.__inmates_html[jail_id] = inmates_file.read()
@@ -36,3 +38,8 @@ class Test_InmateDetails:
         assert inmate_details.next_court_date() == datetime(2014, 2, 7)
         assert inmate_details.race() == u'BK'
         assert inmate_details.weight() == u'195'
+
+    def test_missing_booking_date(self):
+        inmate_details = InmateDetails(self.__inmates_html[INMATE_2])
+        assert inmate_details.booking_date() == date(2014, 11, 7)
+        assert inmate_details.age_at_booking() == 20
