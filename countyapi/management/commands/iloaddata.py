@@ -57,11 +57,22 @@ class Command(BaseCommand):
 
         self.__populate_database(FIRST_PASS_MODELS)
         self.__populate_database(SECOND_PASS_MODELS)
+
+        self.__display_stats()
+
         print 'Incremental loading took %f seconds.' % (time.clock() - beginning)
 
     def __activate_json_parser(self):
         self.__jsonParser = ijson.parse(open(self.__jsonFileName, 'r'))
         self.__jsonParser.next() # skip over the start of the list
+
+    def __display_stats(self):
+        print "Num Charges History processed: %d" % self.__num_charges_history
+        print "Num County Inmates processed: %d" % self.__num_county_inmates
+        print "Num Court Dates processed: %d" % self.__num_court_dates
+        print "Num Court Locations processed: %d" % self.__num_court_location
+        print "Num Housing Locations processed: %d" % self.__num_housing_location
+        print "Num Housing History processed: %d" % self.__num_housing_history
 
     def __fetch_db_entry(self, models_to_populate):
         db_entry = None
