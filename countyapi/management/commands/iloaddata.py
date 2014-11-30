@@ -234,7 +234,10 @@ class Command(BaseCommand):
 # item.fields end_map None
 # item end_map None
 #
-#
+
+# In the original line 262 below contained a non-ascii character '\xc2' without adding character encoding at the
+# top of this file. Need to deal with these in the original data set
+
 # item start_map None
 # item map_key pk
 # item.pk number 1
@@ -256,7 +259,7 @@ class Command(BaseCommand):
 # item.fields.location string Criminal C
 # Criminal Courts Building, Room:506
 # 2650 South California Avenue Room: 506
-# Chicago, IL 60608
+# Chicago, IL  60608
 #
 # item.fields map_key address
 # item.fields.address null None
