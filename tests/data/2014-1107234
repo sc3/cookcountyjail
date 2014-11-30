@@ -1,0 +1,228 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Cook County Sheriff Inmate Locator Search Results</title>
+<style type="text/css">
+<!--
+body {
+	font: 100% Verdana, Arial, Helvetica, sans-serif;
+	background: #666666;
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0;
+	text-align: center; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #000000;
+}
+.oneColElsCtrHdr #container {
+	width: 46em;  /* this width will create a container that will fit in an 800px browser window if text is left at browser default font sizes */
+	background: #FFFFFF;
+	margin: 0 auto; /* the auto margins (in conjunction with a width) center the page */
+	border: 1px solid #000000;
+	text-align: left; /* this overrides the text-align: center on the body element. */
+}
+.oneColElsCtrHdr #header { 
+	background: #DDDDDD; 
+	padding: 0 10px 0 20px;  /* this padding matches the left alignment of the elements in the divs that appear beneath it. If an image is used in the #header instead of text, you may want to remove the padding. */
+} 
+.oneColElsCtrHdr #header h1 {
+	margin: 0; /* zeroing the margin of the last element in the #header div will avoid margin collapse - an unexplainable space between divs. If the div has a border around it, this is not necessary as that also avoids the margin collapse */
+	padding: 10px 0; /* using padding instead of margin will allow you to keep the element away from the edges of the div */
+}
+.oneColElsCtrHdr #mainContent {
+	padding: 0 20px; /* remember that padding is the space inside the div box and margin is the space outside the div box */
+	background: #FFFFFF;
+}
+.oneColElsCtrHdr #footer { 
+	padding: 0 10px; /* this padding matches the left alignment of the elements in the divs that appear above it. */
+	background:#DDDDDD;
+} 
+.oneColElsCtrHdr #footer p {
+	margin: 0; /* zeroing the margins of the first element in the footer will avoid the possibility of margin collapse - a space between divs */
+	padding: 10px 0; /* padding on this element will create space, just as the the margin would have, without the margin collapse issue */
+}
+-->
+</style>
+<script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-20470269-2']);
+  _gaq.push(['_trackPageview']);
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+</script>
+</head>
+
+<body class="oneColElsCtrHdr">
+
+<div id="container">
+  <div id="header">
+    <h1 align="center"><img src="images/DOCinmatelocator.jpg" width="648" height="100" alt="Cook County Sheriffs Office Department Of Corrections Inmate Locator" /></h1>
+  <!-- end #header --></div>
+  <div id="mainContent">
+    <p><div id="google_translate_element"></div>
+<script src="http://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script></p><h1> Individual Inmate Report</h1>
+ <table border="0" cellpadding="5" cellspacing="1" width=100%>
+      <tr>
+        <td bgcolor="#6699CC" align="center" colspan="2"><font size=2 face="arial, helvetica" color="white"> Booking #</td>
+        <td bgcolor="#6699CC" align="center" colspan="3"><font size=2 face="arial, helvetica" color="white"> Inmate Full Name</td>
+        <td width="72" align="center" bgcolor="#6699CC"><font size=2 face="arial, helvetica" color="white"> Date of Birth</td>
+         <td width="67" align="center" bgcolor="#6699CC"><font size=2 face="arial, helvetica" color="white"> Race</td>
+        <td width="71" align="center" bgcolor="#6699CC"><font size=2 face="arial, helvetica" color="white">Gender</td>
+        <td width="73" align="center" bgcolor="#6699CC"><font size=2 face="arial, helvetica" color="white">Height</td>
+        <td width="63" align="center" bgcolor="#6699CC"><font size=2 face="arial, helvetica" color="white">Weight</td>
+      </tr>
+      <tr>
+        <td bgcolor="white" colspan="2"><font size=2 face="arial, helvetica" color="#003366"> 2014-1107234</td>
+        <td bgcolor="white" colspan="3"><font size=2 face="arial, helvetica" color="#003366"> luzuriaga-coron, tefilo </td>
+        <td bgcolor="white"><font size=2 face="arial, helvetica" color="#003366"> 03/19/1993</td>
+        <td bgcolor="white"><font size=2 face="arial, helvetica" color="#003366"> <div align="center">
+          LB
+        </div></td>
+        <td bgcolor="white"><font size=2 face="arial, helvetica" color="#003366"> <div align="center">
+          M
+        </div></td>
+        <td bgcolor="white"><font size=2 face="arial, helvetica" color="#003366"> <div align="center">
+          506
+        </div></td>
+        <td bgcolor="white"><font size=2 face="arial, helvetica" color="#003366"> <div align="center">
+          160
+        </div></td>
+      </tr>
+      
+      </table>
+      <table border="0" cellpadding="5" cellspacing="1" width=100%>
+      <tr>
+        <td bgcolor="#6699CC" align="center" colspan="2"><font size=2 face="arial, helvetica" color="white"> Booked Date</td>
+        <td width="23%" align="center" bgcolor="#6699CC" ><font size=2 face="arial, helvetica" color="white"> Housing Location</td>
+        <td bgcolor="#6699CC" align="center" colspan="4"><font size=2 face="arial, helvetica" color="white"> Visiting Day / Time</font></td>
+        <td width="10%" align="center" bgcolor="#6699CC"><font size=2 face="arial, helvetica" color="white"> Bail Amount</font></td>
+         
+      </tr>
+      <tr>
+        <td bgcolor="white" align="center" colspan="2"><font size=2 face="arial, helvetica" color="#003366"> </td>
+        <td bgcolor="white" ><font size=2 face="arial, helvetica" color="#003366"> DIV3AX-C3-1-43</td>
+        <td bgcolor="white" colspan="4"><font size=2 face="arial, helvetica" color="#003366">
+          -         &nbsp; Call the Visitor Information Center at 773/674-5225 from 2pm to 10pm.</td>
+        <td bgcolor="white" align="right"><font size=2 face="arial, helvetica" color="#003366"> <div align="center">
+          50,000                        
+        </div></td>
+        </tr>
+      <tr>
+      <td bgcolor="#6699CC" colspan="9" align="center" valign="top"><font size=2 face="arial, helvetica" color="white"> Charges</td>
+      </tr>
+       <tr>
+      <td bgcolor="white" align="center" colspan="9" valign="top"><font size=2 face="arial, helvetica" color="#003366"> 15 ILCS 335 14B(b)(1) [8197140]<br />
+	  Poss Fraudulent Id Card
+      </td>
+      </tr>
+      <tr>
+      <td bgcolor="white" align="center" colspan="9" valign="top"><font size=2 face="arial, helvetica" color="#003366"> <br />
+	  
+      </td>
+      </tr>
+    </table>
+    <table border="0" cellpadding="5" cellspacing="1" width=100%>
+      <tr>
+        <td bgcolor="#6699CC" colspan="5" align="center" valign="top"><font size=2 face="arial, helvetica" color="white"> Next Court Date</td>
+        <td bgcolor="#6699CC" align="center" colspan="5"><font size=2 face="arial, helvetica" color="white"> Court House Location</td>
+      </tr>
+      <tr>
+        <td bgcolor="white" align="center" colspan="5" valign="top"><font size=2 face="arial, helvetica" color="#003366"> 12/12/2014</td>
+        <td bgcolor="white" colspan="5"><font size=2 face="arial, helvetica" color="#003366"> Rolling Meadows<br />
+          
+        Rolling Meadows<br />
+       	   <br />
+       	 	 ,   &nbsp;     
+          <!-- 2650 South California Avenue<br>
+	Chicago, IL 60608<br>
+	<a href="map.html"><font size=1>get map</font></a> --></td>
+      </tr>
+      
+    </table>
+   
+    <table width="100%" border="0">
+      <tr>
+        <td width="21%" rowspan=3><a href="photo.asp?jailnumber=2014-1107234" target="_blank"><img src="showmugshot.asp?jail=2014-1107234" alt="photo" width="128" height="107"/></a></td>
+        <td width="79%"><p><strong><font color="#FF0000">*Please apply using Internet Explorer on a desktop/laptop computer only.  A cellphone or tablet cannot be used to apply. </font></strong>    </p>
+        <p><a href="http:\\www7.cookcountysheriff.org\visitor.asp?jailid=2014-1107234&name=luzuriaga-coron, tefilo ">Register online</a> to visit. </p></td>
+      </tr>
+      <tr>
+        <td>OR</td>
+        
+      </tr>
+      <tr>
+        <td><a href="InmateVisitorApplication_110714.pdf" target="_blank" >Download</a> Printable form</td>
+        
+      </tr>
+    </table>
+    <p>&nbsp;</p>
+    <p>Mailing Address for this inmate</p>
+    <p><strong>Inmate name</strong><br />
+      <strong>Inmate number</strong><br />
+    P.O. Box 089002<br />
+    <strong><em>(Insert Housing Location from above here)</em></strong><br />
+    Chicago, Illinois 60608</p>
+    <p><b>For MONEYGRAM</b><br />
+RECEIVE CODE = <b>1750</b><br />
+Account = <b>Inmate name &#150; # Inmate number</b></p>
+
+<p><b>Requirements for Entry into the Facility:</b> <br />
+      <br />
+      <b>Identification:</b> All visitors must be in possession of one valid photo identification including:<br />
+    </p>
+    <ul>
+      <li>Valid Drivers License or State ID<br />
+      </li>
+      <li>U.S. Military Identification Card<br />
+      </li>
+      <li>Valid Passport/Visa/Consulate ID<br />
+      </li>
+      <li>Valid Alien Registration Card<br />
+      </li>
+      <li>Public Aid Photo ID<br />
+      </li>
+      <li>Photo School ID</li>
+    </ul>
+
+	  <p><br />
+      <b>Age:</b>Visitors 17 years of age or  under must be accompanied by a parent or guardian who has been approved to  visit and is visiting the same inmate.<br />
+      <br />
+      <b>Registration:</b>When  visiting inmates, visitors must follow the visitor application process in order  to get approval for visiting privileges.   Once approved, visitors must use the ID that was used on your  application when visiting inmates. <br />
+      <br />
+      <b>Search:</b>ALL visitors, including  children, are subject to search prior to being allowed to visit any inmate.  Prohibited items include, but are not limited to, the following: Alcohol,  Electronics, Newspapers/Magazines, Books, Food, Pocket Knives, Cameras,  Lighters, Syringes, Cell Phones, Matches, Tobacco Products, Drinks, Music  Players, Tools, Drugs, Nail, Clippers, and Weapons.<br />
+VIOLATION OF CRIMINAL CODE <strong>720 ILCS 5/31A-1.1</strong>IS A FELONY PUNISHABLE UP TO 12 YEARS IN THE ILLINOIS DEPARTMENT OF  CORRECTIONS<br />
+<br />
+      <br />
+  <b>Out-of-Town Visits:</b>Visitors from out of town  shall follow the application process in order to get approval for visiting  privileges. Once approved, out of town visitors shall be allowed to visit  Monday through Saturday regardless of the regularly scheduled visiting day of  the inmate. The visitors must submit proof that they are from out of town,  which is defined as 150 miles or more from the Cook County Department of  Corrections. </p>
+    
+     <p><b>Instructions for Bonding Out an Inmate:</b> <br />
+      <b>Where:</b> Division Five, 2700 South California Avenue<br />
+      <b>Time:</b> 9 AM to 9 PM Sunday through Saturday, including Holidays<br />
+      <br />
+      <b>Methods of payment:</b>Cash (US currency only); NO Personal Checks, NO  Money Orders, Bank or Cashier Checks only. When paying by check, the check is  payable to the Clerk of the Circuit Court and must be presented during normal  banking hours for verification purposes (the Clerk of the Circuit Court bonding  clerk will speak with a bank employee for verification). <br />
+      <br />
+You may pay CASH BAIL by Credit or Debit Card. A non-refundable service fee of  2.13% will be charged. The actual payment card used and a valid photo ID are  required to process the payment.    </p>
+     <p>Posting of Bail Bonds by Credit Card <strong>must</strong> be transacted in person at the 26th and California facility. <br />
+   </p>
+    <p><b>Bonding Procedures and Policies</b></p>
+    <b>Detainees incarcerated overnight or longer.</b><br />
+    <p>After the inmate's name is recorded in the database, it should  take approximately 20 minutes for the record's clerk to prepare inmate folder  for bonding. This time frame is based on the conditions that the inmate is NOT  in court that day and/or does not have a hold from another agency that requires  additional information from the agency and a reply is needed. In those  instances more time will be needed. The time needed depends on when the inmate  returns from court and/or when the needed information is received from the  other agency.</p>
+<p><b>New detainees.</b><br />
+  Detainees coming to the department after being  arrested and attending bond court must be processed into the department before  bond is posted. The time frame before bond is posted will depend on when the  person is brought from court to the CCDOC and processed.  </p>
+<p>Although every effort is made to keep the  information accurate and current, it cannot be guaranteed. Users are cautioned  that the information is based upon name check only and documentation the DOC  received. By using this search tool, you acknowledge that you understand that  it is solely your responsibility to verify any information you may obtain  herein before relying on said information for any type of legal action. </p>
+<p>Last Update: 11/30/2014 4:35:46 PM
+  <!-- <br><a href="disclaimer.html">Refer to the Legal Disclaimer</a> -->
+</p>
+	<!-- end #mainContent --></div>
+  <div id="footer">
+    <p align="center">Cook County Sheriff's Department of Corrections • 2700 S. California Ave. <br />
+    Chicago, IL 60608 • <strong>773 674 5201</strong></p>
+  <!-- end #footer --></div>
+<!-- end #container --></div>
+
+</body>
+</html>
