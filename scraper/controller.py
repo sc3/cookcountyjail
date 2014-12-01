@@ -9,7 +9,7 @@ from search_commands import SearchCommands
 from utils import ONE_DAY
 
 
-NEW_INMATE_SEARCH_WINDOW_SIZE = 5
+NEW_INMATE_SEARCH_WINDOW_SIZE = 30
 
 
 class Controller:
