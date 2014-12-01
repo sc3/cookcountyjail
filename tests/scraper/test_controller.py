@@ -64,8 +64,9 @@ class TestController:
         send_response(controller, active_jail_ids)
         assert self._search.update_inmates_status.call_args_list == [call(active_jail_ids)]
         self.send_notification(self._search, SearchCommands.FINISHED_UPDATE_INMATES_STATUS)
-        assert self._search.find_inmates.call_args_list == [call(exclude_list=missing_inmate_exclude_list,
-                                                                 start_date=date.today() - ONE_DAY * 6)]
+        assert self._search.find_inmates.call_args_list == \
+               [call(exclude_list=missing_inmate_exclude_list,
+                     start_date=date.today() - ONE_DAY * (NEW_INMATE_SEARCH_WINDOW_SIZE + 1))]
         self.send_notification(self._search, SearchCommands.FINISHED_FIND_INMATES)
         assert inmates.recently_discharged_inmates_ids.call_args_list == [call(controller.inmates_response_q)]
         send_response(controller, active_jail_ids)
